@@ -1,188 +1,131 @@
-# Contributing zu Techtyl
+# Contributing to Techtyl
 
-Vielen Dank für dein Interesse, zu Techtyl beizutragen! 🎉
+Thank you for considering contributing to Techtyl! 🎉
 
-## 🤝 Wie kann ich beitragen?
+## How to Contribute
 
-### Fehler melden
-- Prüfe zuerst, ob der Fehler bereits gemeldet wurde
-- Erstelle ein Issue mit detaillierten Informationen:
-  - Schritten zur Reproduktion
-  - Erwartetes vs. tatsächliches Verhalten
-  - Screenshots (falls relevant)
-  - System-Informationen
+### Reporting Bugs
 
-### Features vorschlagen
-- Erstelle ein Issue mit dem Label "feature request"
-- Beschreibe das Feature und den Nutzen
-- Diskutiere mit der Community
+1. Check if the bug is already reported in [Issues](https://github.com/theredstonee/Techtyl/issues)
+2. Create a new issue with:
+   - Clear description
+   - Steps to reproduce
+   - Expected vs actual behavior
+   - System information (OS, PHP version)
+   - Relevant logs
 
-### Code beitragen
+### Suggesting Features
+
+1. Create an issue with the `enhancement` label
+2. Describe the feature and its benefits
+3. Discuss with the community
+
+### Code Contributions
 
 #### 1. Fork & Clone
+
 ```bash
-git clone https://github.com/yourusername/techtyl.git
-cd techtyl
+git clone https://github.com/yourusername/Techtyl.git
+cd Techtyl
 ```
 
-#### 2. Branch erstellen
+#### 2. Create Branch
+
 ```bash
-git checkout -b feature/mein-neues-feature
-# oder
-git checkout -b fix/mein-bugfix
+git checkout -b feature/your-feature-name
+# or
+git checkout -b fix/your-bug-fix
 ```
 
-#### 3. Code schreiben
-- Folge den Code-Style-Guidelines (siehe unten)
-- Schreibe Tests für neue Features
-- Kommentiere komplexen Code
+#### 3. Make Changes
+
+- Follow the existing code style
+- Test your changes thoroughly
+- Add comments for complex logic
 
 #### 4. Commit
+
 ```bash
 git add .
-git commit -m "feat: Beschreibung des Features"
-# oder
-git commit -m "fix: Beschreibung des Bugfixes"
+git commit -m "feat: add feature description"
+# or
+git commit -m "fix: fix bug description"
 ```
 
-**Commit-Message-Format:**
-- `feat:` - Neues Feature
-- `fix:` - Bugfix
-- `docs:` - Dokumentation
-- `style:` - Code-Formatierung
-- `refactor:` - Code-Refactoring
+**Commit Message Format:**
+- `feat:` - New feature
+- `fix:` - Bug fix
+- `docs:` - Documentation
+- `refactor:` - Code refactoring
 - `test:` - Tests
-- `chore:` - Build/Tools
+- `chore:` - Build/maintenance
 
 #### 5. Push & Pull Request
+
 ```bash
-git push origin feature/mein-neues-feature
+git push origin feature/your-feature-name
 ```
 
-Erstelle dann einen Pull Request auf GitHub.
+Then create a Pull Request on GitHub.
 
-## 📝 Code-Style-Guidelines
+## Code Style
 
-### PHP/Laravel
-- PSR-12 Coding Standard
-- Type Hints verwenden
-- DocBlocks für Methoden
-- Aussagekräftige Variablennamen
+### Bash Scripts
 
-```php
-<?php
+- Use shellcheck for validation
+- Add comments for complex logic
+- Follow existing formatting
+- Test on Ubuntu 22.04 and 24.04
 
-/**
- * Get server configuration suggestions from AI
- *
- * @param string $gameType The type of game server
- * @param array $requirements Additional requirements
- * @return array Configuration suggestions
- */
-public function getServerConfigSuggestions(string $gameType, array $requirements = []): array
-{
-    // Implementation
-}
-```
+### PHP (for addons)
 
-### TypeScript/React
-- Funktionale Komponenten bevorzugen
-- TypeScript-Types definieren
-- Props-Interface für Komponenten
-- Hooks korrekt verwenden
+- PSR-12 coding standard
+- Use type hints
+- Add DocBlocks
 
-```typescript
-interface ServerCardProps {
-  server: Server;
-  onDelete: (id: number) => void;
-}
+### Documentation
 
-export function ServerCard({ server, onDelete }: ServerCardProps) {
-  // Component implementation
-}
-```
+- Keep it simple and clear
+- Use proper English
+- Add examples where helpful
 
-### CSS/Tailwind
-- Utility-First-Ansatz
-- Wiederverwendbare Komponenten-Klassen
-- Responsive Design (mobile-first)
+## Testing
 
-```tsx
-<div className="card hover:shadow-md transition-shadow">
-  <h3 className="text-lg font-semibold text-gray-900">
-    {server.name}
-  </h3>
-</div>
-```
+Test your changes on:
+- ✅ Fresh Ubuntu 22.04
+- ✅ Fresh Ubuntu 24.04
+- ✅ Existing Pterodactyl installations
 
-## 🧪 Testing
+## Security
 
-### Backend Tests
-```bash
-cd backend
-php artisan test
-```
+**NEVER commit:**
+- API keys
+- Passwords
+- Private keys
+- `.env` files
 
-### Frontend Tests
-```bash
-cd frontend
-npm run test
-```
+**Always:**
+- Validate user input
+- Use parameterized queries
+- Sanitize output
+- Follow OWASP guidelines
 
-## 🔒 Sicherheit
+### Reporting Security Issues
 
-- **NIEMALS** API-Keys committen
-- XSS-Protection beachten
-- SQL-Injection vermeiden (Eloquent verwenden)
-- Input-Validierung immer durchführen
-- Security Headers setzen
+Email: security@techtyl.io (do NOT create public issues)
 
-### Sicherheitslücken melden
-Sende eine E-Mail an security@techtyl.io (keine öffentlichen Issues!)
+## Pull Request Checklist
 
-## 📚 Dokumentation
+- [ ] Code follows project style
+- [ ] Tested on Ubuntu 22.04/24.04
+- [ ] Documentation updated
+- [ ] No merge conflicts
+- [ ] Commit messages are clear
+- [ ] Security best practices followed
 
-- Neue Features dokumentieren (FEATURES.md)
-- Setup-Schritte aktualisieren (SETUP.md)
-- Code-Kommentare auf Englisch
-- User-facing Texte auf Deutsch
+## Questions?
 
-## 🎯 Prioritäten
+- [GitHub Discussions](https://github.com/theredstonee/Techtyl/discussions)
+- [Issues](https://github.com/theredstonee/Techtyl/issues)
 
-### High Priority
-- Security Fixes
-- Critical Bugs
-- Performance-Probleme
-
-### Medium Priority
-- Feature Requests mit vielen Votes
-- UI/UX-Verbesserungen
-- Dokumentation
-
-### Low Priority
-- Nice-to-have Features
-- Code-Refactoring
-- Style-Anpassungen
-
-## ✅ Pull Request Checklist
-
-- [ ] Code folgt den Style-Guidelines
-- [ ] Tests wurden geschrieben/angepasst
-- [ ] Alle Tests laufen durch
-- [ ] Dokumentation wurde aktualisiert
-- [ ] Commit-Messages sind aussagekräftig
-- [ ] Keine Merge-Konflikte
-- [ ] XSS-Protection beachtet
-- [ ] Input-Validierung implementiert
-
-## 🌟 Anerkennung
-
-Alle Contributors werden in der README.md erwähnt!
-
-## 📞 Fragen?
-
-- GitHub Discussions
-- Discord: [Link zum Discord]
-- E-Mail: contribute@techtyl.io
-
-Danke für deine Unterstützung! 🚀
+Thank you for your contributions! 🚀

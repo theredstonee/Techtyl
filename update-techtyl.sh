@@ -22,11 +22,13 @@ echo ""
 G='\033[0;32m'
 R='\033[0;31m'
 Y='\033[1;33m'
+B='\033[0;34m'
 NC='\033[0m'
 
 ok() { echo -e "${G}✓${NC} $1"; }
 err() { echo -e "${R}✗${NC} $1"; exit 1; }
 warn() { echo -e "${Y}!${NC} $1"; }
+info() { echo -e "${B}➜${NC} $1"; }
 
 # Root check
 [[ $EUID -ne 0 ]] && err "Als root ausführen: sudo bash update-techtyl.sh"
@@ -65,9 +67,15 @@ echo "Aktuelle APP_URL: $CURRENT_URL"
 SERVER_IP=$(hostname -I | awk '{print $1}' 2>/dev/null || echo "localhost")
 
 # Neue URL abfragen
-read -p "Neue Panel-URL (Enter behält aktuelle): " NEW_URL
+read -p "Neue Panel-URL (Enter behält aktuelle, z.B. http://${SERVER_IP}): " NEW_URL
 
 if [ -n "$NEW_URL" ]; then
+    # Prüfe ob http:// oder https:// vorhanden
+    if [[ ! "$NEW_URL" =~ ^https?:// ]]; then
+        warn "http:// fehlt - füge automatisch hinzu..."
+        NEW_URL="http://${NEW_URL}"
+    fi
+
     # APP_URL aktualisieren
     if grep -q "^APP_URL=" .env; then
         sed -i "s|^APP_URL=.*|APP_URL=${NEW_URL}|" .env
@@ -78,6 +86,13 @@ if [ -n "$NEW_URL" ]; then
     fi
     PANEL_URL="$NEW_URL"
 else
+    # Wenn aktuelle URL kein http:// hat, hinzufügen
+    if [[ ! "$CURRENT_URL" =~ ^https?:// ]] && [[ "$CURRENT_URL" != "nicht gesetzt" ]]; then
+        warn "Aktuelle APP_URL hat kein http:// - fixe..."
+        CURRENT_URL="http://${CURRENT_URL}"
+        sed -i "s|^APP_URL=.*|APP_URL=${CURRENT_URL}|" .env
+        ok "APP_URL gefixt: $CURRENT_URL"
+    fi
     PANEL_URL="$CURRENT_URL"
     ok "APP_URL beibehalten: $CURRENT_URL"
 fi
@@ -530,9 +545,29 @@ echo "[4/5] Aktualisiere System..."
 # Composer autoload
 composer dump-autoload -q 2>/dev/null
 
-# Permissions
+# Permissions (CRITICAL for avoiding 500 errors)
+info "Setting ownership and permissions..."
+
+# Set owner
 chown -R www-data:www-data /var/www/pterodactyl
-chmod -R 755 storage bootstrap/cache
+
+# Set directory permissions
+find /var/www/pterodactyl -type d -exec chmod 755 {} \;
+
+# Set file permissions
+find /var/www/pterodactyl -type f -exec chmod 644 {} \;
+
+# Special permissions for critical directories
+chmod -R 755 /var/www/pterodactyl/storage
+chmod -R 755 /var/www/pterodactyl/bootstrap/cache
+
+# Make artisan executable
+chmod +x /var/www/pterodactyl/artisan
+
+ok "Permissions set"
+
+# Storage link
+php artisan storage:link 2>/dev/null || true
 
 # Cache
 php artisan config:clear
@@ -545,6 +580,7 @@ php artisan config:cache
 php artisan route:cache
 
 # Restart services
+info "Restarting services..."
 systemctl restart php${PHP_VER}-fpm nginx
 
 ok "System aktualisiert"

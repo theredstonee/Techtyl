@@ -341,17 +341,27 @@ cat /root/techtyl-info.txt
 
 ## 🔄 Updates & Fixes
 
-### Quick Fix (500 Errors, Footer Issues)
+### 🚨 Emergency Fix (500 Errors, Permission Issues)
+
+**If you're experiencing 500 errors or permission problems:**
 
 ```bash
-sudo wget -O - https://raw.githubusercontent.com/theredstonee/Techtyl/main/quick-fix.sh | sudo bash
+sudo wget -O - https://raw.githubusercontent.com/theredstonee/Techtyl/main/emergency-fix.sh | sudo bash
 ```
 
 This fixes:
-- Multiple footer displays
-- Register 500 errors
-- Permission issues
-- Cache problems
+- ✅ **500 Internal Server Error**
+- ✅ **APP_URL without http://** (causes broken links)
+- ✅ **Permission issues** (www-data ownership)
+- ✅ **Multiple footer displays**
+- ✅ **Cache problems**
+
+**What it does:**
+1. Fixes APP_URL (adds http:// if missing)
+2. Sets proper permissions (directories 755, files 644)
+3. Sets www-data ownership
+4. Rebuilds cache
+5. Restarts services
 
 ### Update Existing Installation
 

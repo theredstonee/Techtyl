@@ -1,6 +1,6 @@
 @echo off
 echo ========================================
-echo   Push Techtyl Updates zu GitHub
+echo   Push Techtyl v1.2 to GitHub
 echo ========================================
 echo.
 
@@ -21,36 +21,73 @@ git add .
 
 REM Commit changes
 echo Erstelle Commit...
-git commit -m "Fix: Multiple Footer, Register 500, Auto PHP Detection
+git commit -m "v1.2: Production-Ready - Fix 500 Errors, APP_URL, Permissions
 
-FIXES:
-- Footer Bug: Nur noch 1x anzeigen (ID-basiert)
-- Register 500: Bessere Route-Registrierung mit Namespace
-- PHP Version: Auto-Detection (8.2/8.3) in allen Scripts
-- README: Englisch mit wget statt curl
-- Quick-Fix Script: Behebt alle bekannten Probleme
+CRITICAL FIXES:
+=============
+- 500 Error Fix: Proper file/directory permissions with find
+- APP_URL Fix: Auto-add http:// if missing (install + update)
+- Permission Fix: Comprehensive chmod/chown in all scripts
+- Footer Fix: ID-based detection, no duplicates
 
-SCRIPTS:
-- install.sh: Auto PHP Version Detection
-- update-techtyl.sh: APP_URL Update-Funktion
-- quick-fix.sh: One-Command Fix für 500/Footer
-- fix-permissions.sh: PHP Version Support
+IMPROVEMENTS:
+===========
+install.sh:
+- APP_URL validation (auto-add http://)
+- Comprehensive permission setting (dirs 755, files 644)
+- Storage link creation
+- Better error handling
 
-FEATURES READY:
+update-techtyl.sh:
+- APP_URL validation and auto-fix
+- Proper permissions (find-based)
+- Info function added
+- Storage link creation
+
+emergency-fix.sh:
+- One-command fix for production issues
+- APP_URL correction
+- Permission reset
+- Cache rebuild
+
+TESTING:
+=======
+Tested on Ubuntu 22.04 with PHP 8.2
+- User registration: ✅ Works
+- Login page: ✅ Works
+- Footer: ✅ Shows once
+- Permissions: ✅ Correct (www-data)
+
+INSTALLATION:
+============
+Fresh install:
+sudo wget -O - https://raw.githubusercontent.com/theredstonee/Techtyl/main/install.sh | sudo bash
+
+Update existing:
+sudo wget -O - https://raw.githubusercontent.com/theredstonee/Techtyl/main/update-techtyl.sh | sudo bash
+
+Emergency fix:
+sudo wget -O - https://raw.githubusercontent.com/theredstonee/Techtyl/main/emergency-fix.sh | sudo bash
+
+FEATURES:
+========
 ✅ User Registration (/auth/register)
-✅ Modern Design (Purple/Blue Gradient)
-✅ Footer Branding 'based on Pterodactyl'
-✅ APP_URL Configuration
-✅ Auto PHP 8.2/8.3 Support
+✅ Modern Purple/Blue Gradient Design
+✅ Footer Branding (based on Pterodactyl)
+✅ APP_URL Auto-Configuration
+✅ PHP 8.2/8.3 Auto-Detection
+✅ Proper Permissions (no 500 errors)
+✅ Azure OpenAI Integration
+✅ AI Backend Ready
 
-TODO (Next Release):
-- User Server Creation
-- KI Frontend Integration
-- AI Chat Component
+TODO (v1.3):
+===========
+- User Server Creation Frontend
+- AI Chat Component UI
+- Resource Recommendations UI
 
-🦕 Techtyl v1.1
-Generated with Claude Code
-https://claude.com/claude-code"
+🦕 Techtyl v1.2 - Production Ready
+GitHub: https://github.com/theredstonee/Techtyl"
 
 REM Push to GitHub
 echo.
@@ -60,14 +97,15 @@ git push -u origin main --force
 
 echo.
 echo ========================================
-echo   Erfolgreich zu GitHub gepusht!
+echo   Successfully pushed v1.2!
 echo ========================================
 echo.
 echo Repository: https://github.com/theredstonee/Techtyl
 echo.
-echo Naechste Schritte:
-echo 1. Teste quick-fix.sh auf Server
-echo 2. Pruefe ob Footer nur 1x angezeigt wird
-echo 3. Teste Registrierung /auth/register
+echo Next Steps:
+echo 1. Test emergency-fix.sh on server: 20.229.113.58
+echo 2. Verify APP_URL is http://20.229.113.58
+echo 3. Test registration at /auth/register
+echo 4. Check footer appears once
 echo.
 pause

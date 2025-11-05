@@ -1,11 +1,7 @@
-# ========================================
-# TECHTYL - Git Ignore
-# WICHTIG für öffentliches Repository!
-# ========================================
+# Techtyl - Game Server Management Panel
+# https://github.com/theredstonee/Techtyl
 
-# NIEMALS COMMITTEN: Credentials & Keys
-backend/.env
-frontend/.env
+# Sensitive files
 .env
 .env.*
 !.env.example
@@ -13,67 +9,31 @@ frontend/.env
 *.pem
 secrets/
 
-# Node
-node_modules/
-frontend/node_modules/
-npm-debug.log
-yarn-error.log
-.pnp
-.pnp.js
-
-# Build
-dist/
-build/
-frontend/dist/
-frontend/build/
-*.min.js
-*.min.css
-backend/public/hot
-backend/public/storage
-
-# PHP/Laravel
-backend/vendor/
-backend/storage/*.key
-backend/.phpunit.result.cache
-backend/Homestead.json
-backend/Homestead.yaml
-backend/auth.json
+# Logs
+*.log
+logs/
 
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
-*~
 
 # OS
 .DS_Store
 Thumbs.db
 
-# Logs
-*.log
-logs/
-backend/storage/logs/
-CLAUDE.md
-
-# Cache
-.cache/
-backend/bootstrap/cache/*.php
-backend/storage/framework/cache/
-backend/storage/framework/sessions/
-backend/storage/framework/views/
-
-# Testing
-backend/coverage/
-
-# Database
-*.sqlite
-*.sqlite-journal
-
 # Temporary
 tmp/
 temp/
 *.tmp
+*.backup
+*.bak
 
-# Production config (mit echten Credentials)
-.env.production.example
+# Build artifacts
+*.tar.gz
+dist/
+build/
+
+# Development files
+CLAUDE.md

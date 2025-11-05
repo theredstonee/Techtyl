@@ -288,6 +288,12 @@ echo ""
 read -p "Panel-URL (Enter für http://${SERVER_IP}): " PANEL_URL
 PANEL_URL=${PANEL_URL:-http://${SERVER_IP}}
 
+# Validate and fix URL format
+if [[ -n "$PANEL_URL" ]] && [[ ! "$PANEL_URL" =~ ^https?:// ]]; then
+    warn "URL ohne http:// erkannt - korrigiere..."
+    PANEL_URL="http://${PANEL_URL}"
+fi
+
 echo ""
 info "Panel wird erreichbar unter: $PANEL_URL"
 
@@ -982,10 +988,26 @@ ExecStart=/usr/bin/php /var/www/pterodactyl/artisan queue:work --queue=high,stan
 WantedBy=multi-user.target
 EOF
 
-# Permissions (wichtig für 500-Fehler!)
+# Permissions (CRITICAL for avoiding 500 errors)
+info "Setting ownership and permissions..."
+
+# Set owner
 chown -R www-data:www-data /var/www/pterodactyl
+
+# Set directory permissions
+find /var/www/pterodactyl -type d -exec chmod 755 {} \;
+
+# Set file permissions
+find /var/www/pterodactyl -type f -exec chmod 644 {} \;
+
+# Special permissions for critical directories
 chmod -R 755 /var/www/pterodactyl/storage
 chmod -R 755 /var/www/pterodactyl/bootstrap/cache
+
+# Make artisan executable
+chmod +x /var/www/pterodactyl/artisan
+
+ok "Permissions set correctly"
 
 # Storage-Link erstellen (für Assets)
 php artisan storage:link
