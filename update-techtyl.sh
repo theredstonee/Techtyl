@@ -342,16 +342,12 @@ ok "Register View erstellt"
 # Routes hinzufügen
 if [ -f "routes/auth.php" ]; then
     if ! grep -q "auth.register" routes/auth.php; then
-        if grep -q "});" routes/auth.php; then
-            sed -i '/});/i\    // User Registration (Techtyl)\n    Route::get('"'"'/register'"'"', [Pterodactyl\\\\Http\\\\Controllers\\\\Auth\\\\RegisterController::class, '"'"'showRegistrationForm'"'"'])->name('"'"'auth.register'"'"');\n    Route::post('"'"'/register'"'"', [Pterodactyl\\\\Http\\\\Controllers\\\\Auth\\\\RegisterController::class, '"'"'register'"'"']);' routes/auth.php
-        else
-            cat >> routes/auth.php <<'PHPEOF'
+        cat >> routes/auth.php <<'PHPEOF'
 
 // User Registration (Techtyl)
 Route::get('/register', [\Pterodactyl\Http\Controllers\Auth\RegisterController::class, 'showRegistrationForm'])->name('auth.register');
 Route::post('/register', [\Pterodactyl\Http\Controllers\Auth\RegisterController::class, 'register']);
 PHPEOF
-        fi
         ok "Register Routes hinzugefügt"
     else
         ok "Register Routes bereits vorhanden"

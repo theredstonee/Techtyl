@@ -19,7 +19,7 @@
 
 ```bash
 # Install Techtyl on fresh Ubuntu 22.04/24.04
-sudo wget -O - https://raw.githubusercontent.com/theredstonee/Techtyl/main/install.sh | sudo bash
+sudo wget -O - https://raw.githubusercontent.com/theredstonee/Techtyl/main/install.sh | sudo bash  wget https://raw.githubusercontent.com/theredstonee/Techtyl/main/install.sh
 ```
 
 **That's it!** The installer will guide you through the setup.
