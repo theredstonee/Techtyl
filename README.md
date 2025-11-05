@@ -1,53 +1,55 @@
-# 🦕 Techtyl - AI Addon für Pterodactyl Panel
+# 🦕 Techtyl
 
 <div align="center">
 
-![Pterodactyl](https://img.shields.io/badge/Pterodactyl-v1.11-0e4688?style=for-the-badge&logo=pterodactyl)
-![PHP](https://img.shields.io/badge/PHP-8.1+-777BB4?style=for-the-badge&logo=php&logoColor=white)
+![Pterodactyl](https://img.shields.io/badge/Based_on-Pterodactyl-0e4688?style=for-the-badge&logo=pterodactyl)
+![PHP](https://img.shields.io/badge/PHP-8.2+-777BB4?style=for-the-badge&logo=php&logoColor=white)
 ![Azure OpenAI](https://img.shields.io/badge/Azure_OpenAI-GPT--4o-0078D4?style=for-the-badge&logo=microsoft-azure)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](LICENSE)
 
-**Erweitere dein Pterodactyl Panel mit AI-gestützter Server-Verwaltung**
+**Pterodactyl Panel with AI-Powered Server Management**
 
-[Features](#-features) • [Installation](#-installation) • [Dokumentation](#-dokumentation) • [Screenshots](#-screenshots)
+[Features](#-features) • [Installation](#-installation) • [Documentation](#-documentation) • [Support](#-support)
 
 </div>
 
 ---
 
-## 📖 Was ist Techtyl?
+## 📖 What is Techtyl?
 
-Techtyl ist ein **AI-Enhancement Addon** für Pterodactyl Panel, das dein Server-Management auf das nächste Level hebt. Statt nur ein weiteres Panel zu sein, integriert sich Techtyl nahtlos in deine bestehende Pterodactyl-Installation und fügt KI-Funktionen hinzu.
+Techtyl is a **complete game server management panel** built on Pterodactyl with integrated AI capabilities. It provides all the power of Pterodactyl Panel enhanced with Azure OpenAI for intelligent server configuration, troubleshooting, and management.
 
-### 🎯 Hauptziele
+### 🎯 Key Features
 
-- 🤖 **AI-Assistent** für intelligente Server-Konfiguration
-- 💡 **Automatische Empfehlungen** basierend auf Spiel-Typ
-- 🏷️ **Namen-Generierung** für kreative Server-Namen
-- 🔧 **Troubleshooting-Hilfe** bei Problemen
-- 📊 **Verbesserte UX** ohne Pterodactyl zu ersetzen
+- 🤖 **AI Assistant** for smart server configuration
+- 👥 **User Registration** - users can create accounts without admin
+- 🎮 **User Server Creation** - users can create their own servers (with limits)
+- 💡 **Automatic Recommendations** based on game type
+- 🏷️ **Name Generation** for creative server names
+- 🔧 **Troubleshooting Help** when problems occur
+- 📊 **Resource Optimization** with AI suggestions
 
 ---
 
 ## ✨ Features
 
-### 🤖 AI-gestützte Server-Erstellung
+### 🤖 AI-Powered Server Creation
 
-- **Intelligente Ressourcen-Empfehlungen**: AI schlägt optimale CPU, RAM und Disk basierend auf Spiel-Typ vor
-- **Automatische Namen**: Generiere kreative und passende Server-Namen
-- **Interaktiver Assistent**: Stelle Fragen während der Server-Erstellung
-- **Kontext-bewusst**: Berücksichtigt Spieler-Anzahl, Mods, etc.
+- **Intelligent Resource Recommendations**: AI suggests optimal CPU, RAM, and Disk based on game type
+- **Automatic Naming**: Generate creative and suitable server names
+- **Interactive Assistant**: Ask questions during server setup
+- **Context-Aware**: Considers player count, mods, requirements, etc.
 
-### 🔧 Troubleshooting & Support
+### 👥 User Management
 
-- **Problem-Analyse**: Beschreibe Fehler, erhalte Lösungen
-- **Schritt-für-Schritt Hilfe**: Detaillierte Anleitungen
-- **Server-spezifisch**: Berücksichtigt deine Server-Konfiguration
-- **24/7 verfügbar**: Keine Wartezeiten
+- **Self-Registration**: Users can create accounts without admin intervention
+- **Server Limits**: Configurable per-user server limits (default: 3 servers)
+- **Resource Limits**: Set maximum CPU, RAM, and disk per user
+- **AI Access**: All users have access to AI features
 
 ### 🎮 Multi-Game Support
 
-Optimiert für:
+Optimized for:
 - Minecraft (Java & Bedrock)
 - Rust
 - ARK: Survival Evolved
@@ -56,257 +58,344 @@ Optimiert für:
 - Terraria
 - TeamSpeak
 - Discord Bots
-- Und mehr...
+- And more...
 
-### 🔒 Sicherheit & Compliance
+### 🔒 Security & Privacy
 
-- ✅ **DSGVO-konform**: Azure EU-Server
-- ✅ **Keine Datenbank-Änderungen**: Pterodactyl bleibt unberührt
-- ✅ **Rate Limiting**: Schutz vor Missbrauch
-- ✅ **Input Sanitization**: XSS/CSRF-geschützt
-- ✅ **Pterodactyl-kompatibel**: Funktioniert mit bestehender Security
+- ✅ **GDPR Compliant**: Azure EU servers
+- ✅ **Secure by Default**: Built on Pterodactyl's security model
+- ✅ **Rate Limiting**: Protection against abuse
+- ✅ **Input Sanitization**: XSS/CSRF protected
+- ✅ **Encrypted Credentials**: Secure storage of sensitive data
 
 ---
 
 ## 🚀 Installation
 
-### Voraussetzungen
+### Prerequisites
 
-- ✅ Pterodactyl Panel v1.11.0+
-- ✅ PHP 8.1+
-- ✅ Node.js 16+
-- ✅ Azure OpenAI Account
+- ✅ Fresh Ubuntu 22.04 or 24.04 server
+- ✅ 2+ CPU cores, 4GB+ RAM, 20GB+ disk
+- ✅ Root access (SSH)
+- ✅ Azure OpenAI account with GPT-4o deployment
 
-### Quick Install (5 Minuten)
+### One-Click Installation (15-20 minutes)
 
 ```bash
-cd /var/www/pterodactyl
-wget https://raw.githubusercontent.com/theredstonee/Techtyl/main/install-addon.sh
-sudo bash install-addon.sh
+curl -sSL https://raw.githubusercontent.com/theredstonee/Techtyl/main/install.sh | sudo bash
 ```
 
-Das Script:
-1. Installiert Techtyl-Komponenten
-2. Fragt nach Azure OpenAI Credentials
-3. Baut Frontend neu
-4. Startet Services neu
+The installer will:
+1. ✅ Install all system dependencies (PHP 8.2, MariaDB, Nginx, Redis)
+2. ✅ Download and configure Pterodactyl Panel
+3. ✅ Install Techtyl AI features
+4. ✅ Configure Azure OpenAI integration
+5. ✅ Set up user registration and server creation
+6. ✅ Create admin account
+7. ✅ Start all services
+
+### During Installation
+
+You'll be prompted for:
+
+**Server Configuration:**
+- Panel URL (auto-detects your server IP)
+
+**Azure OpenAI Configuration:**
+- API Key
+- Endpoint (e.g., `https://your-resource.openai.azure.com/`)
+- Deployment Name (e.g., `gpt-4o`)
+
+**Admin Account:**
+- Email
+- Username
+- Password
 
 ### Azure OpenAI Setup
 
-1. Gehe zu: https://portal.azure.com/
-2. Erstelle "Azure OpenAI" Resource
-3. Deploy Model: **gpt-4o** (empfohlen)
-4. Kopiere API Key & Endpoint
+1. Go to: https://portal.azure.com/
+2. Create "Azure OpenAI" resource
+3. Deploy model: **gpt-4o** (recommended)
+4. Copy API Key & Endpoint from "Keys and Endpoint" section
+5. Copy Deployment Name from "Model deployments"
 
-**In `.env` eintragen:**
-```env
-TECHTYL_AI_ENABLED=true
-AZURE_OPENAI_API_KEY=dein-key
-AZURE_OPENAI_ENDPOINT=https://dein-resource.openai.azure.com/
-AZURE_OPENAI_DEPLOYMENT=gpt-4o
+---
+
+## 🎮 Usage
+
+### For Users
+
+**Register Account:**
+1. Navigate to panel URL
+2. Click "Register" (if enabled)
+3. Fill in username, email, password
+4. Login with credentials
+
+**Create Server:**
+1. Click "Create New Server"
+2. Select game type (Egg)
+3. Click **"✨ AI Recommendations"** - AI suggests optimal resources
+4. Click **"🏷️ Suggest Names"** - AI generates creative names
+5. Ask questions in **"💬 Chat"** field
+6. Click "Create Server"
+
+### For Admins
+
+**Access Admin Panel:**
+```
+https://your-panel-url/admin
 ```
 
-📚 **Detaillierte Anleitung**: [PTERODACTYL_ADDON.md](PTERODACTYL_ADDON.md)
+**Create Nodes:**
+1. Admin → Nodes → Create New
+2. Configure node settings
+3. Add allocations (ports)
 
----
+**Manage Users:**
+1. Admin → Users
+2. View/edit user limits
+3. Suspend/delete accounts
 
-## 📸 Screenshots
-
-<details>
-<summary>🖼️ Screenshots anzeigen</summary>
-
-### AI-Assistent bei Server-Erstellung
-![Server Creation](https://via.placeholder.com/800x400?text=AI+Server+Creation)
-
-### Intelligente Empfehlungen
-![AI Suggestions](https://via.placeholder.com/800x400?text=AI+Recommendations)
-
-### Troubleshooting-Hilfe
-![Troubleshooting](https://via.placeholder.com/800x400?text=AI+Troubleshooting)
-
-</details>
-
----
-
-## 🎮 Nutzung
-
-### Für Server-Ersteller:
-
-1. **Neuen Server erstellen** in Pterodactyl
-2. **Klicke "✨ AI-Empfehlungen"** neben Ressourcen-Feldern
-3. **AI schlägt vor**: CPU, RAM, Disk basierend auf Spiel
-4. **Optional**: "Namen vorschlagen" für kreativen Namen
-5. **Server erstellen** mit optimalen Einstellungen
-
-### Für Admins:
-
+**Monitor System:**
 ```bash
-# Einstellungen anpassen
-sudo nano /var/www/pterodactyl/config/techtyl.php
+# View logs
+tail -f /var/www/pterodactyl/storage/logs/laravel.log
 
-# Logs überwachen
-tail -f /var/www/pterodactyl/storage/logs/techtyl.log
-
-# Updates installieren
-cd /var/www/pterodactyl
-sudo bash install-addon.sh --update
+# Check services
+systemctl status nginx php8.2-fpm pteroq
 ```
 
 ---
 
-## 💰 Kosten
+## ⚙️ Configuration
 
-### Azure OpenAI Pricing (GPT-4o)
+### User Settings
 
-| Nutzung | Kosten/Monat | Anfragen |
-|---------|--------------|----------|
-| Klein (10 User) | ~$5 | 100/Monat |
-| Mittel (50 User) | ~$25 | 500/Monat |
-| Groß (200 User) | ~$100 | 2000/Monat |
+Edit `/var/www/pterodactyl/.env`:
 
-**Kostenoptimierung:**
-- ✅ Response-Caching (24h)
-- ✅ Rate Limiting pro User
-- ✅ Günstigstes Model (GPT-4o)
+```env
+# User Registration
+REGISTRATION_ENABLED=true                    # Enable/disable registration
 
-**Startguthaben**: Neue Azure-Accounts erhalten oft $5-10 kostenlos!
+# User Server Creation
+USER_SERVER_CREATION_ENABLED=true           # Allow users to create servers
+USER_SERVER_LIMIT=3                          # Max servers per user
+USER_SERVER_MEMORY_LIMIT=4096                # Max RAM per server (MB)
+USER_SERVER_CPU_LIMIT=200                    # Max CPU per server (%)
+USER_SERVER_DISK_LIMIT=10240                 # Max disk per server (MB)
+
+# AI Configuration
+TECHTYL_AI_ENABLED=true                      # Enable/disable AI
+TECHTYL_MAX_REQUESTS=50                      # Max AI requests per user/day
+TECHTYL_CACHE_RESPONSES=true                 # Cache AI responses
+TECHTYL_CACHE_DURATION=1440                  # Cache duration (minutes)
+
+# Azure OpenAI
+AZURE_OPENAI_API_KEY=your-key-here
+AZURE_OPENAI_ENDPOINT=https://your-endpoint.openai.azure.com/
+AZURE_OPENAI_DEPLOYMENT=gpt-4o
+AZURE_OPENAI_API_VERSION=2024-02-15-preview
+```
+
+After changes:
+```bash
+cd /var/www/pterodactyl
+php artisan config:clear
+```
 
 ---
 
-## 🛠️ Entwicklung
+## 💰 Pricing
 
-### Projekt-Struktur
+### Azure OpenAI Costs (GPT-4o)
+
+| Usage | Monthly Cost | Requests |
+|-------|--------------|----------|
+| Small (10 users) | ~$5 | 100/month |
+| Medium (50 users) | ~$25 | 500/month |
+| Large (200 users) | ~$100 | 2000/month |
+
+**Cost Optimization:**
+- ✅ Response caching (24 hours)
+- ✅ Rate limiting per user
+- ✅ Most cost-effective model (GPT-4o)
+
+**Free Credits**: New Azure accounts often receive $5-10 free credit!
+
+---
+
+## 🔧 Development
+
+### Project Structure
 
 ```
 Techtyl/
+├── install.sh                                # Main installer
 ├── addon/
 │   ├── app/
 │   │   ├── Services/
-│   │   │   └── AzureOpenAIService.php
-│   │   └── Http/Controllers/Techtyl/
-│   │       └── AIController.php
+│   │   │   └── AzureOpenAIService.php       # AI integration
+│   │   └── Http/Controllers/Api/Client/Techtyl/
+│   │       └── AIController.php              # API endpoints
 │   ├── resources/scripts/components/techtyl/
-│   │   ├── AIAssistant.tsx
-│   │   └── ServerWizard.tsx
+│   │   └── AIAssistant.tsx                   # React component
 │   ├── routes/
-│   │   └── techtyl.php
+│   │   └── techtyl.php                       # API routes
 │   └── config/
-│       └── techtyl.php
-├── install-addon.sh
+│       └── techtyl.php                       # Configuration
 └── docs/
+    ├── QUICK_START.md
+    └── DEPLOYMENT_READY.md
 ```
 
-### Lokal testen
+### API Endpoints
 
-```bash
-# Pterodactyl lokal einrichten
-git clone https://github.com/pterodactyl/panel.git
-cd panel
-
-# Techtyl-Addon installieren
-git clone https://github.com/theredstonee/Techtyl.git temp-addon
-bash temp-addon/install-addon.sh
-
-# Development-Server
-php artisan serve
-npm run dev
 ```
-
----
-
-## 🔄 Updates
-
-```bash
-cd /var/www/pterodactyl
-wget https://raw.githubusercontent.com/theredstonee/Techtyl/main/install-addon.sh
-sudo bash install-addon.sh --update
-```
-
-Oder manuell:
-```bash
-cd /var/www/pterodactyl
-git pull https://github.com/theredstonee/Techtyl.git main
-composer install --no-dev
-cd resources/scripts && npm run build
-php artisan config:clear
+POST /api/client/techtyl/ai/suggestions
+POST /api/client/techtyl/ai/names
+POST /api/client/techtyl/ai/help
 ```
 
 ---
 
 ## 🐛 Troubleshooting
 
-### AI-Features erscheinen nicht
+### 500 Internal Server Error
 
 ```bash
 cd /var/www/pterodactyl
+
+# Check logs
+tail -50 storage/logs/laravel.log
+
+# Fix permissions
+chown -R www-data:www-data .
+chmod -R 755 storage bootstrap/cache
+
+# Clear cache
 php artisan config:clear
+php artisan cache:clear
 php artisan view:clear
-cd resources/scripts && npm run build
+
+# Restart services
+systemctl restart php8.2-fpm nginx
 ```
 
-### "Credentials not configured"
+### AI Features Not Working
 
 ```bash
-# .env prüfen
-cat /var/www/pterodactyl/.env | grep AZURE_OPENAI
+# Verify Azure OpenAI credentials
+cat .env | grep AZURE_OPENAI
 
-# Sollte 4 Werte zeigen
+# Should show 4 values:
+# AZURE_OPENAI_API_KEY=...
+# AZURE_OPENAI_ENDPOINT=...
+# AZURE_OPENAI_DEPLOYMENT=...
+# AZURE_OPENAI_API_VERSION=...
+
+# Test connection
+tail -f storage/logs/laravel.log
+# Then try using AI features
 ```
 
-### Rate Limit Error
+### Panel Not Accessible
 
-Admin kann Limit in `config/techtyl.php` erhöhen
+```bash
+# Check services
+systemctl status nginx php8.2-fpm
 
-📚 **Mehr Hilfe**: [PTERODACTYL_ADDON.md](PTERODACTYL_ADDON.md)
+# Check Nginx config
+nginx -t
+
+# View error logs
+tail -20 /var/log/nginx/error.log
+```
+
+### Database Issues
+
+```bash
+# Check database connection
+mysql -u pterodactyl -p panel
+
+# View credentials
+cat /root/techtyl-info.txt
+```
 
 ---
 
-## 📊 Kompatibilität
+## 🔄 Updates
 
-| Pterodactyl | Techtyl | Status |
-|-------------|---------|--------|
-| v1.11.x | v1.x | ✅ Voll unterstützt |
-| v1.10.x | v1.x | ✅ Unterstützt |
-| v1.9.x | v1.x | ⚠️ Teilweise |
-| v1.8.x | v1.x | ❌ Nicht getestet |
+### Reinstall/Update
+
+```bash
+# Clean reinstall
+sudo rm -rf /var/www/pterodactyl
+sudo mysql -e "DROP DATABASE IF EXISTS panel;"
+
+# Run installer
+curl -sSL https://raw.githubusercontent.com/theredstonee/Techtyl/main/install.sh | sudo bash
+```
+
+---
+
+## 📊 System Requirements
+
+### Minimum
+
+- 2 CPU cores
+- 4GB RAM
+- 20GB disk space
+- Ubuntu 22.04/24.04 or Debian 11/12
+
+### Recommended
+
+- 4+ CPU cores
+- 8GB+ RAM
+- 40GB+ SSD
+- Domain with SSL certificate
+
+---
+
+## 📚 Documentation
+
+- [Quick Start Guide](QUICK_START.md)
+- [Deployment Checklist](DEPLOYMENT_READY.md)
+- [Installation Guide](ADDON_INSTALL_GUIDE.md)
+- [Security Policy](SECURITY.md)
 
 ---
 
 ## 🤝 Contributing
 
-Wir freuen uns über Beiträge! 🎉
+Contributions are welcome! 🎉
 
-1. Fork das Projekt
-2. Erstelle Feature-Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit Änderungen (`git commit -m 'Add AmazingFeature'`)
-4. Push zum Branch (`git push origin feature/AmazingFeature`)
-5. Öffne Pull Request
-
-Siehe [CONTRIBUTING.md](CONTRIBUTING.md) für Details.
+1. Fork the project
+2. Create feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit changes (`git commit -m 'Add AmazingFeature'`)
+4. Push to branch (`git push origin feature/AmazingFeature`)
+5. Open Pull Request
 
 ---
 
-## 📄 Lizenz
+## 📄 License
 
-MIT License - Siehe [LICENSE](LICENSE)
+MIT License - See [LICENSE](LICENSE)
 
-**Kompatibel mit Pterodactyl (MIT)**
+**Based on Pterodactyl Panel (MIT License)**
 
 ---
 
 ## 🙏 Credits
 
-- Basiert auf [Pterodactyl Panel](https://pterodactyl.io)
+- Built on [Pterodactyl Panel](https://pterodactyl.io)
 - AI powered by [Azure OpenAI](https://azure.microsoft.com/en-us/products/ai-services/openai-service)
-- Community-Addon (nicht offiziell von Pterodactyl)
+- Community project (not officially affiliated with Pterodactyl)
 
 ---
 
-## 🌟 Zeig deine Unterstützung
+## 🌟 Show Your Support
 
-Wenn dir Techtyl gefällt, gib uns einen ⭐ auf GitHub!
-
-[![Star History](https://starchart.cc/theredstonee/Techtyl.svg)](https://starchart.cc/theredstonee/Techtyl)
+If you like Techtyl, give us a ⭐ on GitHub!
 
 ---
 
@@ -314,14 +403,36 @@ Wenn dir Techtyl gefällt, gib uns einen ⭐ auf GitHub!
 
 - **Issues**: [GitHub Issues](https://github.com/theredstonee/Techtyl/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/theredstonee/Techtyl/discussions)
-- **Discord**: Coming soon
+- **Documentation**: [Read the Docs](https://github.com/theredstonee/Techtyl/tree/main/docs)
+
+---
+
+## 📋 FAQ
+
+**Q: Is this an official Pterodactyl addon?**
+A: No, Techtyl is a community project built on top of Pterodactyl.
+
+**Q: Does it modify Pterodactyl's database?**
+A: It uses Pterodactyl's existing database structure.
+
+**Q: Can I use it with existing Pterodactyl installation?**
+A: Techtyl is a complete installation including Pterodactyl, not an addon to existing installations.
+
+**Q: What's the difference from standard Pterodactyl?**
+A: Techtyl adds AI features, user registration, and user server creation capabilities.
+
+**Q: Is it free?**
+A: The software is free (MIT License), but you pay for Azure OpenAI usage (~$5-100/month depending on usage).
+
+**Q: Which Azure OpenAI model should I use?**
+A: We recommend GPT-4o for the best balance of cost and performance.
 
 ---
 
 <div align="center">
 
-**Erstellt mit ❤️ und 🤖 für die Pterodactyl-Community**
+**Built with ❤️ and 🤖 for the gaming community**
 
-[Website](https://techtyl.io) • [Docs](PTERODACTYL_ADDON.md) • [Azure Setup](AZURE_SETUP.md)
+[Website](https://github.com/theredstonee/Techtyl) • [Docs](QUICK_START.md) • [Azure Setup Guide](https://docs.microsoft.com/azure/ai-services/openai/)
 
 </div>

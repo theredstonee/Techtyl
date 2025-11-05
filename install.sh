@@ -112,46 +112,71 @@ echo "[2/8] Richte MariaDB ein..."
 systemctl start mariadb 2>/dev/null || true
 systemctl enable mariadb >/dev/null 2>&1
 
-# Prüfe ob MariaDB bereits konfiguriert ist
+info "Prüfe MariaDB-Status..."
+
+# Prüfe ob MariaDB läuft
+if ! systemctl is-active --quiet mariadb; then
+    err "MariaDB läuft nicht! Starte mit: systemctl start mariadb"
+fi
+
+# Sichere Passwörter generieren (IMMER, damit wir einen haben)
+DB_ROOT_PASS=$(openssl rand -base64 24 | tr -d "=+/" | cut -c1-25)
+DB_USER_PASS=$(openssl rand -base64 24 | tr -d "=+/" | cut -c1-25)
+
+# Prüfe ob panel DB existiert (ohne Passwort zu verlangen)
 DB_EXISTS=false
-if mysql -e "USE panel" 2>/dev/null; then
+if echo "SELECT 1" | mysql panel 2>/dev/null | grep -q 1; then
     DB_EXISTS=true
-    warn "MariaDB panel-Datenbank existiert bereits!"
+    warn "MariaDB 'panel' Datenbank existiert bereits!"
     echo ""
     read -p "Bestehende Datenbank LÖSCHEN und neu erstellen? (y/n): " -n 1 -r
     echo ""
     if [[ ! $REPLY =~ ^[Yy]$ ]]; then
         echo ""
-        info "Nutze bestehende Datenbank..."
+        warn "Behalte bestehende Datenbank - bitte Root-Passwort eingeben"
         echo ""
         read -p "MySQL Root-Passwort: " -s DB_ROOT_PASS
         echo ""
-        read -p "Pterodactyl DB-Passwort (falls bekannt, sonst Enter): " -s DB_USER_PASS
+        read -p "Pterodactyl DB-Passwort (oder Enter für neu generiert): " -s INPUT_PASS
         echo ""
 
-        # Falls DB-User-Pass leer, generiere neues
-        if [ -z "$DB_USER_PASS" ]; then
-            DB_USER_PASS=$(openssl rand -base64 24 | tr -d "=+/" | cut -c1-25)
-            warn "Neues Pterodactyl-Passwort generiert"
+        # Falls leer, nutze generiertes
+        if [ ! -z "$INPUT_PASS" ]; then
+            DB_USER_PASS=$INPUT_PASS
         fi
 
-        ok "Nutze bestehende MariaDB"
+        ok "Nutze bestehende Datenbank"
+        # Überspringe Neuanlage
+        DB_EXISTS=true
     else
+        # User will neu erstellen
         DB_EXISTS=false
+        echo ""
+        info "Datenbank wird neu erstellt..."
     fi
 fi
 
 # Neue Installation oder Neuanlage
 if [ "$DB_EXISTS" = false ]; then
-    # Sichere Passwörter generieren
-    DB_ROOT_PASS=$(openssl rand -base64 24 | tr -d "=+/" | cut -c1-25)
-    DB_USER_PASS=$(openssl rand -base64 24 | tr -d "=+/" | cut -c1-25)
+    info "Erstelle neue Datenbank..."
 
-    # Versuche Root-Passwort zu setzen (ignoriere Fehler wenn bereits gesetzt)
-    mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '${DB_ROOT_PASS}';" 2>/dev/null || \
-        mysqladmin -u root password "${DB_ROOT_PASS}" 2>/dev/null || true
+    # Prüfe ob Root-Passwort schon gesetzt ist
+    if mysql -u root -e "SELECT 1;" >/dev/null 2>&1; then
+        info "Root hat noch kein Passwort - setze neues..."
+        mysqladmin -u root password "${DB_ROOT_PASS}"
+    else
+        # Root hat schon Passwort - versuche zu nutzen
+        if ! mysql -u root -p"${DB_ROOT_PASS}" -e "SELECT 1;" >/dev/null 2>&1; then
+            warn "Generiertes Passwort funktioniert nicht"
+            echo ""
+            read -p "Bestehendes MySQL Root-Passwort eingeben: " -s EXISTING_ROOT_PASS
+            echo ""
+            DB_ROOT_PASS=$EXISTING_ROOT_PASS
+        fi
+    fi
 
     # Datenbank erstellen
+    info "Erstelle panel Datenbank..."
     if mysql -u root -p"${DB_ROOT_PASS}" <<EOF 2>/dev/null
 DROP DATABASE IF EXISTS panel;
 CREATE DATABASE panel CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -161,27 +186,13 @@ GRANT ALL PRIVILEGES ON panel.* TO 'pterodactyl'@'127.0.0.1';
 FLUSH PRIVILEGES;
 EOF
     then
-        ok "MariaDB neu konfiguriert"
-    else
-        # Fallback: Root-Passwort fragen
-        warn "Konnte nicht automatisch konfigurieren"
-        echo ""
-        read -p "MySQL Root-Passwort eingeben: " -s EXISTING_ROOT_PASS
-        echo ""
-
-        DB_ROOT_PASS=$EXISTING_ROOT_PASS
-
-        mysql -u root -p"${DB_ROOT_PASS}" <<EOF
-DROP DATABASE IF EXISTS panel;
-CREATE DATABASE panel CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-DROP USER IF EXISTS 'pterodactyl'@'127.0.0.1';
-CREATE USER 'pterodactyl'@'127.0.0.1' IDENTIFIED BY '${DB_USER_PASS}';
-GRANT ALL PRIVILEGES ON panel.* TO 'pterodactyl'@'127.0.0.1';
-FLUSH PRIVILEGES;
-EOF
         ok "MariaDB konfiguriert"
+    else
+        err "MariaDB-Konfiguration fehlgeschlagen! Prüfe MySQL-Passwort."
     fi
 fi
+
+ok "MariaDB bereit"
 
 # ========================================
 # 3. Pterodactyl Panel
