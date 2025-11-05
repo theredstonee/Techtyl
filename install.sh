@@ -48,6 +48,35 @@ info() { echo -e "${B}➜${NC} $1"; }
 
 info "System: $ID $VERSION_ID"
 
+# Pre-Installation Check
+echo ""
+info "Prüfe bestehende Installation..."
+
+FRESH_INSTALL=true
+
+if [ -f "/var/www/pterodactyl/artisan" ]; then
+    warn "Pterodactyl bereits installiert"
+    FRESH_INSTALL=false
+fi
+
+if mysql -e "USE panel" 2>/dev/null; then
+    warn "MariaDB 'panel' Datenbank existiert"
+    FRESH_INSTALL=false
+fi
+
+if [ "$FRESH_INSTALL" = true ]; then
+    ok "Keine bestehende Installation gefunden"
+else
+    warn "Bestehende Installation erkannt - Script wird nachfragen"
+fi
+
+echo ""
+read -p "Fortfahren? (y/n): " -n 1 -r
+echo ""
+if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+    exit 0
+fi
+
 # ========================================
 # 1. System-Pakete
 # ========================================
@@ -80,19 +109,50 @@ ok "Pakete installiert"
 echo ""
 echo "[2/8] Richte MariaDB ein..."
 
-systemctl start mariadb
+systemctl start mariadb 2>/dev/null || true
 systemctl enable mariadb >/dev/null 2>&1
 
-# Sichere Passwörter generieren
-DB_ROOT_PASS=$(openssl rand -base64 24 | tr -d "=+/" | cut -c1-25)
-DB_USER_PASS=$(openssl rand -base64 24 | tr -d "=+/" | cut -c1-25)
+# Prüfe ob MariaDB bereits konfiguriert ist
+DB_EXISTS=false
+if mysql -e "USE panel" 2>/dev/null; then
+    DB_EXISTS=true
+    warn "MariaDB panel-Datenbank existiert bereits!"
+    echo ""
+    read -p "Bestehende Datenbank LÖSCHEN und neu erstellen? (y/n): " -n 1 -r
+    echo ""
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        echo ""
+        info "Nutze bestehende Datenbank..."
+        echo ""
+        read -p "MySQL Root-Passwort: " -s DB_ROOT_PASS
+        echo ""
+        read -p "Pterodactyl DB-Passwort (falls bekannt, sonst Enter): " -s DB_USER_PASS
+        echo ""
 
-# Root-Passwort setzen
-mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '${DB_ROOT_PASS}';" 2>/dev/null || \
-    mysqladmin -u root password "${DB_ROOT_PASS}" 2>/dev/null || true
+        # Falls DB-User-Pass leer, generiere neues
+        if [ -z "$DB_USER_PASS" ]; then
+            DB_USER_PASS=$(openssl rand -base64 24 | tr -d "=+/" | cut -c1-25)
+            warn "Neues Pterodactyl-Passwort generiert"
+        fi
 
-# Datenbank erstellen
-mysql -u root -p"${DB_ROOT_PASS}" <<EOF 2>/dev/null
+        ok "Nutze bestehende MariaDB"
+    else
+        DB_EXISTS=false
+    fi
+fi
+
+# Neue Installation oder Neuanlage
+if [ "$DB_EXISTS" = false ]; then
+    # Sichere Passwörter generieren
+    DB_ROOT_PASS=$(openssl rand -base64 24 | tr -d "=+/" | cut -c1-25)
+    DB_USER_PASS=$(openssl rand -base64 24 | tr -d "=+/" | cut -c1-25)
+
+    # Versuche Root-Passwort zu setzen (ignoriere Fehler wenn bereits gesetzt)
+    mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '${DB_ROOT_PASS}';" 2>/dev/null || \
+        mysqladmin -u root password "${DB_ROOT_PASS}" 2>/dev/null || true
+
+    # Datenbank erstellen
+    if mysql -u root -p"${DB_ROOT_PASS}" <<EOF 2>/dev/null
 DROP DATABASE IF EXISTS panel;
 CREATE DATABASE panel CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 DROP USER IF EXISTS 'pterodactyl'@'127.0.0.1';
@@ -100,14 +160,48 @@ CREATE USER 'pterodactyl'@'127.0.0.1' IDENTIFIED BY '${DB_USER_PASS}';
 GRANT ALL PRIVILEGES ON panel.* TO 'pterodactyl'@'127.0.0.1';
 FLUSH PRIVILEGES;
 EOF
+    then
+        ok "MariaDB neu konfiguriert"
+    else
+        # Fallback: Root-Passwort fragen
+        warn "Konnte nicht automatisch konfigurieren"
+        echo ""
+        read -p "MySQL Root-Passwort eingeben: " -s EXISTING_ROOT_PASS
+        echo ""
 
-ok "MariaDB konfiguriert"
+        DB_ROOT_PASS=$EXISTING_ROOT_PASS
+
+        mysql -u root -p"${DB_ROOT_PASS}" <<EOF
+DROP DATABASE IF EXISTS panel;
+CREATE DATABASE panel CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+DROP USER IF EXISTS 'pterodactyl'@'127.0.0.1';
+CREATE USER 'pterodactyl'@'127.0.0.1' IDENTIFIED BY '${DB_USER_PASS}';
+GRANT ALL PRIVILEGES ON panel.* TO 'pterodactyl'@'127.0.0.1';
+FLUSH PRIVILEGES;
+EOF
+        ok "MariaDB konfiguriert"
+    fi
+fi
 
 # ========================================
 # 3. Pterodactyl Panel
 # ========================================
 echo ""
 echo "[3/8] Lade Pterodactyl..."
+
+# Prüfe ob bereits installiert
+if [ -f "/var/www/pterodactyl/artisan" ]; then
+    warn "Pterodactyl ist bereits installiert in /var/www/pterodactyl"
+    echo ""
+    read -p "Bestehende Installation ÜBERSCHREIBEN? (y/n): " -n 1 -r
+    echo ""
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        err "Installation abgebrochen. Lösche erst: sudo rm -rf /var/www/pterodactyl"
+    fi
+
+    info "Lösche alte Installation..."
+    rm -rf /var/www/pterodactyl
+fi
 
 mkdir -p /var/www/pterodactyl
 cd /var/www/pterodactyl
