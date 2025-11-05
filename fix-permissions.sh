@@ -15,6 +15,17 @@ echo ""
 # Root check
 [[ $EUID -ne 0 ]] && { echo "Als root ausführen: sudo bash fix-permissions.sh"; exit 1; }
 
+# Detect PHP version
+if command -v php8.3 &> /dev/null; then
+    PHP_VER="8.3"
+elif command -v php${PHP_VER} &> /dev/null; then
+    PHP_VER="8.2"
+else
+    PHP_VER="8.2"
+fi
+
+echo "Using PHP $PHP_VER"
+
 # Pterodactyl check
 [ ! -f "/var/www/pterodactyl/artisan" ] && { echo "Pterodactyl nicht gefunden!"; exit 1; }
 
@@ -55,7 +66,7 @@ php artisan storage:link
 
 echo ""
 echo "Starte Services neu..."
-systemctl restart php8.2-fpm nginx
+systemctl restart php${PHP_VER}-fpm nginx
 
 echo ""
 echo "========================================="

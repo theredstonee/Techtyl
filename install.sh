@@ -48,6 +48,17 @@ info() { echo -e "${B}➜${NC} $1"; }
 
 info "System: $ID $VERSION_ID"
 
+# Detect best PHP version
+if [[ "$VERSION_ID" == "24.04" ]] || [[ "$VERSION_ID" == "12" ]]; then
+    PHP_VER="8.3"
+elif [[ "$VERSION_ID" == "22.04" ]] || [[ "$VERSION_ID" == "11" ]]; then
+    PHP_VER="8.2"
+else
+    PHP_VER="8.2" # Default fallback
+fi
+
+info "Using PHP $PHP_VER"
+
 # Pre-Installation Check
 echo ""
 info "Prüfe bestehende Installation..."
@@ -94,7 +105,7 @@ apt update -qq
 
 # Pakete installieren (OHNE nodejs/npm!)
 apt install -y \
-    php8.2 php8.2-{cli,gd,mysql,pdo,mbstring,tokenizer,bcmath,xml,fpm,curl,zip} \
+    php${PHP_VER} php${PHP_VER}-{cli,gd,mysql,pdo,mbstring,tokenizer,bcmath,xml,fpm,curl,zip} \
     mariadb-server mariadb-client \
     nginx \
     redis-server \
@@ -867,12 +878,33 @@ cat > resources/views/auth/login.blade.php <<'BLADEEOF'
 BLADEEOF
 
 # Register Routes
-if ! grep -q "Route::get('/register'" routes/auth.php 2>/dev/null; then
-    cat >> routes/auth.php <<'PHPEOF'
+if [ -f "routes/auth.php" ]; then
+    # Prüfe ob Route schon existiert
+    if ! grep -q "auth.register" routes/auth.php; then
+        # Füge Route vor dem letzten }); ein (falls vorhanden)
+        if grep -q "});" routes/auth.php; then
+            sed -i '/});/i\    // User Registration (Techtyl)\n    Route::get('"'"'/register'"'"', [Pterodactyl\\\\Http\\\\Controllers\\\\Auth\\\\RegisterController::class, '"'"'showRegistrationForm'"'"'])->name('"'"'auth.register'"'"');\n    Route::post('"'"'/register'"'"', [Pterodactyl\\\\Http\\\\Controllers\\\\Auth\\\\RegisterController::class, '"'"'register'"'"']);' routes/auth.php
+        else
+            # Falls keine Gruppe, einfach anhängen
+            cat >> routes/auth.php <<'PHPEOF'
 
 // User Registration (Techtyl)
-Route::get('/register', 'Auth\RegisterController@showRegistrationForm')->name('auth.register');
-Route::post('/register', 'Auth\RegisterController@register');
+Route::get('/register', [\Pterodactyl\Http\Controllers\Auth\RegisterController::class, 'showRegistrationForm'])->name('auth.register');
+Route::post('/register', [\Pterodactyl\Http\Controllers\Auth\RegisterController::class, 'register']);
+PHPEOF
+        fi
+    fi
+else
+    # Erstelle routes/auth.php falls nicht vorhanden
+    cat > routes/auth.php <<'PHPEOF'
+<?php
+
+use Illuminate\Support\Facades\Route;
+use Pterodactyl\Http\Controllers\Auth\RegisterController;
+
+// User Registration (Techtyl)
+Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('auth.register');
+Route::post('/register', [RegisterController::class, 'register']);
 PHPEOF
 fi
 
@@ -882,9 +914,12 @@ ok "Registrierung aktiviert"
 
 # Footer Branding im Hauptpanel
 if [ -f "resources/views/templates/wrapper.blade.php" ]; then
-    if ! grep -q "based on Pterodactyl" resources/views/templates/wrapper.blade.php; then
-        sed -i 's|</body>|<div style="text-align: center; padding: 20px; color: #718096; font-size: 12px;">🦕 Techtyl - based on <a href=\"https://pterodactyl.io\" style=\"color: #667eea; text-decoration: none;\">Pterodactyl Panel</a></div></body>|' resources/views/templates/wrapper.blade.php
+    if ! grep -q "techtyl-footer" resources/views/templates/wrapper.blade.php; then
+        # Füge Footer vor dem letzten </body> Tag ein
+        sed -i '$ s|</body>|<div id="techtyl-footer" style="text-align: center; padding: 20px; color: #718096; font-size: 12px;">🦕 Techtyl - based on <a href="https://pterodactyl.io" style="color: #667eea; text-decoration: none;">Pterodactyl Panel</a></div>\n</body>|' resources/views/templates/wrapper.blade.php
         ok "Footer-Branding hinzugefügt"
+    else
+        ok "Footer bereits vorhanden"
     fi
 fi
 
@@ -910,7 +945,7 @@ server {
     }
 
     location ~ \.php$ {
-        fastcgi_pass unix:/run/php/php8.2-fpm.sock;
+        fastcgi_pass unix:/run/php/php${PHP_VER}-fpm.sock;
         fastcgi_index index.php;
         include fastcgi_params;
         fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
@@ -971,7 +1006,7 @@ systemctl enable --now redis-server >/dev/null 2>&1
 systemctl enable --now pteroq.service >/dev/null 2>&1
 
 echo "Debug: Restarting PHP-FPM..."
-systemctl restart php8.2-fpm
+systemctl restart php${PHP_VER}-fpm
 
 echo "Debug: Starting Nginx..."
 systemctl enable nginx >/dev/null 2>&1
@@ -980,7 +1015,7 @@ systemctl restart nginx
 # Prüfe ob Services laufen
 echo "Debug: Checking service status..."
 systemctl is-active --quiet nginx || warn "Nginx läuft nicht!"
-systemctl is-active --quiet php8.2-fpm || warn "PHP-FPM läuft nicht!"
+systemctl is-active --quiet php${PHP_VER}-fpm || warn "PHP-FPM läuft nicht!"
 
 ok "Services gestartet"
 

@@ -15,6 +15,17 @@
 
 ---
 
+## ⚡ Quick Start
+
+```bash
+# Install Techtyl on fresh Ubuntu 22.04/24.04
+sudo wget -O - https://raw.githubusercontent.com/theredstonee/Techtyl/main/install.sh | sudo bash
+```
+
+**That's it!** The installer will guide you through the setup.
+
+---
+
 ## 📖 What is Techtyl?
 
 Techtyl is a **complete game server management panel** built on Pterodactyl with integrated AI capabilities. It provides all the power of Pterodactyl Panel enhanced with Azure OpenAI for intelligent server configuration, troubleshooting, and management.
@@ -79,10 +90,15 @@ Optimized for:
 - ✅ Root access (SSH)
 - ✅ Azure OpenAI account with GPT-4o deployment
 
-### One-Click Installation (15-20 minutes)
+### One-Command Installation (15-20 minutes)
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/theredstonee/Techtyl/main/install.sh | sudo bash
+sudo wget -O - https://raw.githubusercontent.com/theredstonee/Techtyl/main/install.sh | sudo bash
+```
+
+**Alternative with curl:**
+```bash
+sudo bash -c "$(curl -sSL https://raw.githubusercontent.com/theredstonee/Techtyl/main/install.sh)"
 ```
 
 The installer will:
@@ -323,17 +339,43 @@ cat /root/techtyl-info.txt
 
 ---
 
-## 🔄 Updates
+## 🔄 Updates & Fixes
 
-### Reinstall/Update
+### Quick Fix (500 Errors, Footer Issues)
 
 ```bash
-# Clean reinstall
+sudo wget -O - https://raw.githubusercontent.com/theredstonee/Techtyl/main/quick-fix.sh | sudo bash
+```
+
+This fixes:
+- Multiple footer displays
+- Register 500 errors
+- Permission issues
+- Cache problems
+
+### Update Existing Installation
+
+```bash
+sudo wget -O - https://raw.githubusercontent.com/theredstonee/Techtyl/main/update-techtyl.sh | sudo bash
+```
+
+Adds:
+- User Registration
+- Improved Design
+- Footer Branding
+
+### Clean Reinstall
+
+```bash
+# Backup first!
+sudo cp /var/www/pterodactyl/.env /root/pterodactyl-env.backup
+
+# Remove old installation
 sudo rm -rf /var/www/pterodactyl
 sudo mysql -e "DROP DATABASE IF EXISTS panel;"
 
 # Run installer
-curl -sSL https://raw.githubusercontent.com/theredstonee/Techtyl/main/install.sh | sudo bash
+sudo wget -O - https://raw.githubusercontent.com/theredstonee/Techtyl/main/install.sh | sudo bash
 ```
 
 ---

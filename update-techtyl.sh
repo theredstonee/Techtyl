@@ -31,6 +31,19 @@ warn() { echo -e "${Y}!${NC} $1"; }
 # Root check
 [[ $EUID -ne 0 ]] && err "Als root ausführen: sudo bash update-techtyl.sh"
 
+# Detect PHP version
+if command -v php8.3 &> /dev/null; then
+    PHP_VER="8.3"
+elif command -v php${PHP_VER} &> /dev/null; then
+    PHP_VER="8.2"
+elif command -v php8.1 &> /dev/null; then
+    PHP_VER="8.1"
+else
+    PHP_VER="8.2" # Default
+fi
+
+echo "Using PHP $PHP_VER"
+
 # Pterodactyl check
 [ ! -f "/var/www/pterodactyl/artisan" ] && err "Pterodactyl nicht gefunden!"
 
@@ -312,14 +325,33 @@ BLADEEOF
 ok "Register View erstellt"
 
 # Routes hinzufügen
-if ! grep -q "Route::get('/register'" routes/auth.php 2>/dev/null; then
-    cat >> routes/auth.php <<'PHPEOF'
+if [ -f "routes/auth.php" ]; then
+    if ! grep -q "auth.register" routes/auth.php; then
+        if grep -q "});" routes/auth.php; then
+            sed -i '/});/i\    // User Registration (Techtyl)\n    Route::get('"'"'/register'"'"', [Pterodactyl\\\\Http\\\\Controllers\\\\Auth\\\\RegisterController::class, '"'"'showRegistrationForm'"'"'])->name('"'"'auth.register'"'"');\n    Route::post('"'"'/register'"'"', [Pterodactyl\\\\Http\\\\Controllers\\\\Auth\\\\RegisterController::class, '"'"'register'"'"']);' routes/auth.php
+        else
+            cat >> routes/auth.php <<'PHPEOF'
 
 // User Registration (Techtyl)
-Route::get('/register', 'Auth\RegisterController@showRegistrationForm')->name('auth.register');
-Route::post('/register', 'Auth\RegisterController@register');
+Route::get('/register', [\Pterodactyl\Http\Controllers\Auth\RegisterController::class, 'showRegistrationForm'])->name('auth.register');
+Route::post('/register', [\Pterodactyl\Http\Controllers\Auth\RegisterController::class, 'register']);
 PHPEOF
-    ok "Register Routes hinzugefügt"
+        fi
+        ok "Register Routes hinzugefügt"
+    else
+        ok "Register Routes bereits vorhanden"
+    fi
+else
+    cat > routes/auth.php <<'PHPEOF'
+<?php
+
+use Illuminate\Support\Facades\Route;
+use Pterodactyl\Http\Controllers\Auth\RegisterController;
+
+Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('auth.register');
+Route::post('/register', [RegisterController::class, 'register']);
+PHPEOF
+    ok "routes/auth.php erstellt"
 fi
 
 # ========================================
@@ -477,9 +509,15 @@ echo "[3/5] Füge Branding hinzu..."
 
 # Layout-Template anpassen (falls existiert)
 if [ -f "resources/views/templates/wrapper.blade.php" ]; then
-    if ! grep -q "based on Pterodactyl" resources/views/templates/wrapper.blade.php; then
-        sed -i 's|</body>|<div style="text-align: center; padding: 20px; color: #718096; font-size: 12px;">🦕 Techtyl - based on <a href="https://pterodactyl.io" style="color: #667eea;">Pterodactyl Panel</a></div></body>|' resources/views/templates/wrapper.blade.php
+    # Entferne alte Footer falls mehrfach vorhanden
+    sed -i '/techtyl-footer/d' resources/views/templates/wrapper.blade.php 2>/dev/null || true
+
+    if ! grep -q "techtyl-footer" resources/views/templates/wrapper.blade.php; then
+        # Füge Footer vor dem letzten </body> Tag ein
+        sed -i '$ s|</body>|<div id="techtyl-footer" style="text-align: center; padding: 20px; color: #718096; font-size: 12px;">🦕 Techtyl - based on <a href="https://pterodactyl.io" style="color: #667eea; text-decoration: none;">Pterodactyl Panel</a></div>\n</body>|' resources/views/templates/wrapper.blade.php
         ok "Footer hinzugefügt"
+    else
+        ok "Footer bereits vorhanden"
     fi
 fi
 
@@ -507,7 +545,7 @@ php artisan config:cache
 php artisan route:cache
 
 # Restart services
-systemctl restart php8.2-fpm nginx
+systemctl restart php${PHP_VER}-fpm nginx
 
 ok "System aktualisiert"
 
