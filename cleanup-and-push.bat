@@ -60,6 +60,10 @@ REM Add files
 echo Adding files...
 git add .
 
+REM Fix line endings (CRITICAL for bash scripts!)
+echo Fixing line endings for Linux compatibility...
+git add --renormalize .
+
 REM Commit
 echo Creating commit...
 git commit -m "v1.2.0: Production-Ready Release
