@@ -141,6 +141,21 @@ echo "[5/8] Konfiguriere Environment..."
 cp .env.example .env
 php artisan key:generate --force
 
+# Server-Konfiguration
+echo ""
+info "Server-Konfiguration:"
+echo ""
+
+# IP automatisch erkennen
+SERVER_IP=$(hostname -I | awk '{print $1}')
+echo "Erkannte Server-IP: $SERVER_IP"
+echo ""
+read -p "Panel-URL (Enter für http://${SERVER_IP}): " PANEL_URL
+PANEL_URL=${PANEL_URL:-http://${SERVER_IP}}
+
+echo ""
+info "Panel wird erreichbar unter: $PANEL_URL"
+
 # Azure OpenAI Eingabe
 echo ""
 info "Azure OpenAI Konfiguration:"
@@ -154,7 +169,9 @@ cat >> .env <<EOF
 
 # App
 APP_NAME=Techtyl
+APP_URL=${PANEL_URL}
 APP_TIMEZONE=Europe/Berlin
+APP_LOCALE=de
 
 # Database
 DB_HOST=127.0.0.1
@@ -436,14 +453,13 @@ ExecStart=/usr/bin/php /var/www/pterodactyl/artisan queue:work --queue=high,stan
 WantedBy=multi-user.target
 EOF
 
-# Permissions
-chown -R www-data:www-data /var/www/pterodactyl/*
+# Permissions (wichtig für 500-Fehler!)
+chown -R www-data:www-data /var/www/pterodactyl
+chmod -R 755 /var/www/pterodactyl/storage
+chmod -R 755 /var/www/pterodactyl/bootstrap/cache
 
-# Services starten
-systemctl enable --now redis-server >/dev/null 2>&1
-systemctl enable --now pteroq.service >/dev/null 2>&1
-systemctl restart php8.2-fpm
-systemctl reload nginx
+# Storage-Link erstellen (für Assets)
+php artisan storage:link
 
 # Cache leeren
 php artisan config:clear
@@ -451,12 +467,21 @@ php artisan cache:clear
 php artisan route:clear
 php artisan view:clear
 
+# Cache neu aufbauen
+php artisan config:cache
+php artisan route:cache
+
+# Services starten
+systemctl enable --now redis-server >/dev/null 2>&1
+systemctl enable --now pteroq.service >/dev/null 2>&1
+systemctl restart php8.2-fpm
+systemctl reload nginx
+
 ok "Services gestartet"
 
 # ========================================
 # Fertig!
 # ========================================
-IP=$(hostname -I | awk '{print $1}')
 
 echo ""
 echo "========================================="
@@ -467,7 +492,7 @@ echo "🦕 Techtyl v1.0"
 echo "   based on Pterodactyl v${PTERO_VER}"
 echo ""
 echo "📱 Panel-URL:"
-echo "   http://${IP}"
+echo "   ${PANEL_URL}"
 echo ""
 echo "🔐 Datenbank:"
 echo "   Host: 127.0.0.1"
@@ -483,11 +508,11 @@ echo "   ✓ Server-Erstellung (3/User)"
 echo "   ✓ AI-Assistent"
 echo ""
 echo "📖 Nächste Schritte:"
-echo "   1. Öffne http://${IP}"
-echo "   2. Login mit Admin"
-echo "   3. Node erstellen"
-echo "   4. Allocations hinzufügen"
-echo "   5. User können Server erstellen!"
+echo "   1. Öffne ${PANEL_URL}"
+echo "   2. Login mit Admin-Account"
+echo "   3. Node erstellen (Admin → Nodes → Create New)"
+echo "   4. Allocations hinzufügen (z.B. Port 25565)"
+echo "   5. User können sich registrieren und Server erstellen!"
 echo ""
 echo "🔒 SSL einrichten:"
 echo "   certbot --nginx -d deine-domain.de"
@@ -498,17 +523,20 @@ echo "========================================="
 cat > /root/techtyl-info.txt <<EOF
 Techtyl Installation - $(date)
 
-Panel: http://${IP}
+Panel-URL: ${PANEL_URL}
 
-DB: panel
-User: pterodactyl
-Pass: ${DB_USER_PASS}
+Datenbank:
+  Host: 127.0.0.1
+  DB: panel
+  User: pterodactyl
+  Pass: ${DB_USER_PASS}
+
 MySQL Root: ${DB_ROOT_PASS}
 
 Azure OpenAI:
-Key: ${AZURE_KEY}
-Endpoint: ${AZURE_ENDPOINT}
-Deployment: ${AZURE_DEPLOY}
+  Key: ${AZURE_KEY}
+  Endpoint: ${AZURE_ENDPOINT}
+  Deployment: ${AZURE_DEPLOY}
 EOF
 
 chmod 600 /root/techtyl-info.txt
