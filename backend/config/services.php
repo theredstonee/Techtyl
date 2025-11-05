@@ -29,10 +29,17 @@ return [
         ],
     ],
 
-    'claude' => [
-        'api_key' => env('CLAUDE_API_KEY'),
-        'model' => env('CLAUDE_MODEL', 'claude-3-5-sonnet-20241022'),
-        'max_tokens' => env('CLAUDE_MAX_TOKENS', 4096),
+    /*
+    |--------------------------------------------------------------------------
+    | Azure OpenAI Configuration
+    |--------------------------------------------------------------------------
+    */
+
+    'azure_openai' => [
+        'api_key' => env('AZURE_OPENAI_API_KEY'),
+        'endpoint' => env('AZURE_OPENAI_ENDPOINT'),
+        'deployment' => env('AZURE_OPENAI_DEPLOYMENT', 'gpt-4o'),
+        'api_version' => env('AZURE_OPENAI_API_VERSION', '2024-02-15-preview'),
     ],
 
 ];

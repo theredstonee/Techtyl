@@ -23,19 +23,16 @@ class AzureOpenAIService
         // 🔷 AZURE OPENAI - KONFIGURATION
         // ========================================
 
-        // API Key (fest eingebaut) ✅
-        $this->apiKey = '7q9BGXhAEjuWFzNWT5d8srjYFhTOGMUXFgGAeKrr6ywLZLnLDxX8JQQJ99BIACfhMk5XJ3w3AAAAACOGPJfr';
+        // Credentials aus .env laden (für Sicherheit)
+        $this->apiKey = env('AZURE_OPENAI_API_KEY');
+        $this->endpoint = env('AZURE_OPENAI_ENDPOINT');
+        $this->deployment = env('AZURE_OPENAI_DEPLOYMENT', 'gpt-4o');
+        $this->apiVersion = env('AZURE_OPENAI_API_VERSION', '2024-02-15-preview');
 
-        // Endpoint (fest eingebaut) ✅
-        $this->endpoint = 'https://theredstonee-projects-resource.cognitiveservices.azure.com/';
-
-        // Deployment-Name - BITTE ANPASSEN!
-        // Gehe zu: https://oai.azure.com/ → Deployments
-        // Trage hier den Namen deines Deployments ein (z.B. gpt-4o, gpt-35-turbo, etc.)
-        $this->deployment = 'gpt-4o';
-
-        // API Version (neueste Version) ✅
-        $this->apiVersion = '2024-02-15-preview';
+        // Validierung
+        if (empty($this->apiKey) || empty($this->endpoint)) {
+            throw new \Exception('Azure OpenAI credentials not configured. Please set AZURE_OPENAI_API_KEY and AZURE_OPENAI_ENDPOINT in .env file.');
+        }
     }
 
     /**

@@ -106,16 +106,34 @@ docker-compose up -d
 
 Siehe [SETUP.md](SETUP.md) für detaillierte Anweisungen.
 
-## 🔑 Claude API Key erhalten
+## 🔑 Azure OpenAI Setup
 
-1. Gehe zu https://console.anthropic.com/
-2. Erstelle einen Account (falls noch nicht vorhanden)
-3. Navigiere zu "API Keys"
-4. Erstelle einen neuen API Key
-5. Kopiere den Key in deine `.env`:
+Techtyl verwendet Azure OpenAI für KI-Features.
+
+### Schnellstart:
+
+1. **Azure OpenAI Resource erstellen**
+   - Gehe zu: https://portal.azure.com/
+   - Erstelle "Azure OpenAI" Resource
+   - Region: West Europe (empfohlen)
+
+2. **API Credentials kopieren**
+   - Resource → "Keys and Endpoint"
+   - Kopiere: API Key & Endpoint
+
+3. **Model deployen**
+   - Azure OpenAI Studio: https://oai.azure.com/
+   - Deployments → Create
+   - Model: **gpt-4o** (empfohlen)
+
+4. **In .env eintragen**
    ```env
-   CLAUDE_API_KEY=sk-ant-your-key-here
+   AZURE_OPENAI_API_KEY=dein-key
+   AZURE_OPENAI_ENDPOINT=https://dein-resource.openai.azure.com/
+   AZURE_OPENAI_DEPLOYMENT=gpt-4o
    ```
+
+📚 **Detaillierte Anleitung**: Siehe [AZURE_SETUP.md](AZURE_SETUP.md)
 
 ## 📸 Screenshots
 
