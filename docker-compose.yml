@@ -1,0 +1,101 @@
+version: '3.8'
+
+services:
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    container_name: techtyl-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: techtyl
+      MYSQL_USER: techtyl
+      MYSQL_PASSWORD: techtyl_password
+      MYSQL_ROOT_PASSWORD: root_password
+    volumes:
+      - mysql_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    networks:
+      - techtyl
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: techtyl-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - techtyl
+
+  # Backend (Laravel)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: techtyl-backend
+    restart: unless-stopped
+    working_dir: /var/www
+    volumes:
+      - ./backend:/var/www
+      - ./backend/storage:/var/www/storage
+    ports:
+      - "8000:8000"
+    environment:
+      DB_CONNECTION: mysql
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_DATABASE: techtyl
+      DB_USERNAME: techtyl
+      DB_PASSWORD: techtyl_password
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      CLAUDE_API_KEY: ${CLAUDE_API_KEY}
+    depends_on:
+      - mysql
+      - redis
+    networks:
+      - techtyl
+    command: php artisan serve --host=0.0.0.0 --port=8000
+
+  # Frontend (React)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: techtyl-frontend
+    restart: unless-stopped
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+    networks:
+      - techtyl
+    command: npm run dev -- --host 0.0.0.0
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: techtyl-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./frontend/dist:/var/www/frontend
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - techtyl
+
+networks:
+  techtyl:
+    driver: bridge
+
+volumes:
+  mysql_data:
+    driver: local
