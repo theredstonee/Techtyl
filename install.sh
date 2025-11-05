@@ -863,6 +863,15 @@ ok "Login view updated"
 
 # Register Routes
 if [ -f "routes/auth.php" ]; then
+    # Check for broken double backslashes (from old update script)
+    if grep -q "Pterodactyl\\\\\\\\Http" routes/auth.php; then
+        warn "Fixing broken route syntax (double backslashes)..."
+        # Remove broken lines
+        sed -i '/User Registration (Techtyl)/d' routes/auth.php
+        sed -i '/Pterodactyl\\\\Http.*RegisterController/d' routes/auth.php
+    fi
+
+    # Add correct routes if not present
     if ! grep -q "auth.register" routes/auth.php; then
         cat >> routes/auth.php <<'PHPEOF'
 
@@ -871,6 +880,8 @@ Route::get('/register', [\Pterodactyl\Http\Controllers\Auth\RegisterController::
 Route::post('/register', [\Pterodactyl\Http\Controllers\Auth\RegisterController::class, 'register']);
 PHPEOF
         ok "Register routes added"
+    else
+        ok "Register routes already present"
     fi
 fi
 
