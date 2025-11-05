@@ -108,24 +108,30 @@ ok "Pakete installiert"
 # ========================================
 echo ""
 echo "[2/8] Richte MariaDB ein..."
+echo "Debug: Starting MariaDB configuration..."
 
-systemctl start mariadb 2>/dev/null || true
-systemctl enable mariadb >/dev/null 2>&1
+# MariaDB starten
+echo "Debug: Starting MariaDB service..."
+systemctl start mariadb 2>&1 | head -3 || echo "MariaDB already running"
+systemctl enable mariadb >/dev/null 2>&1 || true
 
-info "Prüfe MariaDB-Status..."
-
+echo "Debug: Checking MariaDB status..."
 # Prüfe ob MariaDB läuft
 if ! systemctl is-active --quiet mariadb; then
-    err "MariaDB läuft nicht! Starte mit: systemctl start mariadb"
+    err "MariaDB läuft nicht! Status: $(systemctl status mariadb | head -5)"
 fi
+
+info "MariaDB läuft"
 
 # Sichere Passwörter generieren (IMMER, damit wir einen haben)
 DB_ROOT_PASS=$(openssl rand -base64 24 | tr -d "=+/" | cut -c1-25)
 DB_USER_PASS=$(openssl rand -base64 24 | tr -d "=+/" | cut -c1-25)
 
-# Prüfe ob panel DB existiert (ohne Passwort zu verlangen)
+echo "Debug: Checking for existing database..."
+
+# Prüfe ob panel DB existiert (mit Timeout!)
 DB_EXISTS=false
-if echo "SELECT 1" | mysql panel 2>/dev/null | grep -q 1; then
+if timeout 2 mysql -e "USE panel;" 2>/dev/null; then
     DB_EXISTS=true
     warn "MariaDB 'panel' Datenbank existiert bereits!"
     echo ""
@@ -154,30 +160,43 @@ if echo "SELECT 1" | mysql panel 2>/dev/null | grep -q 1; then
         echo ""
         info "Datenbank wird neu erstellt..."
     fi
+else
+    info "Keine bestehende 'panel' Datenbank gefunden"
 fi
+
+echo "Debug: DB_EXISTS=$DB_EXISTS"
 
 # Neue Installation oder Neuanlage
 if [ "$DB_EXISTS" = false ]; then
+    echo "Debug: Creating new database..."
     info "Erstelle neue Datenbank..."
 
-    # Prüfe ob Root-Passwort schon gesetzt ist
-    if mysql -u root -e "SELECT 1;" >/dev/null 2>&1; then
+    echo "Debug: Testing root access without password..."
+    # Prüfe ob Root-Passwort schon gesetzt ist (mit Timeout!)
+    if timeout 2 mysql -u root -e "SELECT 1;" >/dev/null 2>&1; then
+        echo "Debug: Root has no password, setting new one..."
         info "Root hat noch kein Passwort - setze neues..."
         mysqladmin -u root password "${DB_ROOT_PASS}"
+        echo "Debug: Password set successfully"
     else
+        echo "Debug: Root already has password, testing generated one..."
         # Root hat schon Passwort - versuche zu nutzen
-        if ! mysql -u root -p"${DB_ROOT_PASS}" -e "SELECT 1;" >/dev/null 2>&1; then
+        if ! timeout 2 mysql -u root -p"${DB_ROOT_PASS}" -e "SELECT 1;" >/dev/null 2>&1; then
             warn "Generiertes Passwort funktioniert nicht"
             echo ""
             read -p "Bestehendes MySQL Root-Passwort eingeben: " -s EXISTING_ROOT_PASS
             echo ""
             DB_ROOT_PASS=$EXISTING_ROOT_PASS
+            echo "Debug: Using user-provided password"
+        else
+            echo "Debug: Generated password works"
         fi
     fi
 
     # Datenbank erstellen
+    echo "Debug: Creating database and user..."
     info "Erstelle panel Datenbank..."
-    if mysql -u root -p"${DB_ROOT_PASS}" <<EOF 2>/dev/null
+    if timeout 10 mysql -u root -p"${DB_ROOT_PASS}" <<EOF 2>/dev/null
 DROP DATABASE IF EXISTS panel;
 CREATE DATABASE panel CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 DROP USER IF EXISTS 'pterodactyl'@'127.0.0.1';
