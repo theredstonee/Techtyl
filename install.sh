@@ -596,10 +596,21 @@ php artisan config:cache
 php artisan route:cache
 
 # Services starten
+echo "Debug: Starting services..."
 systemctl enable --now redis-server >/dev/null 2>&1
 systemctl enable --now pteroq.service >/dev/null 2>&1
+
+echo "Debug: Restarting PHP-FPM..."
 systemctl restart php8.2-fpm
-systemctl reload nginx
+
+echo "Debug: Starting Nginx..."
+systemctl enable nginx >/dev/null 2>&1
+systemctl restart nginx
+
+# Prüfe ob Services laufen
+echo "Debug: Checking service status..."
+systemctl is-active --quiet nginx || warn "Nginx läuft nicht!"
+systemctl is-active --quiet php8.2-fpm || warn "PHP-FPM läuft nicht!"
 
 ok "Services gestartet"
 
