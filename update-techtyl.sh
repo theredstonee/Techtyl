@@ -39,10 +39,41 @@ cd /var/www/pterodactyl
 ok "Pterodactyl gefunden"
 
 # ========================================
+# 0. APP_URL konfigurieren
+# ========================================
+echo ""
+echo "[0/5] Konfiguriere Panel-URL..."
+
+# Aktuelle APP_URL anzeigen
+CURRENT_URL=$(grep "^APP_URL=" .env 2>/dev/null | cut -d'=' -f2- || echo "nicht gesetzt")
+echo "Aktuelle APP_URL: $CURRENT_URL"
+
+# Server IP ermitteln
+SERVER_IP=$(hostname -I | awk '{print $1}' 2>/dev/null || echo "localhost")
+
+# Neue URL abfragen
+read -p "Neue Panel-URL (Enter behält aktuelle): " NEW_URL
+
+if [ -n "$NEW_URL" ]; then
+    # APP_URL aktualisieren
+    if grep -q "^APP_URL=" .env; then
+        sed -i "s|^APP_URL=.*|APP_URL=${NEW_URL}|" .env
+        ok "APP_URL aktualisiert: $NEW_URL"
+    else
+        echo "APP_URL=${NEW_URL}" >> .env
+        ok "APP_URL gesetzt: $NEW_URL"
+    fi
+    PANEL_URL="$NEW_URL"
+else
+    PANEL_URL="$CURRENT_URL"
+    ok "APP_URL beibehalten: $CURRENT_URL"
+fi
+
+# ========================================
 # 1. Registrierung aktivieren
 # ========================================
 echo ""
-echo "[1/4] Aktiviere User-Registrierung..."
+echo "[1/5] Aktiviere User-Registrierung..."
 
 # .env anpassen
 if ! grep -q "REGISTRATION_ENABLED" .env; then
@@ -295,7 +326,7 @@ fi
 # 2. Login View anpassen
 # ========================================
 echo ""
-echo "[2/4] Passe Login-View an..."
+echo "[2/5] Passe Login-View an..."
 
 cat > resources/views/auth/login.blade.php <<'BLADEEOF'
 <!DOCTYPE html>
@@ -442,7 +473,7 @@ ok "Login View angepasst"
 # 3. Footer "based on Pterodactyl" hinzufügen
 # ========================================
 echo ""
-echo "[3/4] Füge Branding hinzu..."
+echo "[3/5] Füge Branding hinzu..."
 
 # Layout-Template anpassen (falls existiert)
 if [ -f "resources/views/templates/wrapper.blade.php" ]; then
@@ -456,7 +487,7 @@ fi
 # 4. Cache & Permissions
 # ========================================
 echo ""
-echo "[4/4] Aktualisiere System..."
+echo "[4/5] Aktualisiere System..."
 
 # Composer autoload
 composer dump-autoload -q 2>/dev/null
@@ -481,22 +512,31 @@ systemctl restart php8.2-fpm nginx
 ok "System aktualisiert"
 
 # ========================================
-# Fertig!
+# 5. Fertig!
 # ========================================
+echo ""
+echo "[5/5] Abschluss..."
+
 echo ""
 echo "========================================="
 echo "  ✅ Update abgeschlossen!"
 echo "========================================="
 echo ""
+echo "🦕 Techtyl Panel"
+echo ""
+echo "📱 Panel-URL:"
+echo "   ${PANEL_URL}"
+echo ""
 echo "✨ Neue Features:"
-echo "   ✓ User-Registrierung: /register"
+echo "   ✓ User-Registrierung: ${PANEL_URL}/auth/register"
 echo "   ✓ Verbessertes Design"
 echo "   ✓ Branding: 'based on Pterodactyl'"
 echo ""
-echo "📝 Registrierung testen:"
-echo "   http://$(hostname -I | awk '{print $1}')/register"
-echo ""
-echo "🎨 Login-Seite:"
-echo "   http://$(hostname -I | awk '{print $1}')/auth/login"
+echo "📝 Nächste Schritte:"
+echo "   1. Cache gelöscht - Panel neu laden"
+echo "   2. Registrierung testen: ${PANEL_URL}/auth/register"
+echo "   3. Login-Seite prüfen: ${PANEL_URL}/auth/login"
 echo ""
 echo "========================================="
+
+ok "Update erfolgreich!"

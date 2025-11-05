@@ -519,10 +519,380 @@ composer dump-autoload -q 2>/dev/null
 ok "AI-Features installiert"
 
 # ========================================
+# 7.5. User-Registrierung aktivieren
+# ========================================
+echo ""
+echo "[7.5/9] Aktiviere User-Registrierung..."
+
+# Register Controller
+mkdir -p app/Http/Controllers/Auth
+
+cat > app/Http/Controllers/Auth/RegisterController.php <<'PHPEOF'
+<?php
+
+namespace Pterodactyl\Http\Controllers\Auth;
+
+use Pterodactyl\Models\User;
+use Pterodactyl\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
+
+class RegisterController extends Controller
+{
+    public function __construct()
+    {
+        $this->middleware('guest');
+    }
+
+    public function showRegistrationForm()
+    {
+        if (!env('REGISTRATION_ENABLED', false)) {
+            abort(404);
+        }
+        return view('auth.register');
+    }
+
+    public function register(Request $request)
+    {
+        if (!env('REGISTRATION_ENABLED', false)) {
+            abort(404);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'username' => 'required|string|max:255|unique:users|regex:/^[a-zA-Z0-9_-]+$/',
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|min:8|confirmed',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        $user = User::create([
+            'uuid' => Str::uuid()->toString(),
+            'username' => $request->username,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+            'name_first' => $request->username,
+            'name_last' => '',
+            'root_admin' => false,
+            'language' => 'en',
+        ]);
+
+        auth()->login($user);
+
+        return redirect('/');
+    }
+}
+PHPEOF
+
+# Register View
+mkdir -p resources/views/auth
+
+cat > resources/views/auth/register.blade.php <<'BLADEEOF'
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Register - Techtyl</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            padding: 40px;
+            width: 100%;
+            max-width: 420px;
+        }
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo h1 {
+            font-size: 32px;
+            font-weight: 700;
+            color: #667eea;
+            margin: 0 0 5px 0;
+        }
+        .logo p {
+            color: #718096;
+            font-size: 14px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #2d3748;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        .link {
+            text-align: center;
+            margin-top: 20px;
+            color: #718096;
+            font-size: 14px;
+        }
+        .link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .errors {
+            background: #fed7d7;
+            color: #c53030;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <h1>🦕 Techtyl</h1>
+            <p>based on Pterodactyl Panel</p>
+        </div>
+
+        @if ($errors->any())
+            <div class="errors">
+                <ul style="margin: 0; padding-left: 20px;">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
+        <form method="POST" action="{{ route('auth.register') }}">
+            @csrf
+            <div class="form-group">
+                <label>Username</label>
+                <input type="text" name="username" value="{{ old('username') }}" required autofocus>
+            </div>
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" name="email" value="{{ old('email') }}" required>
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" name="password" required>
+            </div>
+            <div class="form-group">
+                <label>Confirm Password</label>
+                <input type="password" name="password_confirmation" required>
+            </div>
+            <button type="submit" class="btn">Create Account</button>
+        </form>
+
+        <div class="link">
+            Already have an account? <a href="{{ route('auth.login') }}">Login here</a>
+        </div>
+    </div>
+</body>
+</html>
+BLADEEOF
+
+# Login View mit Register-Link
+cat > resources/views/auth/login.blade.php <<'BLADEEOF'
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login - Techtyl</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            padding: 40px;
+            width: 100%;
+            max-width: 420px;
+        }
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo h1 {
+            font-size: 32px;
+            font-weight: 700;
+            color: #667eea;
+            margin: 0 0 5px 0;
+        }
+        .logo p {
+            color: #718096;
+            font-size: 14px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #2d3748;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        .link {
+            text-align: center;
+            margin-top: 20px;
+            color: #718096;
+            font-size: 14px;
+        }
+        .link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .errors {
+            background: #fed7d7;
+            color: #c53030;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <h1>🦕 Techtyl</h1>
+            <p>based on Pterodactyl Panel</p>
+        </div>
+
+        @if ($errors->any())
+            <div class="errors">
+                Login failed. Please check your credentials.
+            </div>
+        @endif
+
+        <form method="POST" action="{{ route('auth.login') }}">
+            @csrf
+            <div class="form-group">
+                <label>Username or Email</label>
+                <input type="text" name="user" value="{{ old('user') }}" required autofocus>
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" name="password" required>
+            </div>
+            <button type="submit" class="btn">Login</button>
+        </form>
+
+        @if(env('REGISTRATION_ENABLED', false))
+        <div class="link">
+            Don't have an account? <a href="{{ route('auth.register') }}">Register here</a>
+        </div>
+        @endif
+    </div>
+</body>
+</html>
+BLADEEOF
+
+# Register Routes
+if ! grep -q "Route::get('/register'" routes/auth.php 2>/dev/null; then
+    cat >> routes/auth.php <<'PHPEOF'
+
+// User Registration (Techtyl)
+Route::get('/register', 'Auth\RegisterController@showRegistrationForm')->name('auth.register');
+Route::post('/register', 'Auth\RegisterController@register');
+PHPEOF
+fi
+
+composer dump-autoload -q 2>/dev/null
+
+ok "Registrierung aktiviert"
+
+# Footer Branding im Hauptpanel
+if [ -f "resources/views/templates/wrapper.blade.php" ]; then
+    if ! grep -q "based on Pterodactyl" resources/views/templates/wrapper.blade.php; then
+        sed -i 's|</body>|<div style="text-align: center; padding: 20px; color: #718096; font-size: 12px;">🦕 Techtyl - based on <a href=\"https://pterodactyl.io\" style=\"color: #667eea; text-decoration: none;\">Pterodactyl Panel</a></div></body>|' resources/views/templates/wrapper.blade.php
+        ok "Footer-Branding hinzugefügt"
+    fi
+fi
+
+# ========================================
 # 8. Webserver & Services
 # ========================================
 echo ""
-echo "[8/8] Konfiguriere Webserver..."
+echo "[8/9] Konfiguriere Webserver..."
 
 # Nginx
 cat > /etc/nginx/sites-available/pterodactyl.conf <<'NGINXEOF'
