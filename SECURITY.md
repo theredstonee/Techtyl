@@ -1,143 +1,164 @@
-# 🔒 Security Policy
+# Security Policy
 
 ## Reporting Security Vulnerabilities
 
-Wir nehmen die Sicherheit von Techtyl sehr ernst. Wenn du eine Sicherheitslücke findest, melde sie bitte verantwortungsvoll.
+We take the security of Techtyl seriously. If you discover a security vulnerability, please report it responsibly.
 
-### 📧 Kontakt
+### Contact
 
-**Bitte NICHT öffentlich als Issue melden!**
+**Please DO NOT report security vulnerabilities publicly via GitHub Issues!**
 
-Stattdessen:
-- E-Mail: security@techtyl.io (bevorzugt)
-- Oder: Private Security Advisory auf GitHub
+Instead, use one of these methods:
+- **Email:** security@techtyl.io (preferred)
+- **GitHub:** [Private Security Advisory](https://github.com/theredstonee/Techtyl/security/advisories/new)
 
-### 🔍 Was zu melden ist
+### What to Report
 
-- Authentifizierungs-/Autorisierungs-Schwachstellen
+Please report any security issues including:
+- Authentication/Authorization bypass
 - XSS, CSRF, SQL Injection
-- Remote Code Execution
-- Sensible Daten-Leaks
-- API-Missbrauch
+- Remote Code Execution (RCE)
+- Sensitive data exposure
+- API abuse vulnerabilities
+- Configuration issues leading to security risks
 
-### ✅ Was wir tun
+### Our Response Process
 
-1. **Bestätigung** innerhalb von 48 Stunden
-2. **Analyse** der Schwachstelle
-3. **Fix** und Tests
-4. **Benachrichtigung** bei Veröffentlichung
-5. **Credit** im Changelog (falls gewünscht)
+1. **Acknowledgment** - Within 48 hours
+2. **Analysis** - Assessment of severity and impact
+3. **Fix** - Development and testing
+4. **Release** - Security patch release
+5. **Credit** - Recognition in changelog (if desired)
 
-### 🛡️ Sicherheits-Features
+## Security Features
 
-Techtyl implementiert:
+### Authentication & Authorization
+- ✅ Bcrypt password hashing
+- ✅ CSRF protection (Laravel built-in)
+- ✅ Session security
+- ✅ Rate limiting
 
-#### Frontend
-- ✅ XSS-Schutz via DOMPurify
-- ✅ Content Security Policy (CSP)
-- ✅ Input-Validierung
-- ✅ Security Headers
+### Input Validation
+- ✅ Server-side validation
+- ✅ SQL injection protection (Eloquent ORM)
+- ✅ XSS protection
+- ✅ Request sanitization
 
-#### Backend
-- ✅ XSS-Protection Middleware
-- ✅ CSRF-Schutz (Laravel Sanctum)
-- ✅ SQL Injection-Schutz (Eloquent ORM)
-- ✅ Bcrypt Password-Hashing
-- ✅ Rate Limiting
-- ✅ Input-Validierung
+### API Security
+- ✅ Token-based authentication
+- ✅ API rate limiting
+- ✅ Input validation
+- ✅ Secure Azure OpenAI integration
 
-#### API
-- ✅ Token-basierte Authentifizierung
-- ✅ API Rate Limiting
-- ✅ Request Sanitization
+## Best Practices
 
-### 📝 Best Practices für Deployment
+### Never Commit
 
-#### Niemals in Git committen:
-- ❌ API Keys
-- ❌ Passwörter
-- ❌ .env Dateien mit echten Credentials
-- ❌ Private Keys
-- ❌ Datenbank-Dumps
+**NEVER** commit these to Git:
+- ❌ API keys
+- ❌ Passwords
+- ❌ `.env` files with credentials
+- ❌ Private keys
+- ❌ Database dumps
 
-#### Immer verwenden:
-- ✅ Umgebungsvariablen (.env)
-- ✅ Starke Passwörter
-- ✅ HTTPS/SSL
-- ✅ Firewall
-- ✅ Regelmäßige Updates
+### Always Use
 
-### 🔐 Credentials sicher aufbewahren
+**ALWAYS** follow these practices:
+- ✅ Environment variables (`.env`)
+- ✅ Strong passwords (min 12 characters)
+- ✅ HTTPS/SSL in production
+- ✅ Firewall configuration
+- ✅ Regular updates
 
-**WICHTIG für Azure OpenAI:**
+### Secure Credentials Storage
+
+**Azure OpenAI Keys:**
 
 ```bash
-# ✅ RICHTIG: In .env (nicht in Git)
-AZURE_OPENAI_API_KEY=dein-key-hier
+# ✅ CORRECT: In .env (not in Git)
+AZURE_OPENAI_API_KEY=your-key-here
+AZURE_OPENAI_ENDPOINT=https://your-endpoint.openai.azure.com/
 
-# ❌ FALSCH: Fest im Code
+# ❌ WRONG: Hardcoded in files
 $apiKey = 'abc123...';
 ```
 
-**Auf dem Server:**
+**Server Configuration:**
+
 ```bash
-# .env vor Git schützen
-chmod 600 backend/.env
-chown www-data:www-data backend/.env
+# Secure .env file
+cd /var/www/pterodactyl
+sudo chmod 600 .env
+sudo chown www-data:www-data .env
 ```
 
-### 🚨 Bei API Key Leak
+## API Key Leak Response
 
-**Falls dein API Key öffentlich wurde:**
+**If your API key is exposed:**
 
-1. **SOFORT** in Azure Portal:
-   - Keys and Endpoint → "Regenerate Key"
+1. **IMMEDIATELY** regenerate in Azure Portal:
+   - Go to: Keys and Endpoint
+   - Click: Regenerate Key
 
-2. **Neuen Key** in .env eintragen
+2. **Update** `.env` with new key
 
-3. **Alten Key** ist jetzt ungültig
+3. **Verify** old key is revoked
 
-4. **Git History** bereinigen (falls Key committed):
-   ```bash
-   git filter-branch --force --index-filter \
-     "git rm --cached --ignore-unmatch backend/.env" \
-     --prune-empty --tag-name-filter cat -- --all
-   ```
+4. **Review** git history for exposure
 
-### 📋 Security Checklist
+## Security Checklist
 
-#### Vor Deployment:
-- [ ] `.env` nicht in Git
-- [ ] `.gitignore` korrekt konfiguriert
-- [ ] Starke DB-Passwörter
-- [ ] API Keys regeneriert
-- [ ] SSL/HTTPS aktiviert
-- [ ] Firewall konfiguriert
+### Before Deployment
+- [ ] `.env` not in Git
+- [ ] `.gitignore` properly configured
+- [ ] Strong database passwords
+- [ ] API keys regenerated for production
+- [ ] SSL/HTTPS enabled
+- [ ] Firewall configured
+- [ ] Unnecessary ports closed
 
-#### Regelmäßig:
-- [ ] System-Updates (`apt update && apt upgrade`)
-- [ ] Dependency-Updates (`composer update`, `npm update`)
-- [ ] Log-Monitoring
-- [ ] Backup-Tests
+### Regular Maintenance
+- [ ] System updates: `sudo apt update && sudo apt upgrade`
+- [ ] Dependency updates: `composer update`
+- [ ] Monitor logs: `tail -f storage/logs/laravel.log`
+- [ ] Backup verification
+- [ ] Security patches applied
 
-### 🔄 Patch-Policy
+## Patch Policy
 
-- **Kritische Sicherheitslücken**: Fix innerhalb 24-48h
-- **Mittlere Schwachstellen**: Fix innerhalb 7 Tagen
-- **Niedrige Schwachstellen**: Fix im nächsten Release
+- **Critical vulnerabilities:** Fix within 24-48 hours
+- **High severity:** Fix within 7 days
+- **Medium severity:** Fix in next release
+- **Low severity:** Scheduled maintenance
 
-### 📚 Weitere Ressourcen
+## Supported Versions
+
+| Version | Supported          |
+| ------- | ------------------ |
+| 1.2.x   | ✅ Yes            |
+| 1.1.x   | ✅ Yes            |
+| 1.0.x   | ⚠️ Security only  |
+| < 1.0   | ❌ No             |
+
+## Security Resources
 
 - [OWASP Top 10](https://owasp.org/www-project-top-ten/)
-- [Laravel Security Best Practices](https://laravel.com/docs/security)
+- [Laravel Security](https://laravel.com/docs/security)
 - [Azure Security Best Practices](https://learn.microsoft.com/en-us/azure/security/)
+- [Pterodactyl Security](https://pterodactyl.io/community/security.html)
 
-### 🏆 Hall of Fame
+## Disclosure Policy
 
-Vielen Dank an alle, die verantwortungsvoll Sicherheitslücken gemeldet haben!
+- We follow responsible disclosure practices
+- We will credit researchers (if desired)
+- Please allow reasonable time for fixes before public disclosure
+- Coordinated disclosure is appreciated
+
+## Hall of Fame
+
+Thank you to everyone who has responsibly reported security issues!
 
 ---
 
-**Zuletzt aktualisiert**: 2024
-
-**Version**: 1.0.0
+**Last Updated:** January 2025
+**Version:** 1.2.0

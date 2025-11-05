@@ -276,6 +276,29 @@ POST /api/client/techtyl/ai/help
 
 ## 🐛 Troubleshooting
 
+### Line Ending Error: `cho: command not found`
+
+**Problem:** Scripts downloaded on Linux may have Windows line endings (CRLF instead of LF).
+
+**Solution:**
+
+```bash
+# Download script
+wget https://raw.githubusercontent.com/theredstonee/Techtyl/main/install.sh
+
+# Fix line endings
+dos2unix install.sh || sed -i 's/\r$//' install.sh
+
+# Run script
+sudo bash install.sh
+```
+
+**Or use one command:**
+
+```bash
+wget -qO- https://raw.githubusercontent.com/theredstonee/Techtyl/main/install.sh | dos2unix | sudo bash
+```
+
 ### 500 Internal Server Error
 
 ```bash
@@ -285,8 +308,8 @@ cd /var/www/pterodactyl
 tail -50 storage/logs/laravel.log
 
 # Fix permissions
-chown -R www-data:www-data .
-chmod -R 755 storage bootstrap/cache
+sudo chown -R www-data:www-data .
+sudo chmod -R 755 storage bootstrap/cache
 
 # Clear cache
 php artisan config:clear
