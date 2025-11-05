@@ -101,7 +101,7 @@ echo ""
 echo "[2/9] Installing packages..."
 
 apt install -y \
-    php${PHP_VER} php${PHP_VER}-{cli,gd,mysql,pdo,mbstring,tokenizer,bcmath,xml,fpm,curl,zip} \
+    php${PHP_VER} php${PHP_VER}-{cli,gd,mysql,pdo,mbstring,tokenizer,bcmath,xml,fpm,curl,zip,intl} \
     mariadb-server mariadb-client \
     nginx \
     redis-server \
