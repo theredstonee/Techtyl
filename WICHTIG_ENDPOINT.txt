@@ -1,0 +1,74 @@
+========================================
+⚠️  WICHTIG: ENDPOINT NOCH EINTRAGEN!
+========================================
+
+Der Azure OpenAI API Key ist bereits im Code eingebaut!
+
+ABER: Du musst noch 2 Dinge in dieser Datei ändern:
+👉 backend/app/Services/AzureOpenAIService.php
+
+
+1️⃣ ENDPOINT eintragen (Zeile 29):
+
+   Aktuell steht da:
+   $this->endpoint = 'https://DEIN-RESOURCE-NAME.openai.azure.com/';
+
+   Wo findest du deinen Endpoint?
+   - Gehe zu: https://portal.azure.com/
+   - Öffne deine Azure OpenAI Resource
+   - Links klicken: "Keys and Endpoint"
+   - Kopiere den "Endpoint" (z.B. https://meine-ki.openai.azure.com/)
+
+   Dann in Zeile 29 eintragen:
+   $this->endpoint = 'https://meine-ki.openai.azure.com/';
+
+
+2️⃣ DEPLOYMENT-NAME eintragen (Zeile 34):
+
+   Aktuell steht da:
+   $this->deployment = 'gpt-4o';
+
+   Wie heißt dein Deployment in Azure?
+   - Gehe zu: https://oai.azure.com/ (Azure OpenAI Studio)
+   - Klicke: "Deployments"
+   - Kopiere den Namen deines Deployments
+
+   Dann in Zeile 34 eintragen:
+   $this->deployment = 'dein-deployment-name';
+
+
+📝 BEISPIEL (ausgefüllt):
+
+$this->endpoint = 'https://techtyl-ai.openai.azure.com/';
+$this->deployment = 'gpt4o-deployment';
+
+
+========================================
+⚠️  SICHERHEITS-HINWEIS
+========================================
+
+Der API Key ist jetzt öffentlich (in dieser Chat-Konversation)!
+
+BITTE nach dem Setup:
+1. Gehe zu Azure Portal
+2. Deine OpenAI Resource → "Keys and Endpoint"
+3. Klicke "Regenerate Key 1"
+4. Trage neuen Key in Code ein
+
+Dann ist der alte Key ungültig und sicher!
+
+
+========================================
+🚀 DANN STARTEN MIT:
+========================================
+
+start.bat
+
+Oder manuell:
+  cd backend && php artisan serve
+  cd frontend && npm run dev
+
+Öffne: http://localhost:3000
+
+
+Viel Erfolg! 🎉

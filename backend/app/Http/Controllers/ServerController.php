@@ -3,15 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Models\Server;
-use App\Services\ClaudeAIService;
+use App\Services\AzureOpenAIService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
 class ServerController extends Controller
 {
-    protected ClaudeAIService $aiService;
+    protected AzureOpenAIService $aiService;
 
-    public function __construct(ClaudeAIService $aiService)
+    public function __construct(AzureOpenAIService $aiService)
     {
         $this->aiService = $aiService;
     }
