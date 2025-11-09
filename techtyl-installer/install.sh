@@ -2,7 +2,31 @@
 
 set -e
 
-
+######################################################################################
+#                                                                                    #
+# Project 'techtyl-installer'                                                        #
+# Based on 'pterodactyl-installer'                                                   #
+#                                                                                    #
+# Original Copyright (C) 2018 - 2025, Vilhelm Prytz, <vilhelm@prytznet.se>          #
+# Techtyl Adaptation (C) 2025                                                        #
+#                                                                                    #
+#   This program is free software: you can redistribute it and/or modify             #
+#   it under the terms of the GNU General Public License as published by             #
+#   the Free Software Foundation, either version 3 of the License, or                #
+#   (at your option) any later version.                                              #
+#                                                                                    #
+#   This program is distributed in the hope that it will be useful,                  #
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of                   #
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the                    #
+#   GNU General Public License for more details.                                     #
+#                                                                                    #
+#   You should have received a copy of the GNU General Public License                #
+#   along with this program.  If not, see <https://www.gnu.org/licenses/>.           #
+#                                                                                    #
+# This script is adapted for Techtyl and is not associated with the                 #
+# official Pterodactyl Project.                                                      #
+#                                                                                    #
+######################################################################################
 
 export GITHUB_SOURCE="main"
 export SCRIPT_RELEASE="v1.3.0"
@@ -19,7 +43,7 @@ fi
 
 # Always remove lib.sh, before downloading it
 [ -f /tmp/lib.sh ] && rm -rf /tmp/lib.sh
-curl -sSL -o /tmp/lib.sh "$GITHUB_BASE_URL"/lib/lib.sh
+curl -sSL -o /tmp/lib.sh "$GITHUB_BASE_URL/lib/lib.sh"
 # shellcheck source=lib/lib.sh
 source /tmp/lib.sh
 
