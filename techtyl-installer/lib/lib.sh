@@ -52,8 +52,8 @@ export SUPPORTED=false
 export PANEL_DL_URL="https://github.com/pterodactyl/panel/releases/latest/download/panel.tar.gz"
 export WINGS_DL_BASE_URL="https://github.com/pterodactyl/wings/releases/latest/download/wings_linux_"
 export MARIADB_URL="https://downloads.mariadb.com/MariaDB/mariadb_repo_setup"
-export GITHUB_BASE_URL=${GITHUB_BASE_URL:-"https://raw.githubusercontent.com/theredstonee/Techtyl"}
-export GITHUB_URL="$GITHUB_BASE_URL/$GITHUB_SOURCE/techtyl-installer"
+# GITHUB_BASE_URL is set in install.sh, don't override it here
+export GITHUB_URL="${GITHUB_BASE_URL}"
 
 # Colors
 COLOR_YELLOW='\033[1;33m'
@@ -172,9 +172,10 @@ get_latest_versions() {
 }
 
 update_lib_source() {
-  GITHUB_URL="$GITHUB_BASE_URL/$GITHUB_SOURCE/techtyl-installer"
+  export GITHUB_BASE_URL="https://raw.githubusercontent.com/theredstonee/Techtyl/$GITHUB_SOURCE/techtyl-installer"
+  export GITHUB_URL="${GITHUB_BASE_URL}"
   rm -rf /tmp/lib.sh
-  curl -sSL -o /tmp/lib.sh "$GITHUB_URL"/lib/lib.sh
+  curl -sSL -o /tmp/lib.sh "$GITHUB_BASE_URL/lib/lib.sh"
   # shellcheck source=lib/lib.sh
   source /tmp/lib.sh
 }

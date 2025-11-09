@@ -30,7 +30,7 @@ set -e
 
 export GITHUB_SOURCE="main"
 export SCRIPT_RELEASE="v1.3.0"
-export GITHUB_BASE_URL="https://raw.githubusercontent.com/theredstonee/Techtyl/main/techtyl-installer"
+export GITHUB_BASE_URL="https://raw.githubusercontent.com/theredstonee/Techtyl/$GITHUB_SOURCE/techtyl-installer"
 
 LOG_PATH="/var/log/techtyl-installer.log"
 
