@@ -6,7 +6,7 @@ set -e
 
 export GITHUB_SOURCE="main"
 export SCRIPT_RELEASE="v1.3.0"
-export GITHUB_BASE_URL="https://raw.githubusercontent.com/techtyl/techtyl-installer"
+export GITHUB_BASE_URL="https://raw.githubusercontent.com/theredstonee/Techtyl/main/techtyl-installer"
 
 LOG_PATH="/var/log/techtyl-installer.log"
 
@@ -19,7 +19,7 @@ fi
 
 # Always remove lib.sh, before downloading it
 [ -f /tmp/lib.sh ] && rm -rf /tmp/lib.sh
-curl -sSL -o /tmp/lib.sh "$GITHUB_BASE_URL"/main/lib/lib.sh
+curl -sSL -o /tmp/lib.sh "$GITHUB_BASE_URL"/lib/lib.sh
 # shellcheck source=lib/lib.sh
 source /tmp/lib.sh
 
