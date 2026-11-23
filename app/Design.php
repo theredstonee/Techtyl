@@ -16,6 +16,107 @@ class Design
     public const MOTION = ['aus', 'dezent', 'voll'];
     public const SERVER_LAYOUT = ['raster', 'liste', 'kompakt'];
 
+    /**
+     * Welche Einstellungen ein Nutzer selbst setzen darf, gruppiert nach der Admin-Grenze,
+     * die sie freigibt. Die Bildadresse (background) ist nie frei waehlbar, eigene Bilder
+     * kommen nur ueber den Upload.
+     */
+    public const GROUPS = [
+        'appearance' => ['variant', 'accent', 'radius', 'motion'],
+        'layout' => ['navigation', 'server_layout', 'banners', 'banner_height'],
+        'background' => ['dim', 'opacity', 'blur'],
+    ];
+
+    /** @return string[] */
+    public static function userKeys(): array
+    {
+        return array_merge(...array_values(self::GROUPS));
+    }
+
+    /** Gruppe (Admin-Grenze), zu der ein Schluessel gehoert, oder null. */
+    public static function groupOf(string $key): ?string
+    {
+        foreach (self::GROUPS as $group => $keys) {
+            if (in_array($key, $keys, true)) {
+                return $group;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Laravel-Regeln je Schluessel (ohne required), fuer Teil-Eingaben der Client-API.
+     *
+     * @return array<string, array<int, string>>
+     */
+    public static function rules(): array
+    {
+        return [
+            'variant' => ['string', 'in:' . implode(',', self::VARIANTS)],
+            'accent' => ['string', 'regex:/^#[0-9a-fA-F]{6}$/'],
+            'radius' => ['integer', 'min:0', 'max:22'],
+            'navigation' => ['string', 'in:' . implode(',', self::NAVIGATION)],
+            'server_layout' => ['string', 'in:' . implode(',', self::SERVER_LAYOUT)],
+            'motion' => ['string', 'in:' . implode(',', self::MOTION)],
+            'banners' => ['boolean'],
+            'banner_height' => ['integer', 'min:48', 'max:160'],
+            'dim' => ['integer', 'min:0', 'max:90'],
+            'opacity' => ['integer', 'min:35', 'max:100'],
+            'blur' => ['integer', 'min:0', 'max:24'],
+        ];
+    }
+
+    /**
+     * Teil-Einstellungen eines Nutzers: nur erlaubte Schluessel, die in der Eingabe wirklich
+     * vorkommen, mit geprueften Werten.
+     *
+     * @param array<string, mixed> $input
+     * @return array<string, mixed>
+     */
+    public static function partial(array $input): array
+    {
+        $clean = self::sanitize($input);
+        $out = [];
+        foreach (self::userKeys() as $key) {
+            if (array_key_exists($key, $input) && $input[$key] !== null) {
+                $out[$key] = $clean[$key];
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * Wirksames Design: Admin-Standard, ueberlagert mit den Nutzerwerten der freigegebenen Gruppen
+     * und (falls erlaubt) dem eigenen Hintergrundbild.
+     *
+     * @param array<string, mixed> $admin Admin-Standard
+     * @param array<string, mixed> $own Teil-Einstellungen des Nutzers
+     * @param array<string, bool> $allowed Gruppe => freigegeben
+     * @return array<string, mixed>
+     */
+    public static function effective(array $admin, array $own, array $allowed, string $ownBackground = ''): array
+    {
+        $design = self::sanitize($admin);
+        $own = self::partial($own);
+        foreach (self::GROUPS as $group => $keys) {
+            if (empty($allowed[$group])) {
+                continue;
+            }
+            foreach ($keys as $key) {
+                if (array_key_exists($key, $own)) {
+                    $design[$key] = $own[$key];
+                }
+            }
+        }
+        if (!empty($allowed['background']) && self::backgroundUrl($ownBackground) !== '') {
+            $design['background'] = self::backgroundUrl($ownBackground);
+        }
+
+        return $design;
+    }
+
     /** @return array<string, mixed> */
     public static function defaults(): array
     {

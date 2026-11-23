@@ -1,8 +1,7 @@
 @php
-  $techtylDesign = \Pterodactyl\BlueprintFramework\Extensions\{identifier}\Design::fromStored(
-    app(\Pterodactyl\BlueprintFramework\Libraries\ExtensionLibrary\Client\BlueprintClientLibrary::class)
-      ->dbGet(\Pterodactyl\BlueprintFramework\Extensions\{identifier}\Design::TABLE, \Pterodactyl\BlueprintFramework\Extensions\{identifier}\Design::RECORD, '{}')
-  );
+  // Angemeldet: wirksames Design des Nutzers (Admin-Standard + erlaubte eigene Werte), sonst der Admin-Standard.
+  // Zwei Abfragen je Seitenaufruf: Admin-Einstellungen und die Zeile des Nutzers.
+  $techtylDesign = \Pterodactyl\BlueprintFramework\Extensions\{identifier}\Settings::designForPage(auth()->id());
   $techtylAttributes = \Pterodactyl\BlueprintFramework\Extensions\{identifier}\Design::attributes($techtylDesign);
 @endphp
 <style id="techtyl-vars">{!! \Pterodactyl\BlueprintFramework\Extensions\{identifier}\Design::toCss($techtylDesign) !!}</style>

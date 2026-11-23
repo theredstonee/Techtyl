@@ -6,7 +6,7 @@ info:
   version: '0.1.0'
   target: 'beta-2026-08'
   author: 'theredstonee'
-  icon: ''
+  icon: 'icon.svg'
   website: 'https://github.com/theredstonee/Techtyl'
 
 admin:
@@ -18,7 +18,7 @@ admin:
 dashboard:
   css: 'dashboard/dashboard.css'
   wrapper: 'dashboard/wrapper.blade.php'
-  components: ''
+  components: 'dashboard/components'
 
 data:
   directory: 'data'
@@ -26,12 +26,12 @@ data:
   console: ''
 
 requests:
-  views: ''
+  views: 'views'
   app: 'app'
   routers:
     application: ''
-    client: ''
-    web: ''
+    client: 'routes/client.php'
+    web: 'routes/web.php'
 
 database:
-  migrations: ''
+  migrations: 'migrations'

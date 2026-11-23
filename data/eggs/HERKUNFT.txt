@@ -1,0 +1,27 @@
+Herkunft der Egg-Dateien in diesem Ordner
+=========================================
+
+Alle JSON-Dateien sind unveraenderte Kopien (byte-identisch) von Community-Eggs der
+"pelican-eggs"-Sammlungen auf GitHub (frueher parkervcp/eggs), jeweils die
+Pterodactyl-Variante im Format PTDL_v2 (importierbar in Pterodactyl Panel 1.x,
+geprueft mit Panel 1.15.1).
+
+Abgerufen am: 2026-11-23
+Lizenz:       MIT (siehe Datei LICENSE in diesem Ordner; der Lizenztext ist in beiden
+              Quell-Repositories identisch)
+Copyright:    (c) 2018 Michael Parker <parker@parkervcp.com> and Contributors
+
+Repository https://github.com/pelican-eggs/generic (Branch main, Commit eec3d4b153ccb8b901905b486f29d4d199154f5b)
+  nodejs-generic.json      <- nodejs/egg-pterodactyl-nodejs-generic.json     (Egg "Node.js generic")
+  nodemon.json             <- nodemon/egg-pterodactyl-nodemon.json           (Egg "Nodemon")
+  python-generic.json      <- python/egg-pterodactyl-python-generic.json     (Egg "Python generic")
+  bun.json                 <- bun/egg-pterodactyl-bun.json                   (Egg "Bun")
+  deno-generic.json        <- deno/egg-pterodactyl-deno-generic.json         (Egg "Deno Generic")
+
+Repository https://github.com/pelican-eggs/minecraft (Branch main, Commit c6f2262eb351054d1be44d3f6a3a605ae163d682)
+  minecraft-fabric.json    <- java/fabric/egg-pterodactyl-fabric.json        (Egg "Fabric")
+  minecraft-velocity.json  <- proxy/java/velocity/egg-pterodactyl-velocity.json (Egg "Velocity")
+
+Hinweis: Die Eggs verweisen auf Docker-Images Dritter (ghcr.io/pelican-eggs/yolks,
+ghcr.io/pelican-eggs/installers sowie offizielle node:/python:-Images); diese Images
+sind nicht Teil dieses Ordners.
