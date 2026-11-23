@@ -1,0 +1,777 @@
+/* Abrechnung. Farben kommen aus den --techtyl-* Variablen des Designers; Statusfarben sind hier
+   je Variante festgelegt. Bewegung richtet sich nach html[data-techtyl-motion]. */
+
+.techtyl-billing {
+  --tb-ok: #5fd39a;
+  --tb-warn: #f0c24a;
+  --tb-bad: #f0685f;
+  --tb-ink: var(--techtyl-accent-ink, #17130b);
+  --tb-r: var(--techtyl-radius, 10px);
+  --tb-r-small: calc(var(--tb-r) * 0.7);
+  --tb-ease: var(--techtyl-ease, cubic-bezier(0.2, 0.7, 0.2, 1));
+  --tb-display: var(--techtyl-display, inherit);
+  --tb-mono: var(--techtyl-mono, ui-monospace, Consolas, monospace);
+  color: var(--techtyl-text);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+html[data-techtyl-variant='papier'] .techtyl-billing {
+  --tb-ok: #187a4c;
+  --tb-warn: #9a6a00;
+  --tb-bad: #b8322a;
+}
+
+.techtyl-billing *,
+.techtyl-billing *::before,
+.techtyl-billing *::after {
+  box-sizing: border-box;
+}
+
+.techtyl-billing :focus-visible {
+  outline: 2px solid var(--techtyl-accent);
+  outline-offset: 2px;
+}
+
+.techtyl-billing h1 {
+  font-family: var(--tb-display);
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+}
+
+.techtyl-billing h2 {
+  font-family: var(--tb-display);
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.techtyl-billing h3 {
+  font-family: var(--tb-display);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.techtyl-billing a {
+  color: var(--techtyl-accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.techtyl-billing-muted {
+  color: var(--techtyl-muted);
+  font-size: 14px;
+}
+
+.techtyl-billing-warn-text {
+  color: var(--tb-warn);
+}
+
+.techtyl-billing-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.techtyl-billing-num {
+  font-family: var(--tb-mono);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* ---------- Kopf ---------- */
+
+.techtyl-billing-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.techtyl-billing-chip {
+  padding: 5px 12px;
+  border: 1px solid var(--tb-warn);
+  border-radius: 99px;
+  color: var(--tb-warn);
+  font-size: 13px;
+}
+
+.techtyl-billing-notice {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--techtyl-line);
+  border-left-width: 3px;
+  border-radius: var(--tb-r-small);
+  background: var(--techtyl-surface);
+}
+
+.techtyl-billing-notice-good {
+  border-left-color: var(--tb-ok);
+}
+
+.techtyl-billing-notice-warn {
+  border-left-color: var(--tb-warn);
+}
+
+.techtyl-billing-notice-bad {
+  border-left-color: var(--tb-bad);
+}
+
+.techtyl-billing-notice button {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--tb-r-small);
+  color: var(--techtyl-muted);
+  font-size: 18px;
+  line-height: 1;
+}
+
+.techtyl-billing-notice button:hover {
+  color: var(--techtyl-text);
+  background: var(--techtyl-raise);
+}
+
+/* ---------- Flächen ---------- */
+
+.techtyl-billing-cols {
+  display: grid;
+  grid-template-columns: minmax(280px, 380px) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.techtyl-billing-panel {
+  padding: 18px 20px 20px;
+  border: 1px solid var(--techtyl-line);
+  border-radius: var(--tb-r);
+  background: var(--techtyl-surface);
+  backdrop-filter: blur(var(--techtyl-blur, 0px));
+}
+
+.techtyl-billing > .techtyl-billing-panel {
+  margin-top: 16px;
+}
+
+.techtyl-billing-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.techtyl-billing-skeleton {
+  min-height: 190px;
+  background: linear-gradient(100deg, var(--techtyl-surface) 30%, var(--techtyl-raise) 50%, var(--techtyl-surface) 70%);
+  background-size: 220% 100%;
+}
+
+.techtyl-billing-empty {
+  padding: 22px 8px;
+  text-align: center;
+}
+
+.techtyl-billing-empty .techtyl-billing-btn {
+  margin-top: 12px;
+}
+
+.techtyl-billing-hint {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px dashed var(--techtyl-line);
+  border-radius: var(--tb-r-small);
+  color: var(--techtyl-muted);
+  font-size: 14px;
+}
+
+.techtyl-billing-legal {
+  margin-top: 8px;
+  font-size: 14px;
+  color: var(--techtyl-muted);
+}
+
+/* ---------- Knöpfe ---------- */
+
+.techtyl-billing-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 14px;
+  border: 1px solid var(--techtyl-line);
+  border-radius: var(--tb-r-small);
+  background: var(--techtyl-raise);
+  color: var(--techtyl-text);
+  font-weight: 500;
+  line-height: 1.3;
+  transition: border-color 120ms var(--tb-ease), background-color 120ms var(--tb-ease), transform 120ms var(--tb-ease);
+}
+
+.techtyl-billing-btn:hover:not(:disabled) {
+  border-color: var(--techtyl-accent);
+}
+
+.techtyl-billing-btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.techtyl-billing-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.techtyl-billing-go {
+  border-color: var(--techtyl-accent);
+  background: var(--techtyl-accent);
+  color: var(--tb-ink);
+  font-weight: 600;
+}
+
+.techtyl-billing-go:hover:not(:disabled) {
+  filter: brightness(1.07);
+}
+
+.techtyl-billing-sm {
+  padding: 5px 10px;
+  font-size: 13px;
+}
+
+.techtyl-billing-danger {
+  border-color: var(--tb-bad);
+  color: var(--tb-bad);
+}
+
+.techtyl-billing-danger:hover:not(:disabled) {
+  border-color: var(--tb-bad);
+  background: var(--tb-bad);
+  color: #fff;
+}
+
+.techtyl-billing-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+/* ---------- Guthaben ---------- */
+
+.techtyl-billing-balance {
+  position: relative;
+  overflow: hidden;
+}
+
+.techtyl-billing-balance::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: var(--techtyl-accent);
+}
+
+.techtyl-billing-big {
+  margin: 8px 0 4px;
+  font-family: var(--tb-display);
+  font-size: 44px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.techtyl-billing-topup {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.techtyl-billing-seg {
+  display: inline-flex;
+  flex-wrap: wrap;
+  padding: 3px;
+  border: 1px solid var(--techtyl-line);
+  border-radius: var(--tb-r-small);
+  background: var(--techtyl-raise);
+}
+
+.techtyl-billing-seg button {
+  padding: 5px 11px;
+  border-radius: calc(var(--tb-r-small) * 0.8);
+  color: var(--techtyl-muted);
+  font-family: var(--tb-mono);
+  font-size: 13px;
+  transition: background-color 120ms var(--tb-ease), color 120ms var(--tb-ease);
+}
+
+.techtyl-billing-seg button:hover {
+  color: var(--techtyl-text);
+}
+
+.techtyl-billing-seg button[aria-pressed='true'] {
+  background: var(--techtyl-accent);
+  color: var(--tb-ink);
+  font-weight: 600;
+}
+
+.techtyl-billing-confirm {
+  margin-top: 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--techtyl-accent);
+  border-radius: var(--tb-r-small);
+  background: var(--techtyl-raise);
+}
+
+/* ---------- Abos ---------- */
+
+.techtyl-billing-tablewrap {
+  overflow-x: auto;
+}
+
+.techtyl-billing-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.techtyl-billing-table th {
+  padding: 6px 10px 8px 0;
+  border-bottom: 1px solid var(--techtyl-line);
+  color: var(--techtyl-muted);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.techtyl-billing-table td {
+  padding: 11px 10px 11px 0;
+  border-bottom: 1px solid var(--techtyl-line);
+  vertical-align: middle;
+}
+
+.techtyl-billing-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.techtyl-billing-cell-action {
+  padding-right: 0 !important;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.techtyl-billing-kind {
+  display: block;
+  color: var(--techtyl-muted);
+  font-size: 12px;
+}
+
+.techtyl-billing-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.techtyl-billing-state::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--techtyl-muted);
+}
+
+.techtyl-billing-state-good::before {
+  background: var(--tb-ok);
+}
+
+.techtyl-billing-state-wait::before {
+  background: var(--tb-warn);
+}
+
+.techtyl-billing-state-bad::before {
+  background: var(--tb-bad);
+}
+
+.techtyl-billing-state-bad {
+  color: var(--tb-bad);
+}
+
+.techtyl-billing-sub td {
+  padding: 10px 12px !important;
+  border-left: 3px solid var(--tb-bad);
+  background: var(--techtyl-raise);
+  font-size: 14px;
+}
+
+.techtyl-billing-ask td {
+  border-left-color: var(--techtyl-accent);
+}
+
+/* ---------- Bestellen ---------- */
+
+.techtyl-billing-steps {
+  display: flex;
+  gap: 14px;
+  color: var(--techtyl-muted);
+  font-size: 13px;
+}
+
+.techtyl-billing-steps li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.techtyl-billing-steps span {
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--techtyl-line);
+  border-radius: 50%;
+  font-family: var(--tb-mono);
+  font-size: 11px;
+}
+
+.techtyl-billing-steps li[aria-current='step'] {
+  color: var(--techtyl-text);
+}
+
+.techtyl-billing-steps li[aria-current='step'] span,
+.techtyl-billing-steps li[data-done='true'] span {
+  border-color: var(--techtyl-accent);
+  background: var(--techtyl-accent);
+  color: var(--tb-ink);
+}
+
+.techtyl-billing-plans {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.techtyl-billing-plan {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  height: 100%;
+  padding: 16px;
+  border: 1px solid var(--techtyl-line);
+  border-radius: var(--tb-r);
+  background: var(--techtyl-raise);
+  color: inherit;
+  text-align: left;
+  transition: border-color 160ms var(--tb-ease), box-shadow 160ms var(--tb-ease), transform 160ms var(--tb-ease);
+}
+
+.techtyl-billing-plan:hover {
+  border-color: var(--techtyl-accent);
+}
+
+.techtyl-billing-pick {
+  border-color: var(--techtyl-accent);
+  box-shadow: inset 0 3px 0 var(--techtyl-accent);
+}
+
+.techtyl-billing-desc {
+  margin-top: 6px;
+  font-size: 14px;
+}
+
+.techtyl-billing-price {
+  margin-top: 12px;
+  font-family: var(--tb-display);
+  font-size: 30px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.15;
+}
+
+.techtyl-billing-detail {
+  margin-top: 16px;
+  padding: 16px;
+  border: 1px solid var(--techtyl-line);
+  border-radius: var(--tb-r);
+  background: var(--techtyl-raise);
+}
+
+.techtyl-billing-detail:focus {
+  outline: none;
+}
+
+.techtyl-billing-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.techtyl-billing-field {
+  display: block;
+}
+
+.techtyl-billing-field > span {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--techtyl-muted);
+  font-size: 13px;
+}
+
+.techtyl-billing-field input,
+.techtyl-billing-field select {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--techtyl-line);
+  border-radius: var(--tb-r-small);
+  background: var(--techtyl-bg);
+  color: var(--techtyl-text);
+}
+
+.techtyl-billing-field input:focus,
+.techtyl-billing-field select:focus {
+  border-color: var(--techtyl-accent);
+}
+
+.techtyl-billing-methods {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.techtyl-billing-methods button {
+  padding: 10px 12px;
+  border: 1px solid var(--techtyl-line);
+  border-radius: var(--tb-r-small);
+  background: var(--techtyl-surface);
+  color: inherit;
+  text-align: left;
+  transition: border-color 120ms var(--tb-ease);
+}
+
+.techtyl-billing-methods button span {
+  display: block;
+  color: var(--techtyl-muted);
+  font-size: 13px;
+}
+
+.techtyl-billing-methods button[aria-pressed='true'] {
+  border-color: var(--techtyl-accent);
+  box-shadow: inset 3px 0 0 var(--techtyl-accent);
+}
+
+.techtyl-billing-summary {
+  margin-bottom: 12px;
+}
+
+.techtyl-billing-summary > div {
+  display: grid;
+  grid-template-columns: 130px minmax(0, 1fr);
+  gap: 10px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--techtyl-line);
+}
+
+.techtyl-billing-summary dt {
+  color: var(--techtyl-muted);
+  font-size: 14px;
+}
+
+.techtyl-billing-summary dd {
+  overflow-wrap: anywhere;
+}
+
+.techtyl-billing-total dd {
+  font-family: var(--tb-display);
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.techtyl-billing-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin-top: 12px;
+  cursor: pointer;
+}
+
+.techtyl-billing-check input {
+  flex: none;
+  width: 17px;
+  height: 17px;
+  margin-top: 3px;
+  accent-color: var(--techtyl-accent);
+}
+
+/* ---------- Verlauf ---------- */
+
+.techtyl-billing-ledger {
+  margin-top: 10px;
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.techtyl-billing-ledger li {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr) 110px 110px;
+  gap: 12px;
+  align-items: baseline;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--techtyl-line);
+  font-size: 14px;
+}
+
+.techtyl-billing-ledger li:last-child {
+  border-bottom: 0;
+}
+
+.techtyl-billing-ledger .techtyl-billing-num {
+  text-align: right;
+}
+
+.techtyl-billing-when {
+  color: var(--techtyl-muted);
+  font-family: var(--tb-mono);
+  font-size: 13px;
+}
+
+.techtyl-billing-what em {
+  display: block;
+  overflow-wrap: anywhere;
+  color: var(--techtyl-muted);
+  font-size: 13px;
+  font-style: normal;
+}
+
+.techtyl-billing-plus {
+  color: var(--tb-ok);
+}
+
+.techtyl-billing-minus {
+  color: var(--techtyl-text);
+}
+
+/* ---------- Bewegung ---------- */
+
+@keyframes techtyl-billing-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes techtyl-billing-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes techtyl-billing-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -120% 0;
+  }
+}
+
+html[data-techtyl-motion='voll'] .techtyl-billing-panel {
+  animation: techtyl-billing-rise 380ms var(--tb-ease) both;
+}
+
+html[data-techtyl-motion='voll'] .techtyl-billing-cols > .techtyl-billing-panel:nth-child(2) {
+  animation-delay: 60ms;
+}
+
+html[data-techtyl-motion='voll'] .techtyl-billing > .techtyl-billing-panel:nth-of-type(1) {
+  animation-delay: 120ms;
+}
+
+html[data-techtyl-motion='voll'] .techtyl-billing > .techtyl-billing-panel:nth-of-type(2) {
+  animation-delay: 180ms;
+}
+
+html[data-techtyl-motion='voll'] .techtyl-billing-plan:hover {
+  transform: translateY(-3px);
+}
+
+html[data-techtyl-motion='voll'] .techtyl-billing-detail,
+html[data-techtyl-motion='voll'] .techtyl-billing-confirm,
+html[data-techtyl-motion='voll'] .techtyl-billing-notice,
+html[data-techtyl-motion='voll'] .techtyl-billing-sub td {
+  animation: techtyl-billing-rise 260ms var(--tb-ease) both;
+}
+
+html[data-techtyl-motion='dezent'] .techtyl-billing-panel,
+html[data-techtyl-motion='dezent'] .techtyl-billing-detail,
+html[data-techtyl-motion='dezent'] .techtyl-billing-confirm,
+html[data-techtyl-motion='dezent'] .techtyl-billing-notice {
+  animation: techtyl-billing-fade 180ms ease both;
+}
+
+html[data-techtyl-motion='voll'] .techtyl-billing-skeleton,
+html[data-techtyl-motion='dezent'] .techtyl-billing-skeleton {
+  animation: techtyl-billing-shimmer 1.4s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .techtyl-billing *,
+  .techtyl-billing *::before {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* ---------- Schmal ---------- */
+
+@media (max-width: 900px) {
+  .techtyl-billing-cols {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .techtyl-billing-big {
+    font-size: 36px;
+  }
+
+  .techtyl-billing-ledger li {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .techtyl-billing-ledger li > :nth-child(4) {
+    display: none;
+  }
+
+  .techtyl-billing-summary > div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px;
+  }
+
+  .techtyl-billing-steps {
+    display: none;
+  }
+}

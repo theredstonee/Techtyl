@@ -1,2 +1,4 @@
 - { Signature: 'tickets-autoclose', Description: 'Closes tickets without a user reply and removes orphaned attachments', Path: 'tickets-autoclose.php', Interval: 'hourly' }
 - { Signature: 'auth-cleanup', Description: 'Removes expired, unconfirmed registrations', Path: 'auth-cleanup.php', Interval: 'hourly' }
+- { Signature: 'billing-daily', Description: 'Charges the daily price of credit-funded servers (at most once per day and subscription)', Path: 'billing-daily.php', Interval: 'hourly' }
+- { Signature: 'billing-enforce', Description: 'Suspends servers after missed payments, unsuspends after payment and deletes after the deletion period', Path: 'billing-enforce.php', Interval: 'hourly' }
