@@ -13,7 +13,7 @@ Navigation:
     - { Name: 'Tickets', Path: '/tickets', Type: 'account', Component: 'pages/account/Tickets', AdminOnly: 'false' }
     - { Name: 'Billing', Path: '/billing', Type: 'account', Component: 'pages/account/Billing', AdminOnly: 'false' }
     - { Name: 'AI assistant', Path: '/assistant', Type: 'account', Component: 'pages/account/Assistant', AdminOnly: 'false' }
-    - { Name: 'Mods & plugins', Path: '/mods', Type: 'server', Component: 'pages/server/Mods', AdminOnly: 'false' }
+    - { Name: 'Mods and plugins', Path: '/mods', Type: 'server', Component: 'pages/server/Mods', AdminOnly: 'false' }
     - { Name: 'Versions', Path: '/versions', Type: 'server', Component: 'pages/server/Versions', AdminOnly: 'false' }
     - { Name: 'Players', Path: '/players', Type: 'server', Component: 'pages/server/Players', AdminOnly: 'false' }
     - { Name: 'Worlds', Path: '/worlds', Type: 'server', Component: 'pages/server/Worlds', AdminOnly: 'false' }
