@@ -1,0 +1,1 @@
+- { Signature: 'tickets-autoclose', Description: 'Schliesst Tickets ohne Antwort des Nutzers und raeumt verwaiste Anhaenge weg', Path: 'tickets-autoclose.php', Interval: 'hourly' }

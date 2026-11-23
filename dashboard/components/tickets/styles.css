@@ -1,0 +1,862 @@
+/* Tickets. Farben kommen aus den --techtyl-* Variablen des Designers; die Statusfarben sind
+   hier je Variante festgelegt. Bewegung richtet sich nach html[data-techtyl-motion]. */
+
+.techtyl-tickets {
+  --tt-ok: #5fd39a;
+  --tt-warn: #f0c24a;
+  --tt-bad: #f0685f;
+  --tt-ink: var(--techtyl-accent-ink, #17130b);
+  --tt-r: var(--techtyl-radius, 10px);
+  --tt-r-small: calc(var(--tt-r) * 0.7);
+  --tt-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  color: var(--techtyl-text);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+html[data-techtyl-variant='papier'] .techtyl-tickets {
+  --tt-ok: #187a4c;
+  --tt-warn: #9a6a00;
+  --tt-bad: #b8322a;
+}
+
+.techtyl-tickets *,
+.techtyl-tickets *::before,
+.techtyl-tickets *::after {
+  box-sizing: border-box;
+}
+
+.techtyl-tickets :focus-visible {
+  outline: 2px solid var(--techtyl-accent);
+  outline-offset: 2px;
+}
+
+.techtyl-tickets-muted {
+  color: var(--techtyl-muted);
+}
+
+/* ---------- Kopf ---------- */
+
+.techtyl-tickets-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.techtyl-tickets-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.techtyl-tickets-top p {
+  margin: 0;
+  font-size: 16px;
+}
+
+.techtyl-tickets h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 650;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- Knoepfe und Felder ---------- */
+
+.techtyl-tickets-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 8px 14px;
+  border: 1px solid var(--techtyl-line);
+  border-radius: var(--tt-r-small);
+  background: var(--techtyl-raise);
+  color: var(--techtyl-text);
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color 0.15s, background-color 0.15s, transform 0.12s var(--tt-ease), opacity 0.15s;
+}
+
+.techtyl-tickets-btn:hover:not(:disabled) {
+  border-color: var(--techtyl-accent);
+}
+
+.techtyl-tickets-btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.techtyl-tickets-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.techtyl-tickets-btn[data-kind='go'] {
+  background: var(--techtyl-accent);
+  border-color: var(--techtyl-accent);
+  color: var(--tt-ink);
+  font-weight: 600;
+}
+
+.techtyl-tickets-btn[data-kind='go']:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--techtyl-accent) 88%, var(--techtyl-text));
+}
+
+.techtyl-tickets-btn[data-size='small'] {
+  padding: 5px 10px;
+  font-size: 13px;
+}
+
+.techtyl-tickets-field {
+  display: block;
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--techtyl-line);
+  border-radius: var(--tt-r-small);
+  background: var(--techtyl-bg);
+  color: var(--techtyl-text);
+  font: inherit;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.techtyl-tickets-field::placeholder {
+  color: var(--techtyl-muted);
+  opacity: 0.8;
+}
+
+.techtyl-tickets-field:focus {
+  outline: none;
+  border-color: var(--techtyl-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--techtyl-accent) 25%, transparent);
+}
+
+.techtyl-tickets textarea.techtyl-tickets-field {
+  min-height: 76px;
+  max-height: 40vh;
+  resize: vertical;
+}
+
+.techtyl-tickets select.techtyl-tickets-field {
+  appearance: auto;
+}
+
+.techtyl-tickets kbd {
+  padding: 1px 5px;
+  border: 1px solid var(--techtyl-line);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  background: var(--techtyl-bg);
+  font: inherit;
+  font-size: 11px;
+}
+
+/* ---------- Aufteilung: Liste links, Gespraech rechts ---------- */
+
+.techtyl-tickets-grid {
+  display: grid;
+  grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
+  gap: 16px;
+  height: clamp(520px, calc(100vh - 250px), 900px);
+}
+
+.techtyl-tickets-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid var(--techtyl-line);
+  border-radius: var(--tt-r);
+  background: var(--techtyl-surface);
+  backdrop-filter: blur(var(--techtyl-blur, 0px));
+}
+
+/* ---------- Liste ---------- */
+
+.techtyl-tickets-tools {
+  display: grid;
+  gap: 10px;
+  padding: 14px 14px 12px;
+  border-bottom: 1px solid var(--techtyl-line);
+}
+
+.techtyl-tickets-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.techtyl-tickets-filters button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border: 1px solid var(--techtyl-line);
+  border-radius: 99px;
+  background: transparent;
+  color: var(--techtyl-muted);
+  font-size: 13px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background-color 0.15s;
+}
+
+.techtyl-tickets-filters button:hover {
+  color: var(--techtyl-text);
+}
+
+.techtyl-tickets-filters button[aria-pressed='true'] {
+  border-color: var(--techtyl-accent);
+  background: color-mix(in srgb, var(--techtyl-accent) 16%, transparent);
+  color: var(--techtyl-text);
+}
+
+.techtyl-tickets-filters button span {
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.75;
+}
+
+.techtyl-tickets-items {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  transition: opacity 0.15s;
+}
+
+.techtyl-tickets-items[data-busy='true'] {
+  opacity: 0.6;
+}
+
+.techtyl-tickets-item {
+  position: relative;
+  display: grid;
+  gap: 3px;
+  width: 100%;
+  padding: 12px 14px;
+  border: 0;
+  border-top: 1px solid var(--techtyl-line);
+  background: none;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.15s, padding-left 0.2s var(--tt-ease);
+}
+
+.techtyl-tickets-item:first-child {
+  border-top: 0;
+}
+
+.techtyl-tickets-item::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: var(--techtyl-accent);
+  transform: scaleY(0);
+  transition: transform 0.2s var(--tt-ease);
+}
+
+.techtyl-tickets-item:hover {
+  background: color-mix(in srgb, var(--techtyl-text) 5%, transparent);
+}
+
+.techtyl-tickets-item:focus-visible {
+  outline-offset: -2px;
+}
+
+.techtyl-tickets-item[aria-current='true'] {
+  padding-left: 20px;
+  background: color-mix(in srgb, var(--techtyl-accent) 9%, transparent);
+}
+
+.techtyl-tickets-item[aria-current='true']::before {
+  transform: none;
+}
+
+.techtyl-tickets-item-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.techtyl-tickets-item-top b {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.techtyl-tickets-item[data-unread='true'] .techtyl-tickets-item-top b {
+  font-weight: 700;
+}
+
+.techtyl-tickets-count {
+  flex: none;
+  min-width: 20px;
+  padding: 0 6px;
+  border-radius: 99px;
+  background: var(--techtyl-accent);
+  color: var(--tt-ink);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 20px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.techtyl-tickets-item-meta {
+  overflow: hidden;
+  color: var(--techtyl-muted);
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.techtyl-tickets-item-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--techtyl-muted);
+  font-size: 12px;
+}
+
+.techtyl-tickets-more {
+  display: flex;
+  width: calc(100% - 28px);
+  margin: 12px 14px;
+}
+
+.techtyl-tickets-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--techtyl-text);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.techtyl-tickets-state::before {
+  content: '';
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--tt-ok);
+}
+
+.techtyl-tickets-state[data-status='answered']::before,
+.techtyl-tickets-state[data-status='waiting']::before {
+  background: var(--tt-warn);
+}
+
+.techtyl-tickets-state[data-status='closed'] {
+  color: var(--techtyl-muted);
+}
+
+.techtyl-tickets-state[data-status='closed']::before {
+  background: var(--techtyl-muted);
+}
+
+/* ---------- Gespraech ---------- */
+
+.techtyl-tickets-thread,
+.techtyl-tickets-new {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.techtyl-tickets-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--techtyl-line);
+}
+
+.techtyl-tickets-title {
+  flex: 1;
+  min-width: 0;
+}
+
+.techtyl-tickets-title p {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  margin: 4px 0 0;
+  font-size: 13px;
+}
+
+.techtyl-tickets-number {
+  font-variant-numeric: tabular-nums;
+}
+
+.techtyl-tickets-back {
+  display: none;
+  flex: none;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--techtyl-line);
+  border-radius: var(--tt-r-small);
+  background: var(--techtyl-raise);
+  color: var(--techtyl-text);
+  cursor: pointer;
+}
+
+.techtyl-tickets-confirm {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.techtyl-tickets-scroll {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+  padding: 18px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* Kurze Verlaeufe stehen unten am Eingabefeld, nicht oben im leeren Raum. */
+.techtyl-tickets-scroll > :first-child {
+  margin-top: auto;
+}
+
+.techtyl-tickets-msg {
+  align-self: flex-start;
+  max-width: min(74%, 640px);
+  padding: 10px 14px;
+  border: 1px solid var(--techtyl-line);
+  border-radius: var(--tt-r);
+  border-bottom-left-radius: 3px;
+  background: var(--techtyl-raise);
+}
+
+.techtyl-tickets-msg[data-from='me'] {
+  align-self: flex-end;
+  border-color: color-mix(in srgb, var(--techtyl-accent) 45%, var(--techtyl-line));
+  border-radius: var(--tt-r);
+  border-bottom-right-radius: 3px;
+  background: color-mix(in srgb, var(--techtyl-accent) 18%, var(--techtyl-surface-c, transparent));
+}
+
+.techtyl-tickets-msg[data-pending='true'] {
+  opacity: 0.72;
+}
+
+.techtyl-tickets-msg small {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--techtyl-muted);
+  font-size: 12px;
+}
+
+.techtyl-tickets-text {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.techtyl-tickets-text a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--techtyl-accent);
+  text-underline-offset: 3px;
+}
+
+.techtyl-tickets-images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.techtyl-tickets-images a {
+  display: block;
+  overflow: hidden;
+  border: 1px solid var(--techtyl-line);
+  border-radius: var(--tt-r-small);
+  background: var(--techtyl-bg);
+}
+
+.techtyl-tickets-images img {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  max-height: 180px;
+  transition: transform 0.3s var(--tt-ease);
+}
+
+.techtyl-tickets-images a:hover img {
+  transform: scale(1.03);
+}
+
+.techtyl-tickets-event {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 4px 0;
+  color: var(--techtyl-muted);
+  font-size: 12px;
+  text-align: center;
+}
+
+.techtyl-tickets-event::before,
+.techtyl-tickets-event::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--techtyl-line);
+}
+
+/* ---------- Eingabe ---------- */
+
+.techtyl-tickets-composer,
+.techtyl-tickets-closed {
+  display: grid;
+  gap: 10px;
+  padding: 14px 18px 16px;
+  border-top: 1px solid var(--techtyl-line);
+}
+
+.techtyl-tickets-closed {
+  justify-items: start;
+}
+
+.techtyl-tickets-closed p {
+  margin: 0;
+}
+
+.techtyl-tickets-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.techtyl-tickets-keys {
+  margin-left: auto;
+  font-size: 12px;
+}
+
+.techtyl-tickets-picker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.techtyl-tickets-thumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.techtyl-tickets-thumb {
+  position: relative;
+  width: 52px;
+  height: 52px;
+}
+
+.techtyl-tickets-thumb img {
+  width: 100%;
+  height: 100%;
+  border: 1px solid var(--techtyl-line);
+  border-radius: var(--tt-r-small);
+  object-fit: cover;
+}
+
+.techtyl-tickets-thumb button {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--techtyl-line);
+  border-radius: 50%;
+  background: var(--techtyl-raise-c, var(--techtyl-raise));
+  color: var(--techtyl-text);
+  cursor: pointer;
+}
+
+.techtyl-tickets-thumb button:hover {
+  border-color: var(--tt-bad);
+  color: var(--tt-bad);
+}
+
+/* ---------- Neues Ticket ---------- */
+
+.techtyl-tickets-form {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  flex: 1;
+  min-height: 0;
+  padding: 18px;
+  overflow-y: auto;
+}
+
+.techtyl-tickets-label {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.techtyl-tickets-label > span {
+  color: var(--techtyl-muted);
+  font-size: 13px;
+}
+
+.techtyl-tickets-label em {
+  font-style: normal;
+  opacity: 0.7;
+}
+
+.techtyl-tickets-label em::before {
+  content: '· ';
+}
+
+.techtyl-tickets-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.techtyl-tickets-safety {
+  margin: -6px 0 0;
+  font-size: 13px;
+}
+
+/* ---------- Hinweise, leere und ladende Zustaende ---------- */
+
+.techtyl-tickets-alert {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--tt-bad) 55%, var(--techtyl-line));
+  border-left-width: 3px;
+  border-radius: var(--tt-r-small);
+  background: color-mix(in srgb, var(--tt-bad) 10%, transparent);
+  font-size: 14px;
+}
+
+.techtyl-tickets-items > .techtyl-tickets-alert {
+  margin: 12px 14px;
+}
+
+.techtyl-tickets-empty {
+  display: grid;
+  justify-items: start;
+  gap: 6px;
+  padding: 22px 16px;
+}
+
+.techtyl-tickets-empty p {
+  margin: 0;
+  color: var(--techtyl-muted);
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.techtyl-tickets-empty .techtyl-tickets-btn {
+  margin-top: 6px;
+}
+
+.techtyl-tickets-welcome {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 10px;
+  flex: 1;
+  padding: 32px 24px;
+  text-align: center;
+}
+
+.techtyl-tickets-welcome svg {
+  margin-bottom: 6px;
+  color: var(--techtyl-accent);
+}
+
+.techtyl-tickets-welcome p {
+  max-width: 44ch;
+  margin: 0;
+}
+
+.techtyl-tickets-welcome .techtyl-tickets-btn {
+  margin-top: 8px;
+}
+
+.techtyl-tickets-skeleton {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+}
+
+.techtyl-tickets-skeleton i {
+  display: block;
+  height: 54px;
+  border-radius: var(--tt-r-small);
+  background: linear-gradient(
+    100deg,
+    color-mix(in srgb, var(--techtyl-text) 6%, transparent) 30%,
+    color-mix(in srgb, var(--techtyl-text) 13%, transparent) 50%,
+    color-mix(in srgb, var(--techtyl-text) 6%, transparent) 70%
+  );
+  background-size: 300% 100%;
+  animation: techtyl-tickets-shimmer 1.4s linear infinite;
+}
+
+.techtyl-tickets-skeleton i:nth-child(2) {
+  width: 82%;
+}
+
+.techtyl-tickets-skeleton i:nth-child(3) {
+  width: 64%;
+}
+
+/* ---------- Bewegung ---------- */
+
+@keyframes techtyl-tickets-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: 0 0;
+  }
+}
+
+@keyframes techtyl-tickets-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes techtyl-tickets-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.techtyl-tickets-msg[data-fresh='true'] {
+  animation: techtyl-tickets-rise 0.32s var(--tt-ease) both;
+  transform-origin: 0 100%;
+}
+
+.techtyl-tickets-msg[data-fresh='true'][data-from='me'] {
+  transform-origin: 100% 100%;
+}
+
+.techtyl-tickets-event[data-fresh='true'],
+.techtyl-tickets-alert,
+.techtyl-tickets-thumb {
+  animation: techtyl-tickets-fade 0.25s ease both;
+}
+
+/* Wechsel des Gespraechs: Inhalt blendet weich ein. */
+.techtyl-tickets-main > * {
+  animation: techtyl-tickets-fade 0.2s ease both;
+}
+
+html[data-techtyl-motion='dezent'] .techtyl-tickets-msg[data-fresh='true'] {
+  animation: techtyl-tickets-fade 0.18s ease both;
+}
+
+html[data-techtyl-motion='dezent'] .techtyl-tickets-images a:hover img {
+  transform: none;
+}
+
+html[data-techtyl-motion='aus'] .techtyl-tickets *,
+html[data-techtyl-motion='aus'] .techtyl-tickets *::before {
+  animation: none !important;
+  transition: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .techtyl-tickets *,
+  .techtyl-tickets *::before {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* ---------- Schmale Bildschirme: erst die Liste, dann das Gespraech ---------- */
+
+@media (max-width: 900px) {
+  .techtyl-tickets-grid {
+    grid-template-columns: minmax(0, 1fr);
+    height: auto;
+  }
+
+  .techtyl-tickets[data-pane='list'] .techtyl-tickets-main,
+  .techtyl-tickets[data-pane='detail'] .techtyl-tickets-side {
+    display: none;
+  }
+
+  .techtyl-tickets-panel {
+    height: clamp(420px, calc(100vh - 210px), 900px);
+  }
+
+  .techtyl-tickets-side {
+    height: auto;
+    max-height: none;
+  }
+
+  .techtyl-tickets-items {
+    overflow: visible;
+  }
+
+  .techtyl-tickets-back {
+    display: grid;
+  }
+
+  .techtyl-tickets-msg {
+    max-width: 88%;
+  }
+
+  .techtyl-tickets-pair {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .techtyl-tickets-keys {
+    display: none;
+  }
+}

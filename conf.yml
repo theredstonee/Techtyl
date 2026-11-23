@@ -23,7 +23,7 @@ dashboard:
 data:
   directory: 'data'
   public: 'public'
-  console: ''
+  console: 'console'
 
 requests:
   views: 'views'

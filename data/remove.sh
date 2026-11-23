@@ -8,22 +8,21 @@ cd "${PTERODACTYL_DIRECTORY:-.}" || exit 0
 php .blueprint/extensions/techtyl/private/patch.php restore \
   || echo "techtyl: Originale konnten nicht vollstaendig wiederhergestellt werden (.blueprint/extensions/techtyl/private/.backup)."
 
-MIGRATION="2026_11_23_170000_create_techtyl_tables"
-
-# Tabellen entfernen und den Eintrag in "migrations" loeschen, damit eine spaetere
-# Neuinstallation die Tabellen wieder anlegt. Es werden nur die eigenen Tabellen angefasst.
+# Alle Tabellen mit dem Praefix "techtyl_" entfernen (Kern und alle Module) und ihre Eintraege in
+# "migrations" loeschen, damit eine spaetere Neuinstallation sie wieder anlegt. Andere Tabellen
+# werden nicht angefasst. Importierte Eggs bleiben bestehen, Server koennten sie verwenden.
 php artisan tinker --execute="
-foreach (['techtyl_folder_servers', 'techtyl_folders', 'techtyl_egg_banners', 'techtyl_server_banners', 'techtyl_user_settings'] as \$table) {
+\$tables = array_values(array_filter(array_map(fn (\$t) => \$t['name'], Illuminate\Support\Facades\Schema::getTables()), fn (\$n) => str_starts_with(\$n, 'techtyl_')));
+Illuminate\Support\Facades\Schema::disableForeignKeyConstraints();
+foreach (\$tables as \$table) {
     Illuminate\Support\Facades\Schema::dropIfExists(\$table);
 }
-Illuminate\Support\Facades\DB::table('migrations')->where('migration', '$MIGRATION')->delete();
-Illuminate\Support\Facades\DB::table('migrations')->where('migration', '2026_11_23_180000_import_techtyl_eggs')->delete();
-echo 'techtyl: Tabellen entfernt';
+Illuminate\Support\Facades\Schema::enableForeignKeyConstraints();
+Illuminate\Support\Facades\DB::table('migrations')->where('migration', 'like', '%techtyl%')->delete();
+echo 'techtyl: ' . count(\$tables) . ' Tabellen entfernt';
 " || echo "techtyl: Tabellen konnten nicht entfernt werden, bitte von Hand pruefen (techtyl_*)."
 
-rm -f "database/migrations/$MIGRATION.php"
-# Importierte Eggs bleiben bestehen (Server koennten sie verwenden), nur die Import-Migration geht.
-rm -f "database/migrations/2026_11_23_180000_import_techtyl_eggs.php"
+rm -f database/migrations/*techtyl*.php
 
 # Hochgeladene Bilder.
 rm -rf "storage/.extensions/techtyl"
