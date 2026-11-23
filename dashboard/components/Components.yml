@@ -11,13 +11,13 @@ Navigation:
   Routes:
     - { Name: 'Design', Path: '/design', Type: 'account', Component: 'pages/account/Designer', AdminOnly: 'false' }
     - { Name: 'Tickets', Path: '/tickets', Type: 'account', Component: 'pages/account/Tickets', AdminOnly: 'false' }
-    - { Name: 'Abrechnung', Path: '/billing', Type: 'account', Component: 'pages/account/Billing', AdminOnly: 'false' }
-    - { Name: 'KI-Assistent', Path: '/assistant', Type: 'account', Component: 'pages/account/Assistant', AdminOnly: 'false' }
-    - { Name: 'Mods und Plugins', Path: '/mods', Type: 'server', Component: 'pages/server/Mods', AdminOnly: 'false' }
-    - { Name: 'Versionen', Path: '/versions', Type: 'server', Component: 'pages/server/Versions', AdminOnly: 'false' }
-    - { Name: 'Spieler', Path: '/players', Type: 'server', Component: 'pages/server/Players', AdminOnly: 'false' }
-    - { Name: 'Welten', Path: '/worlds', Type: 'server', Component: 'pages/server/Worlds', AdminOnly: 'false' }
-    - { Name: 'Eigenschaften', Path: '/properties', Type: 'server', Component: 'pages/server/Properties', AdminOnly: 'false' }
+    - { Name: 'Billing', Path: '/billing', Type: 'account', Component: 'pages/account/Billing', AdminOnly: 'false' }
+    - { Name: 'AI assistant', Path: '/assistant', Type: 'account', Component: 'pages/account/Assistant', AdminOnly: 'false' }
+    - { Name: 'Mods & plugins', Path: '/mods', Type: 'server', Component: 'pages/server/Mods', AdminOnly: 'false' }
+    - { Name: 'Versions', Path: '/versions', Type: 'server', Component: 'pages/server/Versions', AdminOnly: 'false' }
+    - { Name: 'Players', Path: '/players', Type: 'server', Component: 'pages/server/Players', AdminOnly: 'false' }
+    - { Name: 'Worlds', Path: '/worlds', Type: 'server', Component: 'pages/server/Worlds', AdminOnly: 'false' }
+    - { Name: 'Properties', Path: '/properties', Type: 'server', Component: 'pages/server/Properties', AdminOnly: 'false' }
     - { Name: 'Logs', Path: '/logs', Type: 'server', Component: 'pages/server/Logs', AdminOnly: 'false' }
 
 Dashboard:

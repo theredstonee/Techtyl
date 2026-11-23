@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
 import PageContentBlock from '@/components/elements/PageContentBlock';
+import { Locale, useLocale, useT } from '@blueprint/extensions/techtyl/i18n';
+import texts from '@blueprint/extensions/techtyl/i18n/tickets';
 import {
     closeTicket,
     createTicket,
@@ -16,53 +18,52 @@ import {
     TicketMessage,
     TicketMeta,
     TicketStatus,
+    Translate,
 } from '../../tickets/api';
 import '../../tickets/styles.css';
 
 /* ------------------------------------------------------------------ Texte und Hilfen */
 
-const STATUS_LABEL: Record<TicketStatus, string> = {
-    open: 'Offen',
-    answered: 'Antwort vom Team',
-    waiting: 'Wartet auf dich',
-    closed: 'Geschlossen',
-};
-
 const FILTERS: { key: StatusFilter; label: string }[] = [
-    { key: 'all', label: 'Alle' },
-    { key: 'answered', label: 'Antwort vom Team' },
-    { key: 'waiting', label: 'Wartet auf dich' },
-    { key: 'open', label: 'Offen' },
-    { key: 'closed', label: 'Geschlossen' },
+    { key: 'all', label: 'filter_all' },
+    { key: 'answered', label: 'status_answered' },
+    { key: 'waiting', label: 'status_waiting' },
+    { key: 'open', label: 'status_open' },
+    { key: 'closed', label: 'status_closed' },
 ];
 
-const pad = (value: number) => (value < 10 ? '0' : '') + value;
-const clock = (date: Date) => `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+const dateLocale = (locale: Locale) => (locale === 'de' ? 'de-DE' : 'en-US');
+const formatNumber = (locale: Locale, value: number) => value.toLocaleString(dateLocale(locale));
 const dayStart = (date: Date) => new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
 const daysAgo = (date: Date) => Math.round((dayStart(new Date()) - dayStart(date)) / 86400000);
-const fullDate = (date: Date) => `${pad(date.getDate())}.${pad(date.getMonth() + 1)}.${date.getFullYear()}`;
-const WEEKDAYS = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
+const clock = (date: Date, locale: Locale) => date.toLocaleString(dateLocale(locale), { hour: '2-digit', minute: '2-digit' });
+const fullDate = (date: Date, locale: Locale) =>
+    date.toLocaleString(dateLocale(locale), { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+const statusText = (t: Translate, status: string): string =>
+    status === 'open' || status === 'answered' || status === 'waiting' || status === 'closed' ? t('status_' + status) : t('status_changed');
 
 /** Kurz fuer die Liste: "gerade eben", "vor 12 Min.", "13:20", "gestern", "Montag", "03.11.2026". */
-const shortTime = (date: Date): string => {
+const shortTime = (t: Translate, locale: Locale, date: Date): string => {
     const minutes = Math.floor((Date.now() - date.getTime()) / 60000);
-    if (minutes < 1) return 'gerade eben';
-    if (minutes < 60) return `vor ${minutes} Min.`;
+    if (minutes < 1) return t('just_now');
+    if (minutes < 60) return t('minutes_ago', { count: formatNumber(locale, minutes) });
     const days = daysAgo(date);
-    if (days <= 0) return clock(date);
-    if (days === 1) return 'gestern';
-    if (days < 7) return WEEKDAYS[date.getDay()];
+    if (days <= 0) return clock(date, locale);
+    if (days === 1) return t('yesterday');
+    if (days < 7) return date.toLocaleString(dateLocale(locale), { weekday: 'long' });
 
-    return fullDate(date);
+    return fullDate(date, locale);
 };
 
 /** Fuer Nachrichten: "heute 13:20", "gestern 13:20", "03.11.2026 13:20". */
-const longTime = (date: Date): string => {
+const longTime = (t: Translate, locale: Locale, date: Date): string => {
     const days = daysAgo(date);
-    if (days <= 0) return `heute ${clock(date)}`;
-    if (days === 1) return `gestern ${clock(date)}`;
+    const time = clock(date, locale);
+    if (days <= 0) return t('today_at', { time });
+    if (days === 1) return t('yesterday_at', { time });
 
-    return `${fullDate(date)} ${clock(date)}`;
+    return t('date_at', { date: fullDate(date, locale), time });
 };
 
 /* Entwuerfe ueberleben den Wechsel zwischen Tickets und ein Neuladen des Tabs (sessionStorage);
@@ -102,22 +103,30 @@ const useDraft = (key: string): [string, (value: string) => void] => {
 
 /* ------------------------------------------------------------------ kleine Bausteine */
 
-const StatusPill = ({ status }: { status: TicketStatus }) => (
-    <span className={'techtyl-tickets-state'} data-status={status}>
-        {STATUS_LABEL[status]}
-    </span>
-);
+const StatusPill = ({ status }: { status: TicketStatus }) => {
+    const t = useT(texts);
 
-const Notice = ({ children, onRetry }: { children: React.ReactNode; onRetry?: () => void }) => (
-    <div className={'techtyl-tickets-alert'} role={'alert'}>
-        <span>{children}</span>
-        {onRetry && (
-            <button type={'button'} className={'techtyl-tickets-btn'} data-size={'small'} onClick={onRetry}>
-                Erneut versuchen
-            </button>
-        )}
-    </div>
-);
+    return (
+        <span className={'techtyl-tickets-state'} data-status={status}>
+            {t('status_' + status)}
+        </span>
+    );
+};
+
+const Notice = ({ children, onRetry }: { children: React.ReactNode; onRetry?: () => void }) => {
+    const t = useT(texts);
+
+    return (
+        <div className={'techtyl-tickets-alert'} role={'alert'}>
+            <span>{children}</span>
+            {onRetry && (
+                <button type={'button'} className={'techtyl-tickets-btn'} data-size={'small'} onClick={onRetry}>
+                    {t('retry')}
+                </button>
+            )}
+        </div>
+    );
+};
 
 /** Nutzertext: nur Text. Adressen mit http(s) werden zu Links, alles andere bleibt Buchstabe fuer Buchstabe. */
 const MessageText = ({ text }: { text: string }) => {
@@ -150,17 +159,17 @@ const MessageText = ({ text }: { text: string }) => {
     return <p className={'techtyl-tickets-text'}>{parts}</p>;
 };
 
-const eventText = (message: TicketMessage): string => {
+const eventText = (t: Translate, message: TicketMessage): string => {
     const team = message.from === 'team';
     switch (message.type) {
         case 'closed':
-            return team ? 'Das Team hat das Ticket geschlossen' : 'Du hast das Ticket geschlossen';
+            return team ? t('event_closed_team') : t('event_closed_you');
         case 'reopened':
-            return team ? 'Das Team hat das Ticket wieder geöffnet' : 'Du hast das Ticket wieder geöffnet';
+            return team ? t('event_reopened_team') : t('event_reopened_you');
         case 'autoclosed':
-            return 'Automatisch geschlossen, weil länger keine Antwort kam';
+            return t('event_autoclosed');
         default:
-            return `Neuer Status: ${STATUS_LABEL[message.body as TicketStatus] || 'geändert'}`;
+            return t('event_status', { status: statusText(t, message.body) });
     }
 };
 
@@ -175,18 +184,18 @@ interface PickerProps {
 }
 
 /** Prueft neue Bilder gegen die Grenzen des Servers, bevor sie hochgeladen werden. */
-const mergeFiles = (meta: TicketMeta, current: File[], added: File[]): { files: File[]; problem: string } => {
+const mergeFiles = (t: Translate, meta: TicketMeta, current: File[], added: File[]): { files: File[]; problem: string } => {
     const limits = meta.limits;
     const files = current.slice();
     let problem = '';
     added.forEach((file) => {
         if (limits.mimeTypes.indexOf(file.type) < 0) {
             const kinds = limits.mimeTypes.map((type) => type.replace('image/', '').toUpperCase()).join(', ');
-            problem = `„${file.name}“ passt nicht. Möglich sind hier Bilder als ${kinds}.`;
+            problem = t('file_type', { file: file.name, kinds });
         } else if (file.size > limits.maxUploadBytes) {
-            problem = `„${file.name}“ ist zu groß (höchstens ${Math.floor(limits.maxUploadBytes / 1024)} KB).`;
+            problem = t('file_too_big', { file: file.name, max: Math.floor(limits.maxUploadBytes / 1024) });
         } else if (files.length >= limits.maxFiles) {
-            problem = `Höchstens ${limits.maxFiles} Bilder je Nachricht.`;
+            problem = t('files_max', { max: limits.maxFiles });
         } else {
             files.push(file);
         }
@@ -196,13 +205,14 @@ const mergeFiles = (meta: TicketMeta, current: File[], added: File[]): { files: 
 };
 
 const Thumb = ({ file, onRemove, disabled }: { file: File; onRemove: () => void; disabled: boolean }) => {
+    const t = useT(texts);
     const url = useMemo(() => URL.createObjectURL(file), [file]);
     useEffect(() => () => URL.revokeObjectURL(url), [url]);
 
     return (
         <li className={'techtyl-tickets-thumb'}>
             <img src={url} alt={''} />
-            <button type={'button'} onClick={onRemove} disabled={disabled} aria-label={`${file.name} entfernen`}>
+            <button type={'button'} onClick={onRemove} disabled={disabled} aria-label={t('remove_file', { file: file.name })}>
                 <svg viewBox={'0 0 12 12'} width={'10'} height={'10'} aria-hidden={'true'}>
                     <path d={'M2 2l8 8M10 2l-8 8'} stroke={'currentColor'} strokeWidth={'1.8'} strokeLinecap={'round'} />
                 </svg>
@@ -212,12 +222,13 @@ const Thumb = ({ file, onRemove, disabled }: { file: File; onRemove: () => void;
 };
 
 const Picker = ({ meta, files, onChange, onProblem, disabled }: PickerProps) => {
+    const t = useT(texts);
     const input = useRef<HTMLInputElement>(null);
     if (!meta.limits.attachments || meta.limits.mimeTypes.length === 0) return null;
 
     const add = (list: FileList | null) => {
         if (!list || list.length === 0) return;
-        const result = mergeFiles(meta, files, Array.prototype.slice.call(list));
+        const result = mergeFiles(t, meta, files, Array.prototype.slice.call(list));
         onChange(result.files);
         onProblem(result.problem);
     };
@@ -263,7 +274,7 @@ const Picker = ({ meta, files, onChange, onProblem, disabled }: PickerProps) => 
                         strokeLinecap={'round'}
                     />
                 </svg>
-                Bild anhängen
+                {t('attach_image')}
             </button>
         </div>
     );
@@ -295,6 +306,8 @@ const NewTicketForm = ({
     onCreated: (ticket: Ticket) => void;
     onCancel: () => void;
 }) => {
+    const t = useT(texts);
+    const locale = useLocale();
     const [stored, setStored] = useDraft('new');
     const draft: NewDraft = useMemo(() => {
         try {
@@ -337,7 +350,7 @@ const NewTicketForm = ({
                 onCreated(ticket);
             })
             .catch((error) => {
-                setProblem(explain(error, 'Das Ticket konnte nicht eröffnet werden. Versuch es gleich noch einmal.'));
+                setProblem(explain(t, error, t('err_create')));
                 setBusy(false);
             });
     };
@@ -360,37 +373,34 @@ const NewTicketForm = ({
             noValidate
         >
             <div className={'techtyl-tickets-head'}>
-                <button type={'button'} className={'techtyl-tickets-back'} onClick={onCancel} aria-label={'Zurück zur Liste'}>
+                <button type={'button'} className={'techtyl-tickets-back'} onClick={onCancel} aria-label={t('back_to_list')}>
                     <svg viewBox={'0 0 16 16'} width={'16'} height={'16'} aria-hidden={'true'}>
                         <path d={'M10 3L5 8l5 5'} fill={'none'} stroke={'currentColor'} strokeWidth={'1.8'} strokeLinecap={'round'} strokeLinejoin={'round'} />
                     </svg>
                 </button>
                 <div>
-                    <h2>Ticket eröffnen</h2>
-                    <p className={'techtyl-tickets-muted'}>Beschreib kurz, worum es geht. Das Team antwortet hier.</p>
+                    <h2>{t('open_heading')}</h2>
+                    <p className={'techtyl-tickets-muted'}>{t('open_lead')}</p>
                 </div>
             </div>
 
             <div className={'techtyl-tickets-form'}>
                 {full && (
                     <Notice>
-                        Du hast bereits {limits.openNow} offene Tickets (höchstens {limits.maxOpen}). Schließe ein
-                        erledigtes Ticket oder antworte in einem bestehenden.
+                        {t('open_limit', { open: formatNumber(locale, limits.openNow), max: formatNumber(locale, limits.maxOpen) })}
                     </Notice>
                 )}
-                {meta.categories.length === 0 && (
-                    <Notice>Das Team hat noch keine Kategorien angelegt. Tickets sind deshalb gerade nicht möglich.</Notice>
-                )}
+                {meta.categories.length === 0 && <Notice>{t('no_categories')}</Notice>}
 
                 <label className={'techtyl-tickets-label'}>
-                    <span>Betreff</span>
+                    <span>{t('field_subject')}</span>
                     <input
                         ref={subjectInput}
                         className={'techtyl-tickets-field'}
                         type={'text'}
                         value={draft.subject}
                         maxLength={limits.subjectMax}
-                        placeholder={'Zum Beispiel: Server startet nach Update nicht'}
+                        placeholder={t('subject_placeholder')}
                         onChange={(event) => update({ subject: event.currentTarget.value })}
                         disabled={busy}
                     />
@@ -398,7 +408,7 @@ const NewTicketForm = ({
 
                 <div className={'techtyl-tickets-pair'}>
                     <label className={'techtyl-tickets-label'}>
-                        <span>Kategorie</span>
+                        <span>{t('field_category')}</span>
                         <select
                             className={'techtyl-tickets-field'}
                             value={category}
@@ -406,7 +416,7 @@ const NewTicketForm = ({
                             disabled={busy}
                         >
                             <option value={''} disabled>
-                                Bitte wählen
+                                {t('please_choose')}
                             </option>
                             {meta.categories.map((item) => (
                                 <option key={item.id} value={String(item.id)}>
@@ -417,7 +427,7 @@ const NewTicketForm = ({
                     </label>
                     <label className={'techtyl-tickets-label'}>
                         <span>
-                            Server <em>optional</em>
+                            {t('field_server')} <em>{t('optional')}</em>
                         </span>
                         <select
                             className={'techtyl-tickets-field'}
@@ -425,7 +435,7 @@ const NewTicketForm = ({
                             onChange={(event) => update({ server: event.currentTarget.value })}
                             disabled={busy || meta.servers.length === 0}
                         >
-                            <option value={''}>{meta.servers.length === 0 ? 'Du hast noch keinen Server' : 'Kein bestimmter Server'}</option>
+                            <option value={''}>{meta.servers.length === 0 ? t('no_server_yet') : t('no_specific_server')}</option>
                             {meta.servers.map((item) => (
                                 <option key={item.uuid} value={item.uuid}>
                                     {item.label}
@@ -436,19 +446,19 @@ const NewTicketForm = ({
                 </div>
 
                 <label className={'techtyl-tickets-label'}>
-                    <span>Nachricht</span>
+                    <span>{t('field_message')}</span>
                     <textarea
                         className={'techtyl-tickets-field'}
                         rows={8}
                         value={draft.body}
                         maxLength={limits.bodyMax}
-                        placeholder={'Was ist passiert, was hast du erwartet? Fehlermeldungen am besten wörtlich.'}
+                        placeholder={t('message_placeholder')}
                         onChange={(event) => update({ body: event.currentTarget.value })}
                         onPaste={(event) => {
                             const images = pastedImages(event);
                             if (images.length > 0 && limits.attachments) {
                                 event.preventDefault();
-                                const result = mergeFiles(meta, files, images);
+                                const result = mergeFiles(t, meta, files, images);
                                 setFiles(result.files);
                                 setProblem(result.problem);
                             }
@@ -457,8 +467,8 @@ const NewTicketForm = ({
                     />
                 </label>
                 <p className={'techtyl-tickets-muted techtyl-tickets-safety'}>
-                    Schick keine Passwörter. Das Team fragt nie danach.
-                    {remaining <= 500 && <span> Noch {remaining} Zeichen.</span>}
+                    {t('safety')}
+                    {remaining <= 500 && <span> {t('chars_left_dot', { count: formatNumber(locale, remaining) })}</span>}
                 </p>
 
                 <Picker meta={meta} files={files} onChange={setFiles} onProblem={setProblem} disabled={busy} />
@@ -467,13 +477,15 @@ const NewTicketForm = ({
 
                 <div className={'techtyl-tickets-actions'}>
                     <span className={'techtyl-tickets-muted techtyl-tickets-keys'}>
-                        <kbd>Strg</kbd> + <kbd>Enter</kbd> sendet
+                        <kbd>{t('key_mod')}</kbd>
+                        {' + '}
+                        <kbd>{t('key_enter')}</kbd> {t('key_sends')}
                     </span>
                     <button type={'button'} className={'techtyl-tickets-btn'} onClick={onCancel} disabled={busy}>
-                        Abbrechen
+                        {t('cancel')}
                     </button>
                     <button type={'submit'} className={'techtyl-tickets-btn'} data-kind={'go'} disabled={!ready}>
-                        {busy ? 'Wird gesendet …' : 'Ticket eröffnen'}
+                        {busy ? t('sending') : t('open_submit')}
                     </button>
                 </div>
             </div>
@@ -493,6 +505,10 @@ interface ThreadProps {
 let pendingId = -1;
 
 const Thread = ({ id, meta, onChanged, onBack }: ThreadProps) => {
+    const t = useT(texts);
+    const locale = useLocale();
+    const tRef = useRef(t);
+    tRef.current = t;
     const key = `t${id}`;
     const [ticket, setTicket] = useState<Ticket | null>(null);
     const [messages, setMessages] = useState<TicketMessage[]>([]);
@@ -544,7 +560,7 @@ const Thread = ({ id, meta, onChanged, onBack }: ThreadProps) => {
                 })
                 .catch((error) => {
                     if (alive.current && !quiet) {
-                        setLoadError(explain(error, 'Das Ticket konnte nicht geladen werden.'));
+                        setLoadError(explain(tRef.current, error, tRef.current('err_load_ticket')));
                     }
                 });
         },
@@ -618,7 +634,7 @@ const Thread = ({ id, meta, onChanged, onBack }: ThreadProps) => {
                 setMessages((current) => current.filter((message) => message.id !== optimistic.id));
                 setText(sentText);
                 setFiles(sentFiles);
-                setProblem(explain(error, 'Die Nachricht wurde nicht gesendet. Dein Text ist noch da, versuch es noch einmal.'));
+                setProblem(explain(t, error, t('err_send')));
             })
             .then(() => {
                 if (alive.current) {
@@ -636,7 +652,7 @@ const Thread = ({ id, meta, onChanged, onBack }: ThreadProps) => {
                 stick.current = true;
                 apply(next, true);
             })
-            .catch((error) => alive.current && setProblem(explain(error, fallback)))
+            .catch((error) => alive.current && setProblem(explain(t, error, fallback)))
             .then(() => {
                 if (alive.current) {
                     setWorking(false);
@@ -649,13 +665,13 @@ const Thread = ({ id, meta, onChanged, onBack }: ThreadProps) => {
         return (
             <div className={'techtyl-tickets-thread'}>
                 <div className={'techtyl-tickets-head'}>
-                    <button type={'button'} className={'techtyl-tickets-back'} onClick={onBack} aria-label={'Zurück zur Liste'}>
+                    <button type={'button'} className={'techtyl-tickets-back'} onClick={onBack} aria-label={t('back_to_list')}>
                         <svg viewBox={'0 0 16 16'} width={'16'} height={'16'} aria-hidden={'true'}>
                             <path d={'M10 3L5 8l5 5'} fill={'none'} stroke={'currentColor'} strokeWidth={'1.8'} strokeLinecap={'round'} strokeLinejoin={'round'} />
                         </svg>
                     </button>
                     <div>
-                        <h2>{loadError ? 'Ticket nicht geladen' : 'Ticket wird geladen'}</h2>
+                        <h2>{loadError ? t('ticket_not_loaded') : t('ticket_loading')}</h2>
                     </div>
                 </div>
                 <div className={'techtyl-tickets-scroll'}>
@@ -682,7 +698,7 @@ const Thread = ({ id, meta, onChanged, onBack }: ThreadProps) => {
     return (
         <div className={'techtyl-tickets-thread'}>
             <div className={'techtyl-tickets-head'}>
-                <button type={'button'} className={'techtyl-tickets-back'} onClick={onBack} aria-label={'Zurück zur Liste'}>
+                <button type={'button'} className={'techtyl-tickets-back'} onClick={onBack} aria-label={t('back_to_list')}>
                     <svg viewBox={'0 0 16 16'} width={'16'} height={'16'} aria-hidden={'true'}>
                         <path d={'M10 3L5 8l5 5'} fill={'none'} stroke={'currentColor'} strokeWidth={'1.8'} strokeLinecap={'round'} strokeLinejoin={'round'} />
                     </svg>
@@ -698,7 +714,7 @@ const Thread = ({ id, meta, onChanged, onBack }: ThreadProps) => {
                 {!closed &&
                     (confirmClose ? (
                         <div className={'techtyl-tickets-confirm'}>
-                            <span>Erledigt?</span>
+                            <span>{t('done_question')}</span>
                             <button
                                 type={'button'}
                                 className={'techtyl-tickets-btn'}
@@ -708,12 +724,12 @@ const Thread = ({ id, meta, onChanged, onBack }: ThreadProps) => {
                                 onClick={() => {
                                     // Ein Doppelklick auf "Schließen" darf nicht gleich bestaetigen.
                                     if (Date.now() - confirmShown.current > 450) {
-                                        change(closeTicket, 'Das Ticket konnte nicht geschlossen werden.');
+                                        change(closeTicket, t('err_close'));
                                     }
                                 }}
                                 autoFocus
                             >
-                                Ja, schließen
+                                {t('yes_close')}
                             </button>
                             <button
                                 type={'button'}
@@ -722,7 +738,7 @@ const Thread = ({ id, meta, onChanged, onBack }: ThreadProps) => {
                                 disabled={working}
                                 onClick={() => setConfirmClose(false)}
                             >
-                                Nein
+                                {t('no')}
                             </button>
                         </div>
                     ) : (
@@ -732,12 +748,12 @@ const Thread = ({ id, meta, onChanged, onBack }: ThreadProps) => {
                                 setConfirmClose(true);
                             }}
                         >
-                            Schließen
+                            {t('close')}
                         </button>
                     ))}
             </div>
 
-            <div className={'techtyl-tickets-scroll'} ref={scroller} onScroll={onScroll} role={'log'} aria-label={'Verlauf'}>
+            <div className={'techtyl-tickets-scroll'} ref={scroller} onScroll={onScroll} role={'log'} aria-label={t('thread_label')}>
                 {messages.map((message) => {
                     if (message.type !== 'message') {
                         return (
@@ -747,13 +763,13 @@ const Thread = ({ id, meta, onChanged, onBack }: ThreadProps) => {
                                 data-fresh={fresh.current.indexOf(message.id) >= 0 ? 'true' : undefined}
                             >
                                 <span>
-                                    {eventText(message)} · {longTime(message.createdAt)}
+                                    {eventText(t, message)} · {longTime(t, locale, message.createdAt)}
                                 </span>
                             </p>
                         );
                     }
                     const mine = message.from === 'you';
-                    const who = mine ? 'Du' : message.teamName ? `${message.teamName} vom Team` : 'Team';
+                    const who = mine ? t('author_you') : message.teamName ? t('author_named_team', { member: message.teamName }) : t('author_team');
 
                     return (
                         <div
@@ -764,7 +780,7 @@ const Thread = ({ id, meta, onChanged, onBack }: ThreadProps) => {
                             data-fresh={fresh.current.indexOf(message.id) >= 0 ? 'true' : undefined}
                         >
                             <small>
-                                {who} · {message.pending ? 'wird gesendet …' : longTime(message.createdAt)}
+                                {who} · {message.pending ? t('sending_inline') : longTime(t, locale, message.createdAt)}
                             </small>
                             <MessageText text={message.body} />
                             {message.attachments.length > 0 && (
@@ -776,7 +792,7 @@ const Thread = ({ id, meta, onChanged, onBack }: ThreadProps) => {
                                                 width={image.width}
                                                 height={image.height}
                                                 loading={'lazy'}
-                                                alt={`Anhang, ${image.width} × ${image.height} Pixel, öffnet in neuem Tab`}
+                                                alt={t('attachment_alt', { width: image.width, height: image.height })}
                                             />
                                         </a>
                                     ))}
@@ -790,17 +806,17 @@ const Thread = ({ id, meta, onChanged, onBack }: ThreadProps) => {
             {closed ? (
                 <div className={'techtyl-tickets-closed'}>
                     <p>
-                        <b>Dieses Ticket ist geschlossen.</b>{' '}
-                        <span className={'techtyl-tickets-muted'}>Ist das Thema doch noch offen, mach hier einfach weiter.</span>
+                        <b>{t('closed_title')}</b>{' '}
+                        <span className={'techtyl-tickets-muted'}>{t('closed_hint')}</span>
                     </p>
                     {problem !== '' && <Notice>{problem}</Notice>}
                     <button
                         type={'button'}
                         className={'techtyl-tickets-btn'}
                         disabled={working}
-                        onClick={() => change(reopenTicket, 'Das Ticket konnte nicht wieder geöffnet werden.')}
+                        onClick={() => change(reopenTicket, t('err_reopen'))}
                     >
-                        {working ? 'Einen Moment …' : 'Wieder öffnen'}
+                        {working ? t('moment') : t('reopen')}
                     </button>
                 </div>
             ) : (
@@ -818,8 +834,8 @@ const Thread = ({ id, meta, onChanged, onBack }: ThreadProps) => {
                         rows={3}
                         value={text}
                         maxLength={meta.limits.bodyMax}
-                        placeholder={ticket.status === 'open' ? 'Noch etwas ergänzen …' : 'Antwort schreiben …'}
-                        aria-label={'Antwort'}
+                        placeholder={ticket.status === 'open' ? t('placeholder_more') : t('placeholder_reply')}
+                        aria-label={t('reply_label')}
                         onChange={(event) => setText(event.currentTarget.value)}
                         onKeyDown={(event) => {
                             if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
@@ -831,7 +847,7 @@ const Thread = ({ id, meta, onChanged, onBack }: ThreadProps) => {
                             const images = pastedImages(event);
                             if (images.length > 0 && meta.limits.attachments) {
                                 event.preventDefault();
-                                const result = mergeFiles(meta, files, images);
+                                const result = mergeFiles(t, meta, files, images);
                                 setFiles(result.files);
                                 setProblem(result.problem);
                             }
@@ -841,15 +857,17 @@ const Thread = ({ id, meta, onChanged, onBack }: ThreadProps) => {
                         <Picker meta={meta} files={files} onChange={setFiles} onProblem={setProblem} disabled={sending} />
                         <span className={'techtyl-tickets-muted techtyl-tickets-keys'}>
                             {remaining <= 500 ? (
-                                `Noch ${remaining} Zeichen`
+                                t('chars_left', { count: formatNumber(locale, remaining) })
                             ) : (
                                 <>
-                                    <kbd>Strg</kbd> + <kbd>Enter</kbd> sendet
+                                    <kbd>{t('key_mod')}</kbd>
+                                    {' + '}
+                                    <kbd>{t('key_enter')}</kbd> {t('key_sends')}
                                 </>
                             )}
                         </span>
                         <button type={'submit'} className={'techtyl-tickets-btn'} data-kind={'go'} disabled={!canSend}>
-                            Antworten
+                            {t('reply_submit')}
                         </button>
                     </div>
                 </form>
@@ -871,6 +889,10 @@ const readSelection = (search: string): Selection => {
 };
 
 export default () => {
+    const t = useT(texts);
+    const locale = useLocale();
+    const tRef = useRef(t);
+    tRef.current = t;
     const history = useHistory();
     const location = useLocation();
     const [meta, setMeta] = useState<TicketMeta | null>(null);
@@ -897,7 +919,7 @@ export default () => {
     const loadMeta = useCallback(() => {
         getMeta()
             .then(setMeta)
-            .catch((error) => setListError(explain(error, 'Die Tickets konnten nicht geladen werden.')));
+            .catch((error) => setListError(explain(tRef.current, error, tRef.current('err_load_list'))));
     }, []);
 
     useEffect(loadMeta, [loadMeta]);
@@ -933,7 +955,7 @@ export default () => {
                 .catch((error) => {
                     if (mine !== request.current) return;
                     setRefreshing(false);
-                    if (!quiet) setListError(explain(error, 'Die Tickets konnten nicht geladen werden.'));
+                    if (!quiet) setListError(explain(tRef.current, error, tRef.current('err_load_list')));
                 });
         },
         [filter, search]
@@ -962,7 +984,7 @@ export default () => {
                     return { ...next, tickets: current.tickets.concat(next.tickets.filter((ticket) => known.indexOf(ticket.id) < 0)) };
                 });
             })
-            .catch((error) => setListError(explain(error, 'Weitere Tickets konnten nicht geladen werden.')))
+            .catch((error) => setListError(explain(t, error, t('err_load_more'))))
             .then(() => setLoadingMore(false));
     };
 
@@ -996,25 +1018,25 @@ export default () => {
     const counts = list ? list.counts : null;
     const waiting = counts ? counts.answered + counts.waiting : 0;
     const subtitle = !list
-        ? 'Fragen, Probleme, Wünsche: das Team hilft dir hier.'
+        ? t('subtitle_default')
         : waiting === 1
-        ? '1 Ticket wartet auf deine Antwort'
+        ? t('subtitle_waiting_one')
         : waiting > 1
-        ? `${waiting} Tickets warten auf deine Antwort`
+        ? t('subtitle_waiting_many', { count: formatNumber(locale, waiting) })
         : counts && counts.open > 0
-        ? 'Das Team ist am Zug. Neue Antworten erscheinen hier von selbst.'
-        : 'Fragen, Probleme, Wünsche: das Team hilft dir hier.';
+        ? t('subtitle_team')
+        : t('subtitle_default');
 
     const nothingAtAll = !!list && list.counts.all === 0 && search === '';
     const hasMore = !!list && list.tickets.length < list.total;
 
     return (
-        <PageContentBlock title={'Tickets'}>
+        <PageContentBlock title={t('title')}>
             <div className={'techtyl-tickets'} data-pane={selected === null ? 'list' : 'detail'}>
                 <header className={'techtyl-tickets-top'}>
                     <div>
                         {/* Den sichtbaren Seitentitel setzt die Techtyl-Shell; diese Ueberschrift ist fuer Screenreader. */}
-                        <h1 className={'techtyl-tickets-sr'}>Tickets</h1>
+                        <h1 className={'techtyl-tickets-sr'}>{t('title')}</h1>
                         <p className={'techtyl-tickets-muted'} aria-live={'polite'}>
                             {subtitle}
                         </p>
@@ -1026,23 +1048,23 @@ export default () => {
                         disabled={!meta}
                         onClick={() => select('new')}
                     >
-                        Ticket eröffnen
+                        {t('open_ticket')}
                     </button>
                 </header>
 
                 <div className={'techtyl-tickets-grid'}>
-                    <aside className={'techtyl-tickets-panel techtyl-tickets-side'} aria-label={'Deine Tickets'}>
+                    <aside className={'techtyl-tickets-panel techtyl-tickets-side'} aria-label={t('your_tickets')}>
                         <div className={'techtyl-tickets-tools'}>
                             <input
                                 className={'techtyl-tickets-field'}
                                 type={'search'}
                                 value={query}
                                 maxLength={120}
-                                placeholder={'Im Betreff suchen'}
-                                aria-label={'Im Betreff suchen'}
+                                placeholder={t('search_subject')}
+                                aria-label={t('search_subject')}
                                 onChange={(event) => setQuery(event.currentTarget.value)}
                             />
-                            <div className={'techtyl-tickets-filters'} role={'group'} aria-label={'Nach Status filtern'}>
+                            <div className={'techtyl-tickets-filters'} role={'group'} aria-label={t('filter_by_status')}>
                                 {FILTERS.map((item) => (
                                     <button
                                         key={item.key}
@@ -1050,8 +1072,8 @@ export default () => {
                                         aria-pressed={filter === item.key}
                                         onClick={() => setFilter(item.key)}
                                     >
-                                        {item.label}
-                                        {counts && counts[item.key] > 0 && <span>{counts[item.key]}</span>}
+                                        {t(item.label)}
+                                        {counts && counts[item.key] > 0 && <span>{formatNumber(locale, counts[item.key])}</span>}
                                     </button>
                                 ))}
                             </div>
@@ -1080,23 +1102,23 @@ export default () => {
                                 <div className={'techtyl-tickets-empty'}>
                                     {nothingAtAll ? (
                                         <>
-                                            <b>Noch keine Tickets</b>
-                                            <p>Wenn etwas hakt oder du eine Frage hast, schreib dem Team.</p>
+                                            <b>{t('empty_title')}</b>
+                                            <p>{t('empty_text')}</p>
                                         </>
                                     ) : search !== '' ? (
                                         <>
-                                            <b>Nichts gefunden</b>
-                                            <p>Kein Betreff enthält „{search}“.</p>
+                                            <b>{t('none_found_title')}</b>
+                                            <p>{t('none_found_text', { query: search })}</p>
                                             <button type={'button'} className={'techtyl-tickets-btn'} data-size={'small'} onClick={() => setQuery('')}>
-                                                Suche leeren
+                                                {t('clear_search')}
                                             </button>
                                         </>
                                     ) : (
                                         <>
-                                            <b>Hier ist nichts</b>
-                                            <p>Kein Ticket mit dem Status „{STATUS_LABEL[filter as TicketStatus]}“.</p>
+                                            <b>{t('empty_status_title')}</b>
+                                            <p>{t('empty_status_text', { status: statusText(t, filter) })}</p>
                                             <button type={'button'} className={'techtyl-tickets-btn'} data-size={'small'} onClick={() => setFilter('all')}>
-                                                Alle zeigen
+                                                {t('show_all')}
                                             </button>
                                         </>
                                     )}
@@ -1115,7 +1137,7 @@ export default () => {
                                         <span className={'techtyl-tickets-item-top'}>
                                             <b>{ticket.subject}</b>
                                             {ticket.unread > 0 && (
-                                                <span className={'techtyl-tickets-count'} aria-label={`${ticket.unread} ungelesen`}>
+                                                <span className={'techtyl-tickets-count'} aria-label={t('unread_count', { count: ticket.unread })}>
                                                     {ticket.unread > 99 ? '99+' : ticket.unread}
                                                 </span>
                                             )}
@@ -1123,23 +1145,23 @@ export default () => {
                                         <span className={'techtyl-tickets-item-meta'}>
                                             {[ticket.category ? ticket.category.label : '', ticket.server ? ticket.server.label : '']
                                                 .filter((part) => part !== '')
-                                                .join(', ') || 'Ohne Kategorie'}
+                                                .join(', ') || t('no_category')}
                                         </span>
                                         <span className={'techtyl-tickets-item-foot'}>
                                             <StatusPill status={ticket.status} />
-                                            <time dateTime={ticket.updatedAt.toISOString()}>{shortTime(ticket.updatedAt)}</time>
+                                            <time dateTime={ticket.updatedAt.toISOString()}>{shortTime(t, locale, ticket.updatedAt)}</time>
                                         </span>
                                     </button>
                                 ))}
                             {hasMore && (
                                 <button type={'button'} className={'techtyl-tickets-btn techtyl-tickets-more'} disabled={loadingMore} onClick={loadMore}>
-                                    {loadingMore ? 'Lädt …' : 'Weitere laden'}
+                                    {loadingMore ? t('loading_more') : t('load_more')}
                                 </button>
                             )}
                         </div>
                     </aside>
 
-                    <section className={'techtyl-tickets-panel techtyl-tickets-main'} aria-label={'Gespräch'}>
+                    <section className={'techtyl-tickets-panel techtyl-tickets-main'} aria-label={t('conversation')}>
                         {selected === 'new' && meta && (
                             <NewTicketForm key={'new'} meta={meta} onCreated={onCreated} onCancel={() => select(null)} />
                         )}
@@ -1167,20 +1189,16 @@ export default () => {
                                 </svg>
                                 {nothingAtAll ? (
                                     <>
-                                        <h2>Wie können wir helfen?</h2>
-                                        <p className={'techtyl-tickets-muted'}>
-                                            Eröffne ein Ticket und beschreib dein Anliegen. Die Antwort des Teams erscheint hier als Gespräch.
-                                        </p>
+                                        <h2>{t('welcome_title')}</h2>
+                                        <p className={'techtyl-tickets-muted'}>{t('welcome_text')}</p>
                                         <button type={'button'} className={'techtyl-tickets-btn'} data-kind={'go'} disabled={!meta} onClick={() => select('new')}>
-                                            Erstes Ticket eröffnen
+                                            {t('welcome_first')}
                                         </button>
                                     </>
                                 ) : (
                                     <>
-                                        <h2>Wähl ein Ticket</h2>
-                                        <p className={'techtyl-tickets-muted'}>
-                                            Links stehen deine Tickets, ganz oben die mit neuen Antworten. Entwürfe bleiben erhalten, wenn du zwischen Tickets wechselst.
-                                        </p>
+                                        <h2>{t('pick_title')}</h2>
+                                        <p className={'techtyl-tickets-muted'}>{t('pick_text')}</p>
                                     </>
                                 )}
                             </div>

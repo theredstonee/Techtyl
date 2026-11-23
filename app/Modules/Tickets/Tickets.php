@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Notification;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Pterodactyl\BlueprintFramework\Extensions\{identifier}\I18n;
 use Pterodactyl\BlueprintFramework\Extensions\{identifier}\Modules\Tickets\Notifications\TicketNotification;
 
 /**
@@ -27,20 +28,20 @@ class Tickets
     public const WAITING = 'waiting';
     public const CLOSED = 'closed';
 
-    /** Status => Bezeichnung aus Sicht des Nutzers. */
+    /** Status keys. Labels are in lang/tickets.php (status_* for users, team_status_* for the team). */
     public const STATUSES = [
-        self::OPEN => 'Offen',
-        self::ANSWERED => 'Antwort vom Team',
-        self::WAITING => 'Wartet auf dich',
-        self::CLOSED => 'Geschlossen',
+        self::OPEN => self::OPEN,
+        self::ANSWERED => self::ANSWERED,
+        self::WAITING => self::WAITING,
+        self::CLOSED => self::CLOSED,
     ];
 
-    /** Status => Bezeichnung aus Sicht des Teams. */
+    /** Same keys as STATUSES. The team-facing wording lives in the translation file. */
     public const TEAM_STATUSES = [
-        self::OPEN => 'Offen, Team am Zug',
-        self::ANSWERED => 'Beantwortet',
-        self::WAITING => 'Wartet auf Nutzer',
-        self::CLOSED => 'Geschlossen',
+        self::OPEN => self::OPEN,
+        self::ANSWERED => self::ANSWERED,
+        self::WAITING => self::WAITING,
+        self::CLOSED => self::CLOSED,
     ];
 
     public const SUBJECT_MIN = 3;
@@ -65,6 +66,58 @@ class Tickets
         return trim((string) preg_replace('/\s{2,}/u', ' ', $text));
     }
 
+    /** @return array<string, string> */
+    public static function userStatusLabels(): array
+    {
+        return self::statusLabels('status_');
+    }
+
+    /** @return array<string, string> */
+    public static function teamStatusLabels(): array
+    {
+        return self::statusLabels('team_status_');
+    }
+
+    /**
+     * Field names for Laravel validation, so a message that still uses :attribute
+     * never shows the raw field key.
+     *
+     * @return array<string, string>
+     */
+    public static function attrs(): array
+    {
+        return [
+            'ticket' => I18n::t('tickets.attr_ticket'),
+            'body' => I18n::t('tickets.attr_body'),
+            'then' => I18n::t('tickets.attr_then'),
+            'status' => I18n::t('tickets.attr_status'),
+            'notify' => I18n::t('tickets.attr_notify'),
+            'attachments' => I18n::t('tickets.attr_attachments'),
+            'autoclose_days' => I18n::t('tickets.attr_autoclose_days'),
+            'max_open' => I18n::t('tickets.attr_max_open'),
+            'direction' => I18n::t('tickets.attr_direction'),
+            'category' => I18n::t('tickets.attr_category'),
+            'name' => I18n::t('tickets.attr_name'),
+            'subject' => I18n::t('tickets.attr_subject'),
+            'server' => I18n::t('tickets.attr_server'),
+            'q' => I18n::t('tickets.attr_search'),
+            'page' => I18n::t('tickets.attr_page'),
+            'images' => I18n::t('tickets.attr_images'),
+            'images.*' => I18n::t('tickets.attr_image'),
+        ];
+    }
+
+    /** @return array<string, string> */
+    private static function statusLabels(string $prefix): array
+    {
+        $labels = [];
+        foreach (array_keys(self::STATUSES) as $status) {
+            $labels[$status] = I18n::t('tickets.' . $prefix . $status);
+        }
+
+        return $labels;
+    }
+
     public static function openCount(int $userId): int
     {
         return DB::table(self::TICKETS)->where('user_id', $userId)->where('status', '!=', self::CLOSED)->count();
@@ -86,7 +139,7 @@ class Tickets
                 ->lockForUpdate()->pluck('id')->count();
             if ($open >= $maxOpen) {
                 throw ValidationException::withMessages(['subject' => [
-                    'Du hast bereits ' . $open . ' offene Tickets (höchstens ' . $maxOpen . '). Schließe ein erledigtes Ticket oder antworte in einem bestehenden.',
+                    I18n::t('tickets.v_open_count', ['open' => $open, 'max' => $maxOpen]),
                 ]]);
             }
 
@@ -123,10 +176,10 @@ class Tickets
         [$messageId, $wasOpen] = DB::transaction(function () use ($user, $ticketId, $body, $attachments) {
             $ticket = DB::table(self::TICKETS)->where('id', $ticketId)->where('user_id', $user->id)->lockForUpdate()->first();
             if ($ticket === null) {
-                throw new NotFoundHttpException('Das Ticket wurde nicht gefunden.');
+                throw new NotFoundHttpException(I18n::t('tickets.v_ticket_missing'));
             }
             if ($ticket->status === self::CLOSED) {
-                throw ValidationException::withMessages(['body' => ['Dieses Ticket ist geschlossen. Öffne es wieder, um zu antworten.']]);
+                throw ValidationException::withMessages(['body' => [I18n::t('tickets.v_closed_reply')]]);
             }
 
             $messageId = self::addMessage($ticketId, $user->id, false, 'message', $body, $attachments);
@@ -160,7 +213,7 @@ class Tickets
         [$messageId, $hadUnread] = DB::transaction(function () use ($admin, $ticketId, $body, $then) {
             $ticket = DB::table(self::TICKETS)->where('id', $ticketId)->lockForUpdate()->first();
             if ($ticket === null) {
-                throw new NotFoundHttpException('Das Ticket wurde nicht gefunden.');
+                throw new NotFoundHttpException(I18n::t('tickets.v_ticket_missing'));
             }
 
             $now = now();
@@ -200,7 +253,7 @@ class Tickets
     public static function setStatus(int $ticketId, string $status, string $by, ?int $actorId, ?int $ownerId = null): void
     {
         if (!isset(self::STATUSES[$status])) {
-            throw ValidationException::withMessages(['status' => ['Unbekannter Status.']]);
+            throw ValidationException::withMessages(['status' => [I18n::t('tickets.v_status_unknown')]]);
         }
 
         DB::transaction(function () use ($ticketId, $status, $by, $actorId, $ownerId) {
@@ -208,7 +261,7 @@ class Tickets
                 ->when($ownerId !== null, fn ($query) => $query->where('user_id', $ownerId))
                 ->lockForUpdate()->first();
             if ($ticket === null) {
-                throw new NotFoundHttpException('Das Ticket wurde nicht gefunden.');
+                throw new NotFoundHttpException(I18n::t('tickets.v_ticket_missing'));
             }
             if ($ticket->status === $status) {
                 return;
@@ -221,7 +274,7 @@ class Tickets
                     ->lockForUpdate()->pluck('id')->count();
                 if ($open >= $maxOpen) {
                     throw ValidationException::withMessages(['status' => [
-                        'Du hast bereits ' . $open . ' offene Tickets (höchstens ' . $maxOpen . '). Schließe zuerst ein anderes.',
+                        I18n::t('tickets.v_open_other', ['open' => $open, 'max' => $maxOpen]),
                     ]]);
                 }
             }

@@ -1,14 +1,15 @@
 @php
+  $t = static fn (string $key, array $replace = []): string => \Pterodactyl\BlueprintFramework\Extensions\{identifier}\I18n::t('tickets.' . $key, $replace);
   $ticketLabels = ['open' => 'label-danger', 'answered' => 'label-success', 'waiting' => 'label-warning', 'closed' => 'label-default'];
 @endphp
 
 @if (empty($ticketsReady))
   <div class="alert alert-warning">
-    Die Tabellen der Tickets fehlen noch. Bitte einmal <code>php artisan migrate --force</code> im Panel-Ordner ausfuehren.
+    {{ $t('tables_missing_before') }} <code>php artisan migrate --force</code> {{ $t('tables_missing_after') }}
   </div>
 @elseif ($ticketDetail !== null)
   {{-- Detailansicht: ?tab=tickets&ticket=<id> --}}
-  <p><a href="{{ $root }}?tab=tickets" class="btn btn-default btn-sm"><i class="fa fa-angle-left"></i> Alle Tickets</a></p>
+  <p><a href="{{ $root }}?tab=tickets" class="btn btn-default btn-sm"><i class="fa fa-angle-left"></i> {{ $t('back_all') }}</a></p>
 
   <div class="row">
     <div class="col-md-8">
@@ -30,9 +31,9 @@
                 <p>
                   <strong>{{ $message['author'] }}</strong>
                   @if ($message['team'])
-                    <span class="label label-primary">Team</span>
+                    <span class="label label-primary">{{ $t('badge_team') }}</span>
                   @else
-                    <span class="label label-default">Nutzer</span>
+                    <span class="label label-default">{{ $t('badge_user') }}</span>
                   @endif
                   <span class="text-muted small">{{ $message['at'] }}</span>
                 </p>
@@ -43,7 +44,7 @@
                 </p>
                 @foreach ($message['attachments'] as $attachment)
                   <a href="{{ $attachment['url'] }}" target="_blank" rel="noopener noreferrer" title="{{ $attachment['label'] }}">
-                    <img src="{{ $attachment['url'] }}" alt="Anhang, {{ $attachment['label'] }}" class="img-thumbnail" width="220" loading="lazy">
+                    <img src="{{ $attachment['url'] }}" alt="{{ $t('attachment_alt', ['size' => $attachment['label']]) }}" class="img-thumbnail" width="220" loading="lazy">
                   </a>
                 @endforeach
               </div>
@@ -53,28 +54,28 @@
       </div>
 
       <div class="box">
-        <div class="box-header with-border"><h3 class="box-title">Antworten</h3></div>
+        <div class="box-header with-border"><h3 class="box-title">{{ $t('reply_heading') }}</h3></div>
         <form method="POST" action="{{ $root }}">
           {{ csrf_field() }}
           <input type="hidden" name="action" value="tickets.reply">
           <input type="hidden" name="ticket" value="{{ $ticketDetail['ticket']->id }}">
           <div class="box-body">
             <div class="form-group">
-              <label for="techtyl-ticket-body">Antwort an {{ $ticketDetail['ticket']->username }}</label>
+              <label for="techtyl-ticket-body">{{ $t('reply_to', ['user' => $ticketDetail['ticket']->username]) }}</label>
               <textarea class="form-control" id="techtyl-ticket-body" name="body" rows="7" maxlength="5000" required>{{ old('body') }}</textarea>
-              <p class="text-muted small">Wird als reiner Text angezeigt, Zeilenumbrueche bleiben erhalten. Der Nutzer sieht deinen Vornamen.</p>
+              <p class="text-muted small">{{ $t('reply_hint') }}</p>
             </div>
             <div class="form-group">
-              <label for="techtyl-ticket-then">Status danach</label>
+              <label for="techtyl-ticket-then">{{ $t('then_label') }}</label>
               <select class="form-control" id="techtyl-ticket-then" name="then">
-                <option value="answered">Beantwortet</option>
-                <option value="waiting">Wartet auf Nutzer (Rueckfrage)</option>
-                <option value="closed">Geschlossen</option>
+                <option value="answered">{{ $t('team_status_answered') }}</option>
+                <option value="waiting">{{ $t('then_waiting') }}</option>
+                <option value="closed">{{ $t('team_status_closed') }}</option>
               </select>
             </div>
           </div>
           <div class="box-footer">
-            <button type="submit" class="btn btn-primary pull-right">Antwort senden</button>
+            <button type="submit" class="btn btn-primary pull-right">{{ $t('send_reply') }}</button>
           </div>
         </form>
       </div>
@@ -82,38 +83,38 @@
 
     <div class="col-md-4">
       <div class="box">
-        <div class="box-header with-border"><h3 class="box-title">Angaben</h3></div>
+        <div class="box-header with-border"><h3 class="box-title">{{ $t('details_heading') }}</h3></div>
         <div class="box-body table-responsive no-padding">
           <table class="table">
             <tr>
-              <th>Nutzer</th>
+              <th>{{ $t('field_user') }}</th>
               <td><a href="/admin/users/view/{{ $ticketDetail['ticket']->user_id }}">{{ $ticketDetail['ticket']->username }}</a><br><span class="text-muted small">{{ $ticketDetail['ticket']->email }}</span></td>
             </tr>
             <tr>
-              <th>Kategorie</th>
-              <td>{{ $ticketDetail['ticket']->category ?? 'Ohne' }}</td>
+              <th>{{ $t('field_category') }}</th>
+              <td>{{ $ticketDetail['ticket']->category ?? $t('none_category') }}</td>
             </tr>
             <tr>
-              <th>Server</th>
+              <th>{{ $t('field_server') }}</th>
               <td>
                 @if ($ticketDetail['ticket']->server_id !== null)
                   <a href="/admin/servers/view/{{ $ticketDetail['ticket']->server_id }}">{{ $ticketDetail['ticket']->server }}</a>
                 @else
-                  <span class="text-muted">Keiner</span>
+                  <span class="text-muted">{{ $t('none_server') }}</span>
                 @endif
               </td>
             </tr>
             <tr>
-              <th>Eroeffnet</th>
+              <th>{{ $t('opened') }}</th>
               <td>{{ $ticketDetail['created'] }}</td>
             </tr>
             <tr>
-              <th>Letzte Nachricht</th>
+              <th>{{ $t('last_message') }}</th>
               <td>{{ $ticketDetail['updated'] }}</td>
             </tr>
             @if ($ticketDetail['ticket']->status === 'closed')
               <tr>
-                <th>Geschlossen</th>
+                <th>{{ $t('closed_label') }}</th>
                 <td>{{ $ticketDetail['closedBy'] }}</td>
               </tr>
             @endif
@@ -122,24 +123,24 @@
       </div>
 
       <div class="box">
-        <div class="box-header with-border"><h3 class="box-title">Status setzen</h3></div>
+        <div class="box-header with-border"><h3 class="box-title">{{ $t('set_status_heading') }}</h3></div>
         <form method="POST" action="{{ $root }}">
           {{ csrf_field() }}
           <input type="hidden" name="action" value="tickets.status">
           <input type="hidden" name="ticket" value="{{ $ticketDetail['ticket']->id }}">
           <div class="box-body">
             <div class="form-group">
-              <label for="techtyl-ticket-status">Status</label>
+              <label for="techtyl-ticket-status">{{ $t('field_status') }}</label>
               <select class="form-control" id="techtyl-ticket-status" name="status">
                 @foreach ($ticketStatuses as $value => $label)
                   <option value="{{ $value }}" @if ($ticketDetail['ticket']->status === $value) selected @endif>{{ $label }}</option>
                 @endforeach
               </select>
-              <p class="text-muted small">Der Wechsel erscheint im Verlauf. Ohne Antwort wird keine E-Mail verschickt.</p>
+              <p class="text-muted small">{{ $t('status_hint') }}</p>
             </div>
           </div>
           <div class="box-footer">
-            <button type="submit" class="btn btn-default pull-right">Status speichern</button>
+            <button type="submit" class="btn btn-default pull-right">{{ $t('save_status') }}</button>
           </div>
         </form>
         @if ($ticketDetail['ticket']->status !== 'closed')
@@ -149,7 +150,7 @@
             <input type="hidden" name="ticket" value="{{ $ticketDetail['ticket']->id }}">
             <input type="hidden" name="status" value="closed">
             <div class="box-footer">
-              <button type="submit" class="btn btn-danger btn-sm">Ticket schliessen</button>
+              <button type="submit" class="btn btn-danger btn-sm">{{ $t('close_ticket') }}</button>
             </div>
           </form>
         @endif
@@ -158,25 +159,25 @@
   </div>
 @else
   @if (!empty($ticketDetailRequested))
-    <div class="alert alert-warning">Dieses Ticket gibt es nicht (mehr).</div>
+    <div class="alert alert-warning">{{ $t('missing_ticket') }}</div>
   @endif
 
   <div class="row">
     <div class="col-md-8">
       <div class="box">
         <div class="box-header with-border">
-          <h3 class="box-title">Tickets</h3>
+          <h3 class="box-title">{{ $t('title') }}</h3>
           <div class="box-tools">
-            <span class="label label-danger">{{ $ticketCounts['open'] }} offen</span>
-            <span class="label label-warning">{{ $ticketCounts['answered'] + $ticketCounts['waiting'] }} beim Nutzer</span>
-            <span class="label label-default">{{ $ticketCounts['closed'] }} geschlossen</span>
+            <span class="label label-danger">{{ $t('count_open', ['count' => $ticketCounts['open']]) }}</span>
+            <span class="label label-warning">{{ $t('count_with_user', ['count' => $ticketCounts['answered'] + $ticketCounts['waiting']]) }}</span>
+            <span class="label label-default">{{ $t('count_closed', ['count' => $ticketCounts['closed']]) }}</span>
           </div>
         </div>
         <div class="box-body">
           <form method="GET" action="{{ $root }}" class="form-inline">
             <input type="hidden" name="tab" value="tickets">
             <div class="form-group">
-              <label for="techtyl-ticket-filter-status">Status</label>
+              <label for="techtyl-ticket-filter-status">{{ $t('field_status') }}</label>
               <select class="form-control" id="techtyl-ticket-filter-status" name="status">
                 @foreach ($ticketFilters as $value => $label)
                   <option value="{{ $value }}" @if ($ticketStatus === $value) selected @endif>{{ $label }}</option>
@@ -184,15 +185,15 @@
               </select>
             </div>
             <div class="form-group">
-              <label for="techtyl-ticket-filter-category">Kategorie</label>
+              <label for="techtyl-ticket-filter-category">{{ $t('field_category') }}</label>
               <select class="form-control" id="techtyl-ticket-filter-category" name="category">
-                <option value="">Alle</option>
+                <option value="">{{ $t('filter_all') }}</option>
                 @foreach ($ticketCategories as $category)
                   <option value="{{ $category->id }}" @if ($ticketCategory === (int) $category->id) selected @endif>{{ $category->name }}</option>
                 @endforeach
               </select>
             </div>
-            <button type="submit" class="btn btn-default">Filtern</button>
+            <button type="submit" class="btn btn-default">{{ $t('filter_submit') }}</button>
           </form>
         </div>
         @if (count($ticketList) > 0)
@@ -200,12 +201,12 @@
             <table class="table table-hover">
               <thead>
                 <tr>
-                  <th>Nr.</th>
-                  <th>Betreff</th>
-                  <th>Nutzer</th>
-                  <th>Kategorie</th>
-                  <th>Status</th>
-                  <th>Letzte Nachricht</th>
+                  <th>{{ $t('col_number') }}</th>
+                  <th>{{ $t('col_subject') }}</th>
+                  <th>{{ $t('field_user') }}</th>
+                  <th>{{ $t('field_category') }}</th>
+                  <th>{{ $t('field_status') }}</th>
+                  <th>{{ $t('last_message') }}</th>
                 </tr>
               </thead>
               <tbody>
@@ -215,14 +216,14 @@
                     <td>
                       <a href="{{ $root }}?tab=tickets&amp;ticket={{ $ticket->id }}">@if ($ticket->team_unread > 0)<strong>{{ $ticket->subject }}</strong>@else{{ $ticket->subject }}@endif</a>
                       @if ($ticket->team_unread > 0)
-                        <span class="badge" title="Ungelesene Nachrichten">{{ $ticket->team_unread }}</span>
+                        <span class="badge" title="{{ $t('unread_title') }}">{{ $ticket->team_unread }}</span>
                       @endif
                       @if ($ticket->server !== null)
                         <br><span class="text-muted small">{{ $ticket->server }}</span>
                       @endif
                     </td>
                     <td>{{ $ticket->username }}</td>
-                    <td>{{ $ticket->category ?? 'Ohne' }}</td>
+                    <td>{{ $ticket->category ?? $t('none_category') }}</td>
                     <td><span class="label {{ $ticketLabels[$ticket->status] ?? 'label-default' }}">{{ $ticketStatuses[$ticket->status] ?? $ticket->status }}</span></td>
                     <td>{{ $ticket->at }}</td>
                   </tr>
@@ -232,13 +233,13 @@
           </div>
           @if ($ticketPages > 1)
             <div class="box-footer">
-              <span class="text-muted small">Seite {{ $ticketPage }} von {{ $ticketPages }}, {{ $ticketTotal }} Tickets</span>
+              <span class="text-muted small">{{ $t('page_status', ['page' => $ticketPage, 'pages' => $ticketPages, 'total' => $ticketTotal]) }}</span>
               <div class="pull-right">
                 @if ($ticketPage > 1)
-                  <a class="btn btn-default btn-sm" href="{{ $root }}?tab=tickets{{ $ticketFilterQuery }}&amp;page={{ $ticketPage - 1 }}">Zurueck</a>
+                  <a class="btn btn-default btn-sm" href="{{ $root }}?tab=tickets{{ $ticketFilterQuery }}&amp;page={{ $ticketPage - 1 }}">{{ $t('page_back') }}</a>
                 @endif
                 @if ($ticketPage < $ticketPages)
-                  <a class="btn btn-default btn-sm" href="{{ $root }}?tab=tickets{{ $ticketFilterQuery }}&amp;page={{ $ticketPage + 1 }}">Weiter</a>
+                  <a class="btn btn-default btn-sm" href="{{ $root }}?tab=tickets{{ $ticketFilterQuery }}&amp;page={{ $ticketPage + 1 }}">{{ $t('page_next') }}</a>
                 @endif
               </div>
             </div>
@@ -247,9 +248,9 @@
           <div class="box-body">
             <p class="text-muted">
               @if ($ticketStatus === 'active' && $ticketCategory === 0)
-                Keine offenen Tickets. Sobald ein Nutzer schreibt, erscheint das Ticket hier.
+                {{ $t('empty_open') }}
               @else
-                Zu diesem Filter gibt es keine Tickets.
+                {{ $t('empty_filter') }}
               @endif
             </p>
           </div>
@@ -259,39 +260,39 @@
 
     <div class="col-md-4">
       <div class="box">
-        <div class="box-header with-border"><h3 class="box-title">Einstellungen</h3></div>
+        <div class="box-header with-border"><h3 class="box-title">{{ $t('settings_heading') }}</h3></div>
         <form method="POST" action="{{ $root }}">
           {{ csrf_field() }}
           <input type="hidden" name="action" value="tickets.settings">
           <div class="box-body">
             <div class="form-group">
               <input type="hidden" name="notify" value="0">
-              <label><input type="checkbox" name="notify" value="1" @if ($ticketSettings['notify']) checked @endif> E-Mail bei neuer Antwort</label>
-              <p class="text-muted small">Nutzer erhalten einen Hinweis bei einer Antwort des Teams, Root-Admins bei neuen Tickets und Antworten. Die Mail enthaelt nur die Ticketnummer und einen Link, keinen Nachrichtentext.</p>
+              <label><input type="checkbox" name="notify" value="1" @if ($ticketSettings['notify']) checked @endif> {{ $t('notify_label') }}</label>
+              <p class="text-muted small">{{ $t('notify_help') }}</p>
             </div>
             <div class="form-group">
               <input type="hidden" name="attachments" value="0">
-              <label><input type="checkbox" name="attachments" value="1" @if ($ticketSettings['attachments']) checked @endif> Bilder als Anhang erlauben</label>
-              <p class="text-muted small">Bis zu 3 Bilder je Nachricht, neu kodiert und nur fuer den Nutzer des Tickets und Root-Admins abrufbar. Die Dateigroesse folgt der Grenze im Reiter Design.</p>
+              <label><input type="checkbox" name="attachments" value="1" @if ($ticketSettings['attachments']) checked @endif> {{ $t('attachments_label') }}</label>
+              <p class="text-muted small">{{ $t('attachments_help') }}</p>
             </div>
             <div class="form-group">
-              <label for="techtyl-ticket-autoclose">Automatisch schliessen nach Tagen ohne Antwort des Nutzers</label>
+              <label for="techtyl-ticket-autoclose">{{ $t('autoclose_label') }}</label>
               <input class="form-control" type="number" min="0" max="{{ $ticketSettingLimits['days'] }}" id="techtyl-ticket-autoclose" name="autoclose_days" value="{{ $ticketSettings['autoclose_days'] }}" required>
-              <p class="text-muted small">0 schaltet das automatische Schliessen ab. Gezaehlt wird ab der letzten Antwort des Teams; braucht den Cron des Panels.</p>
+              <p class="text-muted small">{{ $t('autoclose_help') }}</p>
             </div>
             <div class="form-group">
-              <label for="techtyl-ticket-max-open">Offene Tickets je Nutzer (1 bis {{ $ticketSettingLimits['open'] }})</label>
+              <label for="techtyl-ticket-max-open">{{ $t('max_open_label', ['max' => $ticketSettingLimits['open']]) }}</label>
               <input class="form-control" type="number" min="1" max="{{ $ticketSettingLimits['open'] }}" id="techtyl-ticket-max-open" name="max_open" value="{{ $ticketSettings['max_open'] }}" required>
             </div>
           </div>
           <div class="box-footer">
-            <button type="submit" class="btn btn-primary pull-right">Einstellungen speichern</button>
+            <button type="submit" class="btn btn-primary pull-right">{{ $t('save_settings') }}</button>
           </div>
         </form>
       </div>
 
       <div class="box">
-        <div class="box-header with-border"><h3 class="box-title">Kategorien</h3></div>
+        <div class="box-header with-border"><h3 class="box-title">{{ $t('categories_heading') }}</h3></div>
         <div class="box-body table-responsive no-padding">
           <table class="table">
             <tbody>
@@ -303,21 +304,21 @@
                       <input type="hidden" name="action" value="tickets.category-rename">
                       <input type="hidden" name="category" value="{{ $category->id }}">
                       <div class="input-group input-group-sm">
-                        <input class="form-control" type="text" name="name" value="{{ $category->name }}" minlength="2" maxlength="60" required aria-label="Name der Kategorie {{ $category->name }}">
+                        <input class="form-control" type="text" name="name" value="{{ $category->name }}" minlength="2" maxlength="60" required aria-label="{{ $t('category_name_label', ['category' => $category->name]) }}">
                         <span class="input-group-btn">
-                          <button type="submit" class="btn btn-default" title="Umbenennen"><i class="fa fa-check"></i><span class="sr-only">Umbenennen</span></button>
+                          <button type="submit" class="btn btn-default" title="{{ $t('rename') }}"><i class="fa fa-check"></i><span class="sr-only">{{ $t('rename') }}</span></button>
                         </span>
                       </div>
                     </form>
-                    <span class="text-muted small">{{ $category->tickets }} {{ (int) $category->tickets === 1 ? 'Ticket' : 'Tickets' }}</span>
+                    <span class="text-muted small">{{ $t((int) $category->tickets === 1 ? 'category_ticket_one' : 'category_tickets', ['count' => $category->tickets]) }}</span>
                   </td>
                   <td class="text-right text-nowrap">
                     <form method="POST" action="{{ $root }}">
                       {{ csrf_field() }}
                       <input type="hidden" name="action" value="tickets.category-move">
                       <input type="hidden" name="category" value="{{ $category->id }}">
-                      <button type="submit" name="direction" value="up" class="btn btn-default btn-xs" title="Nach oben" @if ($loop->first) disabled @endif><i class="fa fa-arrow-up"></i><span class="sr-only">Nach oben</span></button>
-                      <button type="submit" name="direction" value="down" class="btn btn-default btn-xs" title="Nach unten" @if ($loop->last) disabled @endif><i class="fa fa-arrow-down"></i><span class="sr-only">Nach unten</span></button>
+                      <button type="submit" name="direction" value="up" class="btn btn-default btn-xs" title="{{ $t('move_up') }}" @if ($loop->first) disabled @endif><i class="fa fa-arrow-up"></i><span class="sr-only">{{ $t('move_up') }}</span></button>
+                      <button type="submit" name="direction" value="down" class="btn btn-default btn-xs" title="{{ $t('move_down') }}" @if ($loop->last) disabled @endif><i class="fa fa-arrow-down"></i><span class="sr-only">{{ $t('move_down') }}</span></button>
                     </form>
                   </td>
                   <td class="text-right">
@@ -325,7 +326,7 @@
                       {{ csrf_field() }}
                       <input type="hidden" name="action" value="tickets.category-delete">
                       <input type="hidden" name="category" value="{{ $category->id }}">
-                      <button type="submit" class="btn btn-danger btn-xs" title="@if ((int) $category->tickets > 0) Wird von Tickets verwendet @else Loeschen @endif" @if ((int) $category->tickets > 0) disabled @endif><i class="fa fa-trash-o"></i><span class="sr-only">Loeschen</span></button>
+                      <button type="submit" class="btn btn-danger btn-xs" title="{{ (int) $category->tickets > 0 ? $t('category_in_use') : $t('delete') }}" @if ((int) $category->tickets > 0) disabled @endif><i class="fa fa-trash-o"></i><span class="sr-only">{{ $t('delete') }}</span></button>
                     </form>
                   </td>
                 </tr>
@@ -338,9 +339,9 @@
           <input type="hidden" name="action" value="tickets.category-add">
           <div class="box-footer">
             <div class="input-group input-group-sm">
-              <input class="form-control" type="text" name="name" minlength="2" maxlength="60" placeholder="Neue Kategorie" required aria-label="Name der neuen Kategorie">
+              <input class="form-control" type="text" name="name" minlength="2" maxlength="60" placeholder="{{ $t('new_category_placeholder') }}" required aria-label="{{ $t('new_category_name') }}">
               <span class="input-group-btn">
-                <button type="submit" class="btn btn-primary">Anlegen</button>
+                <button type="submit" class="btn btn-primary">{{ $t('category_add') }}</button>
               </span>
             </div>
           </div>

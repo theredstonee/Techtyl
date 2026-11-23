@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Pterodactyl\BlueprintFramework\Extensions\{identifier}\I18n;
 
 /**
  * Admin-Reiter "Tickets": alle Tickets, Detailansicht (?tab=tickets&ticket=<id>), Kategorien und
@@ -20,8 +21,8 @@ class Admin
     private const MAX_CATEGORIES = 30;
     private const CATEGORY_NAME = ['required', 'string', 'min:2', 'max:60', 'regex:/^[^\p{Cc}\p{Cf}<>]+$/u'];
 
-    /** Filterwert => Bezeichnung; "active" sind alle nicht geschlossenen Tickets. */
-    private const FILTERS = ['active' => 'Alle offenen', 'all' => 'Alle'] + Tickets::TEAM_STATUSES;
+    /** Filter keys. "active" means every ticket that is not closed. Labels come from translations. */
+    private const FILTERS = ['active' => 'active', 'all' => 'all'] + Tickets::TEAM_STATUSES;
 
     public static function data(): array
     {
@@ -81,8 +82,8 @@ class Admin
             'ticketSettings' => TicketSettings::get(),
             'ticketSettingLimits' => ['days' => TicketSettings::MAX_AUTOCLOSE_DAYS, 'open' => TicketSettings::MAX_OPEN_LIMIT],
             'ticketCategories' => $categories,
-            'ticketFilters' => self::FILTERS,
-            'ticketStatuses' => Tickets::TEAM_STATUSES,
+            'ticketFilters' => self::filterLabels(),
+            'ticketStatuses' => Tickets::teamStatusLabels(),
             'ticketStatus' => $status,
             'ticketCategory' => $category,
             'ticketList' => $list,
@@ -118,17 +119,24 @@ class Admin
             'body' => ['required', 'string', 'max:' . (Tickets::BODY_MAX * 2)],
             'then' => ['required', 'string', Rule::in([Tickets::ANSWERED, Tickets::WAITING, Tickets::CLOSED])],
         ], [
-            'body.required' => 'Bitte eine Antwort eingeben.',
-            'body.max' => 'Die Antwort ist zu lang (hoechstens ' . Tickets::BODY_MAX . ' Zeichen).',
-        ]);
+            'ticket.required' => I18n::t('tickets.v_ticket_invalid'),
+            'ticket.integer' => I18n::t('tickets.v_ticket_invalid'),
+            'ticket.min' => I18n::t('tickets.v_ticket_invalid'),
+            'body.required' => I18n::t('tickets.v_reply_required'),
+            'body.string' => I18n::t('tickets.v_reply_required'),
+            'body.max' => I18n::t('tickets.v_reply_long', ['max' => Tickets::BODY_MAX]),
+            'then.required' => I18n::t('tickets.v_then'),
+            'then.string' => I18n::t('tickets.v_then'),
+            'then.in' => I18n::t('tickets.v_then'),
+        ], Tickets::attrs());
         $body = Tickets::cleanBody($input['body']);
         if ($body === '' || mb_strlen($body) > Tickets::BODY_MAX) {
-            throw ValidationException::withMessages(['body' => ['Die Antwort braucht 1 bis ' . Tickets::BODY_MAX . ' Zeichen.']]);
+            throw ValidationException::withMessages(['body' => [I18n::t('tickets.v_reply_length', ['max' => Tickets::BODY_MAX])]]);
         }
 
         Tickets::teamReply($request->user(), (int) $input['ticket'], $body, $input['then']);
 
-        self::backToTicket((int) $input['ticket'], $input['then'] === Tickets::CLOSED ? 'Antwort gesendet, Ticket geschlossen.' : 'Antwort gesendet.');
+        self::backToTicket((int) $input['ticket'], I18n::t($input['then'] === Tickets::CLOSED ? 'tickets.saved_reply_closed' : 'tickets.saved_reply'));
     }
 
     private static function status(Request $request): string
@@ -136,10 +144,19 @@ class Admin
         $input = $request->validate([
             'ticket' => ['required', 'integer', 'min:1'],
             'status' => ['required', 'string', Rule::in(array_keys(Tickets::STATUSES))],
-        ]);
+        ], [
+            'ticket.required' => I18n::t('tickets.v_ticket_invalid'),
+            'ticket.integer' => I18n::t('tickets.v_ticket_invalid'),
+            'ticket.min' => I18n::t('tickets.v_ticket_invalid'),
+            'status.required' => I18n::t('tickets.v_status_required'),
+            'status.string' => I18n::t('tickets.v_status_invalid'),
+            'status.in' => I18n::t('tickets.v_status_invalid'),
+        ], Tickets::attrs());
         Tickets::setStatus((int) $input['ticket'], $input['status'], 'team', $request->user()->id);
 
-        self::backToTicket((int) $input['ticket'], 'Status gesetzt: ' . Tickets::TEAM_STATUSES[$input['status']] . '.');
+        self::backToTicket((int) $input['ticket'], I18n::t('tickets.saved_status', [
+            'status' => Tickets::teamStatusLabels()[$input['status']],
+        ]));
     }
 
     private static function settings(Request $request): string
@@ -149,16 +166,27 @@ class Admin
             'attachments' => ['nullable', 'boolean'],
             'autoclose_days' => ['required', 'integer', 'min:0', 'max:' . TicketSettings::MAX_AUTOCLOSE_DAYS],
             'max_open' => ['required', 'integer', 'min:1', 'max:' . TicketSettings::MAX_OPEN_LIMIT],
-        ]));
+        ], [
+            'notify.boolean' => I18n::t('tickets.v_bool'),
+            'attachments.boolean' => I18n::t('tickets.v_bool'),
+            'autoclose_days.required' => I18n::t('tickets.v_days_required'),
+            'autoclose_days.integer' => I18n::t('tickets.v_days', ['max' => TicketSettings::MAX_AUTOCLOSE_DAYS]),
+            'autoclose_days.min' => I18n::t('tickets.v_days', ['max' => TicketSettings::MAX_AUTOCLOSE_DAYS]),
+            'autoclose_days.max' => I18n::t('tickets.v_days', ['max' => TicketSettings::MAX_AUTOCLOSE_DAYS]),
+            'max_open.required' => I18n::t('tickets.v_max_open_required'),
+            'max_open.integer' => I18n::t('tickets.v_max_open', ['max' => TicketSettings::MAX_OPEN_LIMIT]),
+            'max_open.min' => I18n::t('tickets.v_max_open', ['max' => TicketSettings::MAX_OPEN_LIMIT]),
+            'max_open.max' => I18n::t('tickets.v_max_open', ['max' => TicketSettings::MAX_OPEN_LIMIT]),
+        ], Tickets::attrs()));
 
-        return 'Ticket-Einstellungen gespeichert.';
+        return I18n::t('tickets.saved_settings');
     }
 
     private static function categoryAdd(Request $request): string
     {
         $name = self::categoryName($request, null);
         if (DB::table(Tickets::CATEGORIES)->count() >= self::MAX_CATEGORIES) {
-            throw ValidationException::withMessages(['name' => ['Es sind hoechstens ' . self::MAX_CATEGORIES . ' Kategorien moeglich.']]);
+            throw ValidationException::withMessages(['name' => [I18n::t('tickets.v_category_limit', ['max' => self::MAX_CATEGORIES])]]);
         }
         DB::table(Tickets::CATEGORIES)->insert([
             'name' => $name,
@@ -167,7 +195,7 @@ class Admin
             'updated_at' => now(),
         ]);
 
-        return 'Kategorie angelegt.';
+        return I18n::t('tickets.saved_category_added');
     }
 
     private static function categoryRename(Request $request): string
@@ -175,7 +203,7 @@ class Admin
         $id = self::categoryId($request);
         DB::table(Tickets::CATEGORIES)->where('id', $id)->update(['name' => self::categoryName($request, $id), 'updated_at' => now()]);
 
-        return 'Kategorie umbenannt.';
+        return I18n::t('tickets.saved_category_renamed');
     }
 
     private static function categoryDelete(Request $request): string
@@ -183,18 +211,22 @@ class Admin
         $id = self::categoryId($request);
         DB::transaction(function () use ($id) {
             if (DB::table(Tickets::TICKETS)->where('category_id', $id)->lockForUpdate()->exists()) {
-                throw ValidationException::withMessages(['category' => ['Die Kategorie wird von Tickets verwendet und kann nicht geloescht werden.']]);
+                throw ValidationException::withMessages(['category' => [I18n::t('tickets.v_category_used')]]);
             }
             DB::table(Tickets::CATEGORIES)->where('id', $id)->delete();
         });
 
-        return 'Kategorie geloescht.';
+        return I18n::t('tickets.saved_category_deleted');
     }
 
     private static function categoryMove(Request $request): string
     {
         $id = self::categoryId($request);
-        $direction = $request->validate(['direction' => ['required', 'string', 'in:up,down']])['direction'];
+        $direction = $request->validate(['direction' => ['required', 'string', 'in:up,down']], [
+            'direction.required' => I18n::t('tickets.v_direction'),
+            'direction.string' => I18n::t('tickets.v_direction'),
+            'direction.in' => I18n::t('tickets.v_direction'),
+        ], Tickets::attrs())['direction'];
 
         DB::transaction(function () use ($id, $direction) {
             $ids = DB::table(Tickets::CATEGORIES)->orderBy('position')->orderBy('id')->lockForUpdate()->pluck('id')
@@ -209,14 +241,18 @@ class Admin
             }
         });
 
-        return 'Reihenfolge geaendert.';
+        return I18n::t('tickets.saved_order');
     }
 
     private static function categoryId(Request $request): int
     {
-        $id = (int) $request->validate(['category' => ['required', 'integer', 'min:1']])['category'];
+        $id = (int) $request->validate(['category' => ['required', 'integer', 'min:1']], [
+            'category.required' => I18n::t('tickets.v_category_invalid'),
+            'category.integer' => I18n::t('tickets.v_category_invalid'),
+            'category.min' => I18n::t('tickets.v_category_invalid'),
+        ], Tickets::attrs())['category'];
         if (!DB::table(Tickets::CATEGORIES)->where('id', $id)->exists()) {
-            throw ValidationException::withMessages(['category' => ['Die Kategorie wurde nicht gefunden.']]);
+            throw ValidationException::withMessages(['category' => [I18n::t('tickets.v_category_missing')]]);
         }
 
         return $id;
@@ -225,12 +261,16 @@ class Admin
     private static function categoryName(Request $request, ?int $exceptId): string
     {
         $name = trim($request->validate(['name' => self::CATEGORY_NAME], [
-            'name.regex' => 'Der Name enthaelt unzulaessige Zeichen.',
-        ])['name']);
+            'name.required' => I18n::t('tickets.v_name_required'),
+            'name.string' => I18n::t('tickets.v_name_required'),
+            'name.min' => I18n::t('tickets.v_name_short'),
+            'name.max' => I18n::t('tickets.v_name_long', ['max' => 60]),
+            'name.regex' => I18n::t('tickets.v_name_chars'),
+        ], Tickets::attrs())['name']);
         $taken = DB::table(Tickets::CATEGORIES)->where('name', $name)
             ->when($exceptId !== null, fn ($query) => $query->where('id', '!=', $exceptId))->exists();
         if (mb_strlen($name) < 2 || $taken) {
-            throw ValidationException::withMessages(['name' => [$taken ? 'Eine Kategorie mit diesem Namen gibt es schon.' : 'Der Name ist zu kurz.']]);
+            throw ValidationException::withMessages(['name' => [I18n::t($taken ? 'tickets.v_name_taken' : 'tickets.v_name_short')]]);
         }
 
         return $name;
@@ -268,20 +308,23 @@ class Admin
         Tickets::markReadByTeam($id);
 
         $events = [
-            'closed' => 'hat das Ticket geschlossen',
-            'reopened' => 'hat das Ticket wieder geoeffnet',
-            'autoclosed' => 'Automatisch geschlossen, weil keine Antwort kam',
+            'closed' => I18n::t('tickets.event_closed'),
+            'reopened' => I18n::t('tickets.event_reopened'),
+            'autoclosed' => I18n::t('tickets.event_autoclosed'),
         ];
+        $teamLabels = Tickets::teamStatusLabels();
         $messages = [];
         foreach (Tickets::thread($id) as $message) {
             $author = $message->user_id === null
-                ? ($message->type === 'autoclosed' ? 'System' : 'Geloeschter Nutzer')
-                : $message->username . ((bool) $message->is_team ? ' (Team)' : '');
+                ? ($message->type === 'autoclosed' ? I18n::t('tickets.author_system') : I18n::t('tickets.author_deleted'))
+                : $message->username . ((bool) $message->is_team ? I18n::t('tickets.author_team_suffix') : '');
             $event = null;
             if ($message->type === 'status') {
-                $event = 'hat den Status gesetzt: ' . (Tickets::TEAM_STATUSES[(string) $message->body] ?? 'unbekannt');
+                $event = I18n::t('tickets.event_status_set', [
+                    'status' => $teamLabels[(string) $message->body] ?? I18n::t('tickets.unknown'),
+                ]);
             } elseif ($message->type !== 'message') {
-                $event = $events[$message->type] ?? 'Ereignis';
+                $event = $events[$message->type] ?? I18n::t('tickets.event_generic');
             }
             $messages[] = [
                 'author' => $author,
@@ -292,7 +335,10 @@ class Admin
                 'at' => self::time($message->created_at),
                 'attachments' => array_map(fn ($attachment) => [
                     'url' => '/extensions/{identifier}/tickets/attachments/' . (int) $attachment->id,
-                    'label' => (int) $attachment->width . ' x ' . (int) $attachment->height . ' Pixel',
+                    'label' => I18n::t('tickets.attachment_size', [
+                        'width' => (int) $attachment->width,
+                        'height' => (int) $attachment->height,
+                    ]),
                 ], $message->attachments),
             ];
         }
@@ -302,8 +348,21 @@ class Admin
             'messages' => $messages,
             'created' => self::time($ticket->created_at),
             'updated' => self::time($ticket->last_message_at),
-            'closedBy' => ['user' => 'vom Nutzer', 'team' => 'vom Team', 'auto' => 'automatisch'][$ticket->closed_by] ?? '',
+            'closedBy' => [
+                'user' => I18n::t('tickets.closed_by_user'),
+                'team' => I18n::t('tickets.closed_by_team'),
+                'auto' => I18n::t('tickets.closed_by_auto'),
+            ][$ticket->closed_by] ?? '',
         ];
+    }
+
+    /** @return array<string, string> */
+    private static function filterLabels(): array
+    {
+        return [
+            'active' => I18n::t('tickets.filter_active'),
+            'all' => I18n::t('tickets.filter_all'),
+        ] + Tickets::teamStatusLabels();
     }
 
     private static function time(mixed $value): string

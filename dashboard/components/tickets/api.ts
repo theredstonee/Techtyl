@@ -178,18 +178,20 @@ export const closeTicket = async (id: number): Promise<Ticket> => toTicket((awai
 export const reopenTicket = async (id: number): Promise<Ticket> =>
     toTicket((await http.post(`${BASE}/${id}/reopen`)).data);
 
+export type Translate = (key: string, replace?: Record<string, string | number>) => string;
+
 /** Fehlermeldung fuer Menschen: sagt, was los ist und was man tun kann. */
-export const explain = (error: any, fallback: string): string => {
+export const explain = (t: Translate, error: any, fallback: string): string => {
     const status = error && error.response ? error.response.status : 0;
-    if (status === 429) return 'Das war zu schnell hintereinander. Warte einen Moment und versuch es dann noch einmal.';
-    if (status === 413) return 'Die Anhänge sind zusammen zu groß für diesen Server. Nimm kleinere oder weniger Bilder.';
-    if (status === 404) return 'Das Ticket wurde nicht gefunden. Vielleicht wurde es entfernt.';
-    if (status === 401 || status === 419) return 'Deine Sitzung ist abgelaufen. Lade die Seite neu und melde dich wieder an.';
+    if (status === 429) return t('err_too_fast');
+    if (status === 413) return t('err_too_large');
+    if (status === 404) return t('err_not_found');
+    if (status === 401 || status === 419) return t('err_session');
     if (status === 422 || status === 400 || status === 403) {
         const text = httpErrorToHuman(error);
         if (text) return text;
     }
-    if (!status) return 'Keine Verbindung zum Panel. Prüfe deine Internetverbindung und versuch es erneut.';
+    if (!status) return t('err_offline');
 
     return fallback;
 };

@@ -6,6 +6,8 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
+use Pterodactyl\BlueprintFramework\Extensions\{identifier}\I18n;
+use Pterodactyl\Models\User;
 
 /**
  * Hinweis-Mail zu einem Ticket. Enthaelt bewusst weder Betreff noch Nachrichtentext (dort koennen
@@ -29,32 +31,40 @@ class TicketNotification extends Notification implements ShouldQueue
         return ['mail'];
     }
 
-    public function toMail(): MailMessage
+    public function toMail(User $user): MailMessage
+    {
+        // Render in the recipient's language. "de" is German, anything else uses the admin default.
+        $locale = $user->language === 'de' ? 'de' : I18n::fallbackLocale();
+
+        return I18n::using($locale, fn () => $this->compose());
+    }
+
+    private function compose(): MailMessage
     {
         $number = '#' . $this->ticketId;
         $userLink = url('/account/tickets?ticket=' . $this->ticketId);
         $teamLink = url('/admin/extensions/{identifier}?tab=tickets&ticket=' . $this->ticketId);
-        $mail = (new MailMessage())->greeting('Hallo!');
+        $mail = (new MailMessage())->greeting(I18n::t('tickets.mail_greeting'));
 
         return match ($this->kind) {
             self::NEW_TICKET => $mail
-                ->subject('Neues Ticket ' . $number)
-                ->line('Ein Nutzer hat das Ticket ' . $number . ' eröffnet.')
-                ->action('Ticket ansehen', $teamLink),
+                ->subject(I18n::t('tickets.mail_new_subject', ['number' => $number]))
+                ->line(I18n::t('tickets.mail_new_line', ['number' => $number]))
+                ->action(I18n::t('tickets.mail_view'), $teamLink),
             self::USER_REPLIED => $mail
-                ->subject('Neue Antwort im Ticket ' . $number)
-                ->line('Im Ticket ' . $number . ' gibt es eine neue Antwort des Nutzers.')
-                ->action('Ticket ansehen', $teamLink),
+                ->subject(I18n::t('tickets.mail_user_subject', ['number' => $number]))
+                ->line(I18n::t('tickets.mail_user_line', ['number' => $number]))
+                ->action(I18n::t('tickets.mail_view'), $teamLink),
             self::AUTO_CLOSED => $mail
-                ->subject('Ticket ' . $number . ' wurde geschlossen')
-                ->line('Dein Ticket ' . $number . ' wurde geschlossen, weil längere Zeit keine Antwort kam.')
-                ->line('Du kannst es im Panel jederzeit wieder öffnen.')
-                ->action('Ticket ansehen', $userLink),
+                ->subject(I18n::t('tickets.mail_auto_subject', ['number' => $number]))
+                ->line(I18n::t('tickets.mail_auto_line', ['number' => $number]))
+                ->line(I18n::t('tickets.mail_auto_reopen'))
+                ->action(I18n::t('tickets.mail_view'), $userLink),
             default => $mail
-                ->subject('Antwort auf dein Ticket ' . $number)
-                ->line('Das Team hat auf dein Ticket ' . $number . ' geantwortet.')
-                ->line('Aus Sicherheitsgründen steht der Inhalt nur im Panel.')
-                ->action('Antwort lesen', $userLink),
+                ->subject(I18n::t('tickets.mail_team_subject', ['number' => $number]))
+                ->line(I18n::t('tickets.mail_team_line', ['number' => $number]))
+                ->line(I18n::t('tickets.mail_team_private'))
+                ->action(I18n::t('tickets.mail_read'), $userLink),
         };
     }
 }

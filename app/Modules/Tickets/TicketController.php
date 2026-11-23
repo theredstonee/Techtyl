@@ -11,6 +11,7 @@ use Pterodactyl\Http\Controllers\Controller;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Pterodactyl\BlueprintFramework\Extensions\{identifier}\I18n;
 use Pterodactyl\BlueprintFramework\Extensions\{identifier}\Settings;
 use Pterodactyl\BlueprintFramework\Extensions\{identifier}\ImageProcessor;
 
@@ -36,7 +37,7 @@ class TicketController extends Controller
                     ->map(fn ($row) => ['id' => (int) $row->id, 'name' => $row->name])->all(),
                 'servers' => $this->serverQuery($user)->orderBy('name')->limit(500)->get(['uuid', 'uuidShort', 'name'])
                     ->map(fn ($row) => ['uuid' => $row->uuid, 'identifier' => $row->uuidShort, 'name' => $row->name])->all(),
-                'statuses' => Tickets::STATUSES,
+                'statuses' => Tickets::userStatusLabels(),
                 'limits' => [
                     'subject_min' => Tickets::SUBJECT_MIN,
                     'subject_max' => Tickets::SUBJECT_MAX,
@@ -59,7 +60,15 @@ class TicketController extends Controller
             'status' => ['sometimes', 'nullable', 'string', 'in:' . implode(',', array_keys(Tickets::STATUSES))],
             'q' => ['sometimes', 'nullable', 'string', 'max:' . Tickets::SUBJECT_MAX],
             'page' => ['sometimes', 'integer', 'min:1', 'max:100000'],
-        ]);
+        ], [
+            'status.string' => I18n::t('tickets.v_status_invalid'),
+            'status.in' => I18n::t('tickets.v_status_invalid'),
+            'q.string' => I18n::t('tickets.v_search_invalid'),
+            'q.max' => I18n::t('tickets.v_search_long', ['max' => Tickets::SUBJECT_MAX]),
+            'page.integer' => I18n::t('tickets.v_page'),
+            'page.min' => I18n::t('tickets.v_page'),
+            'page.max' => I18n::t('tickets.v_page'),
+        ], Tickets::attrs());
         $user = $request->user();
         $status = $input['status'] ?? null;
         $search = trim((string) ($input['q'] ?? ''));
@@ -104,31 +113,31 @@ class TicketController extends Controller
             'subject' => ['required', 'string', 'max:' . (Tickets::SUBJECT_MAX * 2)],
             'category' => ['required', 'integer', 'min:1'],
             'server' => ['sometimes', 'nullable', 'string', 'uuid'],
-        ] + $this->messageRules(), $this->messageTexts());
+        ] + $this->messageRules(), $this->fieldTexts() + $this->messageTexts(), Tickets::attrs());
 
         $subject = Tickets::cleanSubject($input['subject']);
         $length = mb_strlen($subject);
         if ($length < Tickets::SUBJECT_MIN || $length > Tickets::SUBJECT_MAX) {
             throw ValidationException::withMessages(['subject' => [
-                'Der Betreff braucht ' . Tickets::SUBJECT_MIN . ' bis ' . Tickets::SUBJECT_MAX . ' Zeichen.',
+                I18n::t('tickets.v_subject_length', ['min' => Tickets::SUBJECT_MIN, 'max' => Tickets::SUBJECT_MAX]),
             ]]);
         }
         $body = $this->cleanBody($input['body']);
 
         if (!DB::table(Tickets::CATEGORIES)->where('id', (int) $input['category'])->exists()) {
-            throw ValidationException::withMessages(['category' => ['Diese Kategorie gibt es nicht mehr. Bitte neu wählen.']]);
+            throw ValidationException::withMessages(['category' => [I18n::t('tickets.v_category_gone')]]);
         }
         $serverId = null;
         if (!empty($input['server'])) {
             $serverId = $this->serverQuery($user)->where('uuid', $input['server'])->value('id');
             if ($serverId === null) {
-                throw ValidationException::withMessages(['server' => ['Der Server wurde nicht gefunden.']]);
+                throw ValidationException::withMessages(['server' => [I18n::t('tickets.v_server_missing')]]);
             }
         }
         // Vor der Bildverarbeitung pruefen, damit ein abgelehntes Ticket keine Rechenzeit kostet.
         if (Tickets::openCount($user->id) >= TicketSettings::get()['max_open']) {
             throw ValidationException::withMessages(['subject' => [
-                'Du hast die Grenze offener Tickets erreicht (' . TicketSettings::get()['max_open'] . '). Schließe ein erledigtes Ticket oder antworte in einem bestehenden.',
+                I18n::t('tickets.v_open_reached', ['max' => TicketSettings::get()['max_open']]),
             ]]);
         }
 
@@ -162,11 +171,11 @@ class TicketController extends Controller
     {
         $user = $request->user();
         $id = $this->ownTicketId($user, $ticket);
-        $input = $request->validate($this->messageRules(), $this->messageTexts());
+        $input = $request->validate($this->messageRules(), $this->messageTexts(), Tickets::attrs());
         $body = $this->cleanBody($input['body']);
 
         if (DB::table(Tickets::TICKETS)->where('id', $id)->value('status') === Tickets::CLOSED) {
-            throw ValidationException::withMessages(['body' => ['Dieses Ticket ist geschlossen. Öffne es wieder, um zu antworten.']]);
+            throw ValidationException::withMessages(['body' => [I18n::t('tickets.v_closed_reply')]]);
         }
 
         $stored = Attachments::store($this->files($request));
@@ -257,17 +266,34 @@ class TicketController extends Controller
     }
 
     /** @return array<string, string> */
+    private function fieldTexts(): array
+    {
+        return [
+            'subject.required' => I18n::t('tickets.v_subject_required'),
+            'subject.string' => I18n::t('tickets.v_subject_required'),
+            'subject.max' => I18n::t('tickets.v_subject_long', ['max' => Tickets::SUBJECT_MAX]),
+            'category.required' => I18n::t('tickets.v_category_choose'),
+            'category.integer' => I18n::t('tickets.v_category_choose'),
+            'category.min' => I18n::t('tickets.v_category_choose'),
+            'server.string' => I18n::t('tickets.v_server_invalid'),
+            'server.uuid' => I18n::t('tickets.v_server_invalid'),
+        ];
+    }
+
+    /** @return array<string, string> */
     private function messageTexts(): array
     {
         return [
-            'body.required' => 'Bitte schreib eine Nachricht.',
-            'body.max' => 'Die Nachricht ist zu lang (höchstens ' . Tickets::BODY_MAX . ' Zeichen).',
-            'images.max' => 'Höchstens ' . Attachments::MAX_PER_MESSAGE . ' Bilder je Nachricht.',
-            'images.prohibited' => 'Dateianhänge sind abgeschaltet.',
-            'images.*.file' => 'Ein Anhang konnte nicht hochgeladen werden.',
-            'images.*.uploaded' => 'Ein Anhang konnte nicht hochgeladen werden (zu groß?).',
-            'images.*.max' => 'Ein Bild ist zu groß (höchstens ' . Settings::limits()['max_upload_kb'] . ' KB).',
-            'images.*.mimetypes' => 'Erlaubt sind nur JPEG-, PNG- und WebP-Bilder.',
+            'body.required' => I18n::t('tickets.v_body_required'),
+            'body.string' => I18n::t('tickets.v_body_required'),
+            'body.max' => I18n::t('tickets.v_body_long', ['max' => Tickets::BODY_MAX]),
+            'images.array' => I18n::t('tickets.v_images_invalid'),
+            'images.max' => I18n::t('tickets.v_images_max', ['max' => Attachments::MAX_PER_MESSAGE]),
+            'images.prohibited' => I18n::t('tickets.v_images_off'),
+            'images.*.file' => I18n::t('tickets.v_image_upload'),
+            'images.*.uploaded' => I18n::t('tickets.v_image_upload_size'),
+            'images.*.max' => I18n::t('tickets.v_image_max', ['max' => Settings::limits()['max_upload_kb']]),
+            'images.*.mimetypes' => I18n::t('tickets.v_image_type'),
         ];
     }
 
@@ -275,10 +301,10 @@ class TicketController extends Controller
     {
         $body = Tickets::cleanBody($raw);
         if ($body === '') {
-            throw ValidationException::withMessages(['body' => ['Bitte schreib eine Nachricht.']]);
+            throw ValidationException::withMessages(['body' => [I18n::t('tickets.v_body_required')]]);
         }
         if (mb_strlen($body) > Tickets::BODY_MAX) {
-            throw ValidationException::withMessages(['body' => ['Die Nachricht ist zu lang (höchstens ' . Tickets::BODY_MAX . ' Zeichen).']]);
+            throw ValidationException::withMessages(['body' => [I18n::t('tickets.v_body_long', ['max' => Tickets::BODY_MAX])]]);
         }
 
         return $body;
@@ -299,7 +325,7 @@ class TicketController extends Controller
     {
         $id = ctype_digit($ticket) && strlen($ticket) <= 10 ? (int) $ticket : 0;
         if ($id < 1 || !DB::table(Tickets::TICKETS)->where('id', $id)->where('user_id', $user->id)->exists()) {
-            throw new NotFoundHttpException('Das Ticket wurde nicht gefunden.');
+            throw new NotFoundHttpException(I18n::t('tickets.v_ticket_missing'));
         }
 
         return $id;
@@ -350,7 +376,7 @@ class TicketController extends Controller
     {
         $row = $this->withRelations(DB::table(Tickets::TICKETS . ' as t')->where('t.id', $id)->where('t.user_id', $user->id))->first();
         if ($row === null) {
-            throw new NotFoundHttpException('Das Ticket wurde nicht gefunden.');
+            throw new NotFoundHttpException(I18n::t('tickets.v_ticket_missing'));
         }
         $ticket = $this->ticketObject($row);
 

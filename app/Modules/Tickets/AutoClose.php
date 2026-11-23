@@ -5,6 +5,7 @@ namespace Pterodactyl\BlueprintFramework\Extensions\{identifier}\Modules\Tickets
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
+use Pterodactyl\BlueprintFramework\Extensions\{identifier}\I18n;
 use Pterodactyl\BlueprintFramework\Extensions\{identifier}\Modules;
 use Pterodactyl\BlueprintFramework\Extensions\{identifier}\Modules\Tickets\Notifications\TicketNotification;
 
@@ -20,7 +21,7 @@ class AutoClose
     public static function run(): array
     {
         if (!Modules::enabled('tickets') || !Schema::hasTable(Tickets::TICKETS)) {
-            return ['closed' => 0, 'pruned' => 0, 'skipped' => 'Modul ist aus oder Tabellen fehlen'];
+            return ['closed' => 0, 'pruned' => 0, 'skipped' => I18n::t('tickets.skipped_off')];
         }
 
         $closed = 0;

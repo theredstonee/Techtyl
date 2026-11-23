@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+use Pterodactyl\BlueprintFramework\Extensions\{identifier}\I18n;
 use Pterodactyl\BlueprintFramework\Extensions\{identifier}\ImageRejected;
 use Pterodactyl\BlueprintFramework\Extensions\{identifier}\ImageProcessor;
 
@@ -75,7 +76,7 @@ class Attachments
         } catch (\Throwable $e) {
             self::discard($stored);
             Log::error('techtyl tickets: Anhang konnte nicht gespeichert werden', ['error' => $e->getMessage()]);
-            throw new HttpException(500, 'Der Anhang konnte nicht gespeichert werden.');
+            throw new HttpException(500, I18n::t('tickets.v_attachment_store'));
         }
 
         return $stored;
