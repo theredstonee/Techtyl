@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Techtyl Bildserie</title>
+<style>html,body{margin:0;background:#000;overflow:hidden}canvas{display:block}</style>
+</head>
+<body>
+<script src="lib.js"></script>
+<script src="iso.js"></script>
+<script src="minecraft.js"></script>
+<script src="banners.js"></script>
+<script src="landschaften.js"></script>
+<script src="muster.js"></script>
+<script src="backgrounds.js"></script>
+<script src="szenen.js"></script>
+<script>
+/* Aufruf: art.html?s=<schluessel>  (z. B. bn-paper, bg-werft). Ohne Parameter: Liste. */
+(function () {
+  var key = new URLSearchParams(location.search).get('s');
+  var sc = A.SCENES[key];
+  if (!sc) {
+    document.body.style.cssText = 'background:#111;color:#ddd;font:14px monospace;padding:20px;overflow:auto';
+    document.body.innerHTML = Object.keys(A.SCENES).map(function (k) {
+      return '<a style="color:#f0a33b;display:block" href="?s=' + k + '">' + k + '</a>';
+    }).join('');
+    return;
+  }
+  var c = document.createElement('canvas');
+  c.width = sc[0]; c.height = sc[1];
+  document.body.appendChild(c);
+  sc[2](c.getContext('2d'), sc[0], sc[1]);
+})();
+</script>
+</body>
+</html>
