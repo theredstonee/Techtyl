@@ -1,0 +1,75 @@
+/* Techtyl Dashboard. Farben und Masse kommen als --techtyl-* Variablen aus dem Wrapper
+   (Designer, ohne Neubau aenderbar). Diese Datei legt nur fest, wie sie verwendet werden. */
+
+:root {
+  --techtyl-bg: #0f1c23;
+  --techtyl-surface-c: #172a33;
+  --techtyl-raise-c: #1f3742;
+  --techtyl-line: #2c4753;
+  --techtyl-text: #e9f0ee;
+  --techtyl-muted: #93a9ac;
+  --techtyl-accent: #f0a33b;
+  --techtyl-radius: 10px;
+  --techtyl-dim: 0.55;
+  --techtyl-opacity: 100%;
+  --techtyl-blur: 0px;
+  --techtyl-background: none;
+}
+
+html[data-techtyl-variant='papier'] {
+  --techtyl-bg: #e9ecef;
+  --techtyl-surface-c: #f8f9fa;
+  --techtyl-raise-c: #ffffff;
+  --techtyl-line: #c9d0d8;
+  --techtyl-text: #161c2b;
+  --techtyl-muted: #5b6578;
+}
+
+html[data-techtyl-variant='hafen'] {
+  --techtyl-bg: #190f24;
+  --techtyl-surface-c: #2a1b3a;
+  --techtyl-raise-c: #392650;
+  --techtyl-line: #4c3766;
+  --techtyl-text: #f5edf7;
+  --techtyl-muted: #b3a1c2;
+}
+
+html[data-techtyl-variant='kiefer'] {
+  --techtyl-bg: #121f19;
+  --techtyl-surface-c: #1b2d24;
+  --techtyl-raise-c: #253c30;
+  --techtyl-line: #35503f;
+  --techtyl-text: #eef0e2;
+  --techtyl-muted: #9fb09f;
+}
+
+body {
+  --techtyl-surface: color-mix(in srgb, var(--techtyl-surface-c) var(--techtyl-opacity), transparent);
+  --techtyl-raise: color-mix(in srgb, var(--techtyl-raise-c) var(--techtyl-opacity), transparent);
+  background-color: var(--techtyl-bg) !important;
+  color: var(--techtyl-text);
+}
+
+#techtyl-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-image: var(--techtyl-background);
+  background-size: cover;
+  background-position: center;
+}
+
+#techtyl-backdrop::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--techtyl-bg);
+  opacity: var(--techtyl-dim);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}

@@ -1,0 +1,13 @@
+/* Techtyl Admin. Wird ohne Neubau geladen. Die Gestaltung des gesamten Admin-Bereichs
+   folgt, sobald die Klassen am Test-Panel geprueft sind. */
+
+.techtyl-admin .box {
+  border-top-color: var(--techtyl-accent, #f0a33b);
+  border-radius: var(--techtyl-radius, 10px);
+}
+
+.techtyl-admin input[type='color'] {
+  height: 40px;
+  padding: 4px;
+  max-width: 120px;
+}

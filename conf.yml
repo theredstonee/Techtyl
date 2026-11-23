@@ -1,0 +1,37 @@
+info:
+  name: 'Techtyl'
+  identifier: 'techtyl'
+  description: 'Theme mit Designer, eigenen Hintergruenden und Server-Bannern fuer Pterodactyl.'
+  flags: ''
+  version: '0.1.0'
+  target: 'beta-2026-08'
+  author: 'theredstonee'
+  icon: ''
+  website: 'https://github.com/theredstonee/Techtyl'
+
+admin:
+  view: 'admin/view.blade.php'
+  controller: 'admin/Controller.php'
+  css: 'admin/admin.css'
+  wrapper: 'admin/wrapper.blade.php'
+
+dashboard:
+  css: 'dashboard/dashboard.css'
+  wrapper: 'dashboard/wrapper.blade.php'
+  components: ''
+
+data:
+  directory: 'data'
+  public: 'public'
+  console: ''
+
+requests:
+  views: ''
+  app: 'app'
+  routers:
+    application: ''
+    client: ''
+    web: ''
+
+database:
+  migrations: ''

@@ -1,0 +1,8 @@
+.env
+.env.*
+node_modules/
+.dist/
+*.blueprint
+*.log
+.DS_Store
+Thumbs.db
