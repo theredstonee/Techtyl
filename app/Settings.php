@@ -4,6 +4,8 @@ namespace Pterodactyl\BlueprintFramework\Extensions\{identifier};
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Pterodactyl\BlueprintFramework\Extensions\{identifier}\Designer\Links;
+use Pterodactyl\BlueprintFramework\Extensions\{identifier}\Designer\Announcement;
 use Pterodactyl\BlueprintFramework\Libraries\ExtensionLibrary\Client\BlueprintClientLibrary;
 
 /**
@@ -24,7 +26,7 @@ class Settings
     {
         if (self::$loaded === null) {
             self::$loaded = app(BlueprintClientLibrary::class)
-                ->dbGetMany(Design::TABLE, [Design::RECORD, Limits::RECORD, self::MEDIA_RECORD]);
+                ->dbGetMany(Design::TABLE, [Design::RECORD, Limits::RECORD, self::MEDIA_RECORD, Announcement::RECORD, Links::RECORD]);
         }
 
         return self::$loaded;
@@ -47,6 +49,18 @@ class Settings
     public static function limits(): array
     {
         return Limits::fromStored(self::load()[Limits::RECORD] ?? null);
+    }
+
+    /** Ankuendigung, wie der Admin sie im Designer gespeichert hat. */
+    public static function announcement(): array
+    {
+        return Announcement::fromStored(self::load()[Announcement::RECORD] ?? null);
+    }
+
+    /** Website- und Social-Links aus dem Designer. */
+    public static function links(): array
+    {
+        return Links::fromStored(self::load()[Links::RECORD] ?? null);
     }
 
     /** @return array{background_file: string} Vom Admin hochgeladene Standardbilder. */

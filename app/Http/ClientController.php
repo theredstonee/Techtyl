@@ -18,6 +18,10 @@ use Pterodactyl\BlueprintFramework\Extensions\{identifier}\Design;
 use Pterodactyl\BlueprintFramework\Extensions\{identifier}\Limits;
 use Pterodactyl\BlueprintFramework\Extensions\{identifier}\Settings;
 use Pterodactyl\BlueprintFramework\Extensions\{identifier}\ImageProcessor;
+use Pterodactyl\BlueprintFramework\Extensions\{identifier}\Designer\Links;
+use Pterodactyl\BlueprintFramework\Extensions\{identifier}\Designer\Motifs;
+use Pterodactyl\BlueprintFramework\Extensions\{identifier}\Designer\DefaultBanners;
+use Pterodactyl\BlueprintFramework\Extensions\{identifier}\Designer\Announcement;
 
 /**
  * Client-API von Techtyl unter /api/client/extensions/techtyl.
@@ -48,6 +52,13 @@ class ClientController extends Controller
                 ],
                 'banners' => $this->banners($user, $servers, $state['permissions']['banners']),
                 'folders' => $this->folders($user, $servers),
+                // Aus dem Designer: Ankuendigung und Links (null, wenn nichts anzuzeigen ist) und die
+                // mitgelieferten Hintergrund-Motive fuer die persoenliche Gestaltung.
+                'announcement' => Announcement::forClient(Settings::announcement()),
+                'links' => Links::forClient(Settings::links()),
+                'motifs' => Motifs::publicList(),
+                // Empfohlene Bildposition fuer Banner (aus dem Manifest, z. B. "50% 30%").
+                'banner_position' => DefaultBanners::position(),
             ],
         ]);
     }
@@ -84,6 +95,10 @@ class ClientController extends Controller
             if (empty($permissions[Design::groupOf($key)])) {
                 throw new AccessDeniedHttpException('Diese Einstellung darf nicht geaendert werden.');
             }
+        }
+        // Motiv: nur "none" oder ein mitgeliefertes Motiv (sonst wuerde es still verworfen).
+        if (isset($input['motif']) && $input['motif'] !== Design::MOTIF_NONE && !Motifs::exists($input['motif'])) {
+            throw ValidationException::withMessages(['design.motif' => [\Pterodactyl\BlueprintFramework\Extensions\{identifier}\I18n::t('designer.v_motif')]]);
         }
 
         DB::transaction(function () use ($user, $input) {
@@ -335,9 +350,11 @@ class ClientController extends Controller
     {
         return [
             'design' => $state['design'],
+            // Admin-Standard (fuer "auf Standard zuruecksetzen" und gesperrte Bereiche im Nutzer-Designer)
+            'admin_design' => Settings::design(),
             'user_design' => (object) $state['own'],
             'background' => [
-                'url' => $state['design']['background'],
+                'url' => Design::backgroundFor($state['design']),
                 'custom' => $state['own_background'] !== '' && $state['design']['background'] === $state['own_background'],
                 'custom_url' => $state['own_background'],
             ],
@@ -367,6 +384,10 @@ class ClientController extends Controller
         }
         $own = DB::table('techtyl_server_banners')->whereIn('server_id', $servers->pluck('id'))->pluck('file', 'server_id');
         $eggs = DB::table('techtyl_egg_banners')->whereIn('egg_id', $servers->pluck('egg_id')->unique())->pluck('file', 'egg_id');
+        // Fuer den Rueckfall auf die mitgelieferten Banner: Egg- und Nest-Namen.
+        $eggNames = DB::table('eggs')->join('nests', 'nests.id', '=', 'eggs.nest_id')
+            ->whereIn('eggs.id', $servers->pluck('egg_id')->unique())
+            ->get(['eggs.id', 'eggs.name', 'nests.name as nest'])->keyBy('id');
         $subuser = DB::table('subusers')->where('user_id', $user->id)->pluck('permissions', 'server_id');
 
         $out = [];
@@ -381,6 +402,11 @@ class ClientController extends Controller
             if ($url === '') {
                 $url = Media::url($eggs[$server->egg_id] ?? null);
                 $source = $url !== '' ? 'egg' : null;
+            }
+            if ($url === '') {
+                $egg = $eggNames[$server->egg_id] ?? null;
+                $url = DefaultBanners::urlFor($egg->name ?? null, $egg->nest ?? null);
+                $source = $url !== '' ? 'default' : null;
             }
             $out[$server->uuid] = [
                 'identifier' => $server->uuidShort,

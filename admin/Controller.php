@@ -78,6 +78,12 @@ class {identifier}ExtensionController extends Controller
             'readableFormats' => array_keys(array_filter(ImageProcessor::readable())),
             'phpUploadLimit' => (string) ini_get('upload_max_filesize'),
             'tab' => $tab,
+            'designerUrl' => '/extensions/{identifier}/designer/editor',
+            'designerSummary' => [
+                'announcement' => Settings::announcement()['enabled'],
+                'links' => count(Settings::links()['website']) + count(Settings::links()['social']),
+                'loginText' => $design['login_title'] !== '' || $design['login_subtitle'] !== '',
+            ],
             'modules' => Modules::ALL,
             'moduleStates' => Modules::states(),
             'moduleView' => Modules::exists($tab) && view()->exists('blueprint.extensions.{identifier}.admin.' . $tab)
@@ -89,7 +95,9 @@ class {identifier}ExtensionController extends Controller
 
     public function update({identifier}DesignFormRequest $request): RedirectResponse
     {
-        $design = Design::sanitize($request->validated());
+        // Mit dem gespeicherten Stand zusammenfuehren: Werte, die nur der Designer setzt
+        // (Login-Texte, Login-Bild), gehen beim Speichern dieses Formulars nicht verloren.
+        $design = Design::sanitize(array_merge(Settings::design(), $request->validated()));
         $this->blueprint->dbSet(Design::TABLE, Design::RECORD, json_encode($design));
         Settings::flush();
 
@@ -114,6 +122,14 @@ class {identifier}ExtensionController extends Controller
             $this->blueprint->dbSet(Design::TABLE, Modules::RECORD, Modules::encode((array) $request->input('modules', [])));
 
             return $this->backTo('modules', 'Module gespeichert.');
+        }
+
+        // Standardsprache fuer Gaeste und Konten ohne eigene Sprachwahl.
+        if ($action === 'locale') {
+            $locale = $request->validate(['locale' => 'required|string|in:' . implode(',', \Pterodactyl\BlueprintFramework\Extensions\{identifier}\I18n::SUPPORTED)])['locale'];
+            $this->blueprint->dbSet(Design::TABLE, \Pterodactyl\BlueprintFramework\Extensions\{identifier}\I18n::RECORD, $locale);
+
+            return $this->backTo('modules', \Pterodactyl\BlueprintFramework\Extensions\{identifier}\I18n::t('core.saved', [], $locale));
         }
 
         // Aktionen eines Moduls heissen "<schluessel>.<aktion>" und werden an dessen Admin-Klasse gereicht.
@@ -216,12 +232,16 @@ class {identifier}ExtensionController extends Controller
 
     private function backTo(string $tab, string $message): RedirectResponse
     {
-        return redirect('/admin/extensions/{identifier}?tab=' . $tab)->with('success', $message);
+        \Prologue\Alerts\Facades\Alert::success(e($message))->flash();
+
+        return redirect('/admin/extensions/{identifier}?tab=' . $tab);
     }
 
     private function back(string $message): RedirectResponse
     {
-        return redirect()->route('admin.extensions.{identifier}.index')->with('success', $message);
+        \Prologue\Alerts\Facades\Alert::success(e($message))->flash();
+
+        return redirect()->route('admin.extensions.{identifier}.index');
     }
 }
 

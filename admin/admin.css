@@ -3146,3 +3146,1409 @@ html[data-techtyl-motion='aus'] body .notification {
     transition: none !important;
   }
 }
+
+/* ==========================================================================
+   16 Admin-Uebersicht (/admin)
+   Gehoert zu views/admin/overview.blade.php und public/admin/overview.js. Alle Klassen tragen das
+   Praefix techtyl-ov-; nichts hier wirkt auf andere Admin-Seiten. Ruhige Flaechen, der Akzent nur in
+   Balken und Schnellaktionen, grosse Zahlen mit Tabellenziffern. Bewegung: Kacheln und Karten steigen
+   gestaffelt auf, Balken wachsen; "dezent" schaltet die Eingaenge ab, "aus" und
+   prefers-reduced-motion greifen ueber die allgemeinen Regeln in Abschnitt 15.
+   ========================================================================== */
+
+body .techtyl-ov[hidden],
+body [data-techtyl-ov-replaced] {
+  display: none !important;
+}
+
+body .techtyl-ov {
+  --techtyl-ov-gap: 20px;
+  display: grid;
+  gap: var(--techtyl-ov-gap);
+  margin-bottom: 8px;
+}
+
+/* Kleinteile */
+body .techtyl-ov-dot {
+  display: inline-block;
+  flex: none;
+  width: 7px;
+  height: 7px;
+  margin-right: 7px;
+  border-radius: 50%;
+  vertical-align: 0.12em;
+  background: var(--techtyl-muted);
+}
+
+body .techtyl-ov-dot--ok {
+  background: var(--techtyl-ok);
+}
+
+body .techtyl-ov-dot--warn {
+  background: var(--techtyl-warn);
+}
+
+body .techtyl-ov-dot--bad {
+  background: var(--techtyl-bad);
+}
+
+body .techtyl-ov-dot--text {
+  background: color-mix(in srgb, var(--techtyl-text) 58%, transparent);
+}
+
+body .techtyl-ov-dot--muted {
+  background: color-mix(in srgb, var(--techtyl-muted) 55%, transparent);
+}
+
+body .techtyl-ov-mono {
+  font-family: var(--tt-mono);
+  font-size: 13px;
+  letter-spacing: 0;
+}
+
+body .techtyl-ov-num {
+  font-variant-numeric: tabular-nums;
+}
+
+body .techtyl-ov-muted {
+  color: var(--techtyl-muted);
+}
+
+body .techtyl-ov-strong {
+  font-weight: 600;
+}
+
+body .techtyl-ov-right {
+  text-align: right;
+}
+
+body .techtyl-ov-flag {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 8px;
+  padding: 0 8px;
+  font-size: 12px;
+  line-height: 20px;
+  font-weight: 500;
+  color: var(--techtyl-muted);
+  border: 1px solid var(--techtyl-line);
+  border-radius: 99px;
+  white-space: nowrap;
+  vertical-align: 0.1em;
+}
+
+body .techtyl-ov-flag > .techtyl-ov-dot {
+  margin-right: 6px;
+  vertical-align: 0;
+}
+
+/* Verweise im Block: ruhig wie im Rest, ohne Akzent auf ganzen Kacheln */
+body .techtyl-ov a {
+  text-decoration: none;
+}
+
+body .techtyl-ov a:hover,
+body .techtyl-ov a:focus-visible {
+  text-decoration: underline;
+  text-decoration-color: currentColor;
+}
+
+/* Balken: Breite setzt das Skript aus data-p als --techtyl-ov-p (0 bis 1) */
+body .techtyl-ov-meter {
+  position: relative;
+  display: block;
+  height: 4px;
+  border-radius: 99px;
+  background: color-mix(in srgb, var(--techtyl-line) 85%, transparent);
+  overflow: hidden;
+}
+
+body .techtyl-ov-meter-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--tt-accent);
+  transform-origin: left center;
+  transform: scaleX(var(--techtyl-ov-p, 0));
+}
+
+body .techtyl-ov-meter--warn .techtyl-ov-meter-fill {
+  background: var(--techtyl-warn);
+}
+
+body .techtyl-ov-meter--bad .techtyl-ov-meter-fill {
+  background: var(--techtyl-bad);
+}
+
+body .techtyl-ov-meter--none {
+  visibility: hidden;
+}
+
+/* Gestapelter Balken: Server nach Zustand, Anteile setzt das Skript als flex-grow */
+body .techtyl-ov-stack {
+  display: flex;
+  gap: 2px;
+  height: 4px;
+  transform-origin: left center;
+}
+
+body .techtyl-ov-stack-part {
+  flex: 0 1 0;
+  min-width: 4px;
+  border-radius: 99px;
+  background: color-mix(in srgb, var(--techtyl-text) 58%, transparent);
+}
+
+body .techtyl-ov-stack-part--warn {
+  background: var(--techtyl-warn);
+}
+
+body .techtyl-ov-stack-part--bad {
+  background: var(--techtyl-bad);
+}
+
+/* Update-Hinweis (ersetzt die Box "System Information" der Panel-Seite) */
+body .techtyl-ov-update {
+  display: flex;
+  align-items: center;
+  gap: 4px 14px;
+  flex-wrap: wrap;
+  padding: 12px 18px;
+  background: color-mix(in srgb, var(--techtyl-warn) 7%, var(--tt-surface));
+  border: 1px solid color-mix(in srgb, var(--techtyl-warn) 38%, var(--techtyl-line));
+  border-radius: var(--tt-r);
+  -webkit-backdrop-filter: var(--tt-glass);
+  backdrop-filter: var(--tt-glass);
+}
+
+body .techtyl-ov-update > .techtyl-ov-dot {
+  margin-right: 0;
+}
+
+body .techtyl-ov-update-text {
+  flex: 1 1 320px;
+  margin: 0;
+  font-size: 14px;
+}
+
+body .techtyl-ov-update-text > span {
+  color: var(--techtyl-muted);
+  margin-left: 6px;
+}
+
+body .techtyl-ov-update-links {
+  display: flex;
+  gap: 18px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+body .techtyl-ov .techtyl-ov-update-links a {
+  text-decoration: underline;
+  text-decoration-color: var(--tt-edge);
+}
+
+/* Kennzahl-Kacheln */
+/* Festes Raster (4 / 3 / 2 Spalten), damit Zeilen ruhig bleiben, egal wie viele Karten sichtbar sind */
+body .techtyl-ov-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+@media (max-width: 1399px) {
+  body .techtyl-ov-kpis {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 991px) {
+  body .techtyl-ov-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+body .techtyl-ov .techtyl-ov-kpi {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 156px;
+  padding: 18px 20px 16px;
+  color: var(--techtyl-text);
+  text-decoration: none;
+  background: var(--tt-surface);
+  border: 1px solid var(--techtyl-line);
+  border-radius: var(--tt-r);
+  -webkit-backdrop-filter: var(--tt-glass);
+  backdrop-filter: var(--tt-glass);
+  transition: border-color var(--tt-t2) var(--tt-curve), background-color var(--tt-t2) var(--tt-curve),
+    transform var(--tt-t2) var(--tt-curve);
+}
+
+/* Pfeil oben rechts: zeigt beim Ueberfahren, dass die Kachel weiterfuehrt */
+body .techtyl-ov a.techtyl-ov-kpi::after {
+  content: '\2192';
+  position: absolute;
+  top: 16px;
+  right: 18px;
+  font-size: 15px;
+  line-height: 1;
+  color: var(--techtyl-muted);
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: opacity var(--tt-t2) var(--tt-curve), transform var(--tt-t2) var(--tt-curve);
+}
+
+body .techtyl-ov a.techtyl-ov-kpi:hover,
+body .techtyl-ov a.techtyl-ov-kpi:focus-visible {
+  color: var(--techtyl-text);
+  text-decoration: none;
+  border-color: var(--tt-edge);
+  background: color-mix(in srgb, var(--techtyl-raise-c) 55%, var(--tt-surface));
+  transform: translateY(-2px);
+}
+
+body .techtyl-ov a.techtyl-ov-kpi:hover::after,
+body .techtyl-ov a.techtyl-ov-kpi:focus-visible::after {
+  opacity: 1;
+  transform: none;
+  color: var(--tt-accent-text);
+}
+
+body .techtyl-ov-kpi-label {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding-right: 22px;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--techtyl-muted);
+}
+
+/* One line, so the large figures of all tiles stay on the same height */
+body .techtyl-ov-kpi-label > span {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+body .techtyl-ov-kpi-label > .fa {
+  flex: none;
+  width: 1.15em;
+  font-size: 14px;
+  text-align: center;
+  transition: color var(--tt-t2) var(--tt-curve);
+}
+
+body .techtyl-ov a.techtyl-ov-kpi:hover .techtyl-ov-kpi-label > .fa {
+  color: var(--tt-accent-text);
+}
+
+body .techtyl-ov-kpi-value {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  margin-top: 14px;
+  font-family: var(--tt-display);
+  font-size: 44px;
+  font-weight: 650;
+  font-stretch: 84%;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums lining-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+body .techtyl-ov-unit {
+  font-family: var(--tt-body);
+  font-size: 16px;
+  font-weight: 500;
+  font-stretch: 100%;
+  letter-spacing: 0;
+  color: var(--techtyl-muted);
+}
+
+body .techtyl-ov-kpi-foot {
+  display: grid;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 16px;
+}
+
+body .techtyl-ov-kpi-sub {
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--techtyl-muted);
+}
+
+body .techtyl-ov-kpi-sub > b {
+  color: var(--techtyl-text);
+  font-weight: 600;
+}
+
+body .techtyl-ov-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  font-size: 13px;
+  color: var(--techtyl-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Zwei Spalten: links Listen, rechts Aktionen und System */
+body .techtyl-ov-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(300px, 1fr);
+  gap: var(--techtyl-ov-gap);
+  align-items: start;
+}
+
+body .techtyl-ov-main,
+body .techtyl-ov-side {
+  display: grid;
+  gap: var(--techtyl-ov-gap);
+  min-width: 0;
+}
+
+/* Karten */
+body .techtyl-ov-card {
+  min-width: 0;
+  background: var(--tt-surface);
+  border: 1px solid var(--techtyl-line);
+  border-radius: var(--tt-r);
+  -webkit-backdrop-filter: var(--tt-glass);
+  backdrop-filter: var(--tt-glass);
+  overflow: hidden;
+}
+
+body .techtyl-ov-card-head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  padding: 16px 20px 14px;
+}
+
+body .techtyl-ov-card-head > h2 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 650;
+  line-height: 1.25;
+}
+
+body .techtyl-ov-card-note {
+  font-size: 13px;
+  color: var(--techtyl-muted);
+}
+
+body .techtyl-ov .techtyl-ov-more {
+  margin-left: auto;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--techtyl-muted);
+  white-space: nowrap;
+}
+
+body .techtyl-ov .techtyl-ov-more::after {
+  content: ' \2192';
+}
+
+body .techtyl-ov .techtyl-ov-more:hover,
+body .techtyl-ov .techtyl-ov-more:focus-visible {
+  color: var(--techtyl-text);
+}
+
+body .techtyl-ov-card-foot {
+  margin: 0;
+  padding: 12px 20px;
+  font-size: 13px;
+  color: var(--techtyl-muted);
+  border-top: 1px solid var(--techtyl-line);
+}
+
+body .techtyl-ov-empty {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  padding: 18px 20px 20px;
+  border-top: 1px solid var(--techtyl-line);
+}
+
+body .techtyl-ov-empty > p {
+  flex: 1 1 260px;
+  margin: 0;
+  font-size: 14px;
+  color: var(--techtyl-muted);
+}
+
+body .techtyl-ov-empty > p > strong {
+  color: var(--techtyl-text);
+}
+
+/* Nodes */
+body .techtyl-ov-nodelist {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+body .techtyl-ov-node {
+  display: grid;
+  grid-template-columns: minmax(150px, 1.1fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10px 28px;
+  align-items: center;
+  padding: 14px 20px 16px;
+  border-top: 1px solid var(--techtyl-line);
+}
+
+body .techtyl-ov-node-name {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+body .techtyl-ov-node-name > a {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+body .techtyl-ov-node-meta {
+  font-size: 13px;
+  color: var(--techtyl-muted);
+}
+
+body .techtyl-ov-node-meta > .techtyl-ov-flag {
+  margin-left: 6px;
+}
+
+body .techtyl-ov-node-meter {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+body .techtyl-ov-node-meter-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 13px;
+  color: var(--techtyl-muted);
+}
+
+body .techtyl-ov-node-meter-label > b {
+  font-family: var(--tt-display);
+  font-size: 17px;
+  font-weight: 650;
+  font-stretch: 88%;
+  color: var(--techtyl-text);
+}
+
+body .techtyl-ov-node-meter-sub {
+  font-size: 12px;
+  color: var(--techtyl-muted);
+}
+
+/* Listen als Tabelle */
+body .techtyl-ov-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+body .techtyl-ov-table th {
+  padding: 9px 20px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-align: left;
+  color: var(--techtyl-muted);
+  border-top: 1px solid var(--techtyl-line);
+  border-bottom: 1px solid var(--techtyl-line);
+  background: color-mix(in srgb, var(--techtyl-raise-c) 35%, transparent);
+}
+
+body .techtyl-ov-table th.techtyl-ov-right {
+  text-align: right;
+}
+
+body .techtyl-ov-table td {
+  padding: 12px 20px;
+  vertical-align: middle;
+  border-top: 1px solid var(--techtyl-line);
+}
+
+body .techtyl-ov-table tbody tr:first-child td {
+  border-top: 0;
+}
+
+body .techtyl-ov-table tbody tr {
+  transition: background-color var(--tt-t1) var(--tt-curve);
+}
+
+body .techtyl-ov-table tbody tr:hover {
+  background: color-mix(in srgb, var(--techtyl-raise-c) 45%, transparent);
+}
+
+body .techtyl-ov-table td .techtyl-ov-mono {
+  margin-left: 8px;
+  font-size: 12px;
+}
+
+body .techtyl-ov-keys .techtyl-ov-table td .techtyl-ov-mono {
+  margin-left: 0;
+}
+
+body .techtyl-ov-table td.techtyl-ov-right {
+  white-space: nowrap;
+  font-size: 13px;
+}
+
+/* Schnellaktionen: der einzige Ort mit Akzentflaechen, klein gehalten */
+body .techtyl-ov-actiongrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  padding: 0 20px 20px;
+}
+
+body .techtyl-ov .techtyl-ov-action {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+  padding: 11px 12px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--techtyl-text);
+  background: var(--tt-raise);
+  border: 1px solid var(--techtyl-line);
+  border-radius: var(--tt-r-s);
+  transition: border-color var(--tt-t2) var(--tt-curve), transform var(--tt-t1) var(--tt-curve);
+}
+
+body .techtyl-ov .techtyl-ov-action > .fa {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 30px;
+  height: 30px;
+  font-size: 14px;
+  color: var(--tt-accent-text);
+  background: color-mix(in srgb, var(--tt-accent) 13%, transparent);
+  border-radius: calc(var(--tt-r) * 0.55);
+  transition: background-color var(--tt-t2) var(--tt-curve), color var(--tt-t2) var(--tt-curve);
+}
+
+body .techtyl-ov .techtyl-ov-action > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+body .techtyl-ov .techtyl-ov-action:hover,
+body .techtyl-ov .techtyl-ov-action:focus-visible {
+  color: var(--techtyl-text);
+  text-decoration: none;
+  border-color: var(--tt-edge);
+}
+
+body .techtyl-ov .techtyl-ov-action:hover > .fa,
+body .techtyl-ov .techtyl-ov-action:focus-visible > .fa {
+  color: var(--tt-ink);
+  background: var(--tt-accent);
+}
+
+body .techtyl-ov .techtyl-ov-action:active {
+  transform: scale(0.97);
+}
+
+/* System */
+body .techtyl-ov-facts {
+  margin: 0;
+}
+
+body .techtyl-ov-facts > div {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 16px;
+  padding: 10px 20px;
+  border-top: 1px solid var(--techtyl-line);
+}
+
+body .techtyl-ov-facts dt {
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--techtyl-muted);
+}
+
+body .techtyl-ov-facts dd {
+  margin: 0;
+  font-size: 14px;
+  text-align: right;
+  min-width: 0;
+}
+
+body .techtyl-ov-facts dd > a {
+  font-weight: 600;
+}
+
+body .techtyl-ov-facts-wide > dd {
+  flex: 1 1 auto;
+}
+
+body .techtyl-ov-facts dd.techtyl-ov-facts-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1 0 100%;
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--techtyl-muted);
+}
+
+body .techtyl-ov-facts-bar > .techtyl-ov-meter {
+  flex: 1;
+}
+
+body .techtyl-ov-facts dd.techtyl-ov-mono {
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+/* Hilfe und Projekt */
+body .techtyl-ov-help {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2px;
+  padding: 8px;
+}
+
+body .techtyl-ov .techtyl-ov-help > a {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 10px;
+  font-size: 13px;
+  color: var(--techtyl-muted);
+  border-radius: var(--tt-r-s);
+  transition: background-color var(--tt-t1) var(--tt-curve), color var(--tt-t1) var(--tt-curve);
+}
+
+body .techtyl-ov .techtyl-ov-help > a > .fa {
+  width: 1.1em;
+  text-align: center;
+}
+
+body .techtyl-ov .techtyl-ov-help > a:hover,
+body .techtyl-ov .techtyl-ov-help > a:focus-visible {
+  color: var(--techtyl-text);
+  text-decoration: none;
+  background: var(--tt-raise);
+}
+
+body .techtyl-ov-stamp {
+  margin: -4px 0 0;
+  font-size: 12px;
+  color: var(--techtyl-muted);
+}
+
+/* Nur fuer Bildschirmleser */
+body .techtyl-ov-sr {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Weitere Kartenformen: breite Liste, eigener Text */
+body .techtyl-ov .techtyl-ov-kpi--wide {
+  grid-column: span 2;
+}
+
+body .techtyl-ov-kpi-text {
+  margin-top: 12px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--techtyl-text);
+  overflow-wrap: anywhere;
+}
+
+body .techtyl-ov-kpi--custom .techtyl-ov-kpi-label {
+  color: var(--techtyl-text);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+body .techtyl-ov-kpi--custom .techtyl-ov-kpi-label > .fa {
+  color: var(--tt-accent-text);
+}
+
+body .techtyl-ov-minilist {
+  display: grid;
+  gap: 9px;
+  margin-top: 14px;
+}
+
+body .techtyl-ov-minirow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px 12px;
+  align-items: baseline;
+  font-size: 13px;
+}
+
+body .techtyl-ov-minirow-name {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+body .techtyl-ov-minirow > b {
+  font-family: var(--tt-display);
+  font-size: 15px;
+  font-weight: 650;
+}
+
+body .techtyl-ov-minirow > .techtyl-ov-meter {
+  grid-column: 1 / -1;
+  height: 3px;
+}
+
+body .techtyl-ov-nocards {
+  margin: 0;
+  padding: 18px 20px;
+  font-size: 14px;
+  color: var(--techtyl-muted);
+  border: 1px dashed var(--tt-edge);
+  border-radius: var(--tt-r);
+}
+
+/* Werkzeugleiste: Stand links, "Karten anpassen" rechts */
+body .techtyl-ov-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin-bottom: -6px;
+}
+
+body .techtyl-ov-toolbar > .techtyl-ov-stamp {
+  margin: 0;
+}
+
+body .techtyl-ov-customize {
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+/* Offen: volle Breite in eigener Zeile, der Knopf bleibt rechts */
+body .techtyl-ov-customize[open] {
+  flex-basis: 100%;
+}
+
+body .techtyl-ov-customize > summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: max-content;
+  margin-left: auto;
+}
+
+body .techtyl-ov-customize > summary::-webkit-details-marker {
+  display: none;
+}
+
+body .techtyl-ov-customize[open] > summary {
+  border-color: var(--tt-accent-text);
+  background-color: color-mix(in srgb, var(--tt-accent) 14%, var(--techtyl-raise-c));
+}
+
+body .techtyl-ov-customize-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: 20px;
+  margin-top: 6px;
+  padding: 20px;
+  background: var(--tt-surface);
+  border: 1px solid var(--tt-edge);
+  border-radius: var(--tt-r);
+  -webkit-backdrop-filter: var(--tt-glass);
+  backdrop-filter: var(--tt-glass);
+}
+
+body .techtyl-ov-customize-head > h2 {
+  margin: 0 0 4px;
+  font-size: 16px;
+  font-weight: 650;
+}
+
+body .techtyl-ov-customize-head > p {
+  margin: 0 0 14px;
+  font-size: 13px;
+  color: var(--techtyl-muted);
+}
+
+body .techtyl-ov-cardlist {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--techtyl-line);
+  border-radius: var(--tt-r-s);
+  overflow: hidden;
+}
+
+body .techtyl-ov-cardrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px 6px 6px;
+  background: var(--tt-raise);
+  border-top: 1px solid var(--techtyl-line);
+  transition: background-color var(--tt-t1) var(--tt-curve), opacity var(--tt-t1) var(--tt-curve);
+}
+
+body .techtyl-ov-cardrow:first-child {
+  border-top: 0;
+}
+
+body .techtyl-ov-cardrow.is-dragging {
+  opacity: 0.5;
+  background: color-mix(in srgb, var(--tt-accent) 10%, var(--techtyl-raise-c));
+}
+
+body .techtyl-ov-cardrow:has(input[type='checkbox']:not(:checked)) .techtyl-ov-cardrow-title,
+body .techtyl-ov-cardrow:has(input[type='checkbox']:not(:checked)) .techtyl-ov-cardrow-icon {
+  color: var(--techtyl-muted);
+}
+
+body .techtyl-ov-grip {
+  display: inline-flex;
+  flex: none;
+  width: 18px;
+  justify-content: center;
+  color: var(--techtyl-muted);
+  cursor: grab;
+  touch-action: none;
+}
+
+body .techtyl-ov-grip > .fa + .fa {
+  margin-left: -6px;
+}
+
+body .techtyl-ov-cardrow-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  padding: 4px 0;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+body .techtyl-ov-cardrow-main > input {
+  flex: none;
+  margin: 0;
+}
+
+body .techtyl-ov-cardrow-icon {
+  width: 1.2em;
+  text-align: center;
+  color: var(--techtyl-text);
+}
+
+body .techtyl-ov-cardrow-title {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+body .techtyl-ov-cardrow-kind {
+  flex: none;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--techtyl-muted);
+}
+
+body .techtyl-ov-cardrow-tools {
+  display: inline-flex;
+  flex: none;
+  gap: 4px;
+}
+
+body .techtyl-ov-cardrow-tools > .techtyl-ov-move {
+  width: 28px;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+body .techtyl-ov-customize-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  margin-top: 14px;
+}
+
+body .techtyl-ov-customize-foot > .techtyl-ov-reset {
+  margin-left: auto;
+  color: var(--techtyl-muted) !important;
+}
+
+body .techtyl-ov-unsaved {
+  display: inline-flex;
+  align-items: center;
+  font-size: 13px;
+  color: var(--techtyl-muted);
+}
+
+body .techtyl-ov-unsaved[hidden] {
+  display: none;
+}
+
+body .techtyl-ov-addform {
+  padding-left: 20px;
+  border-left: 1px solid var(--techtyl-line);
+}
+
+body .techtyl-ov-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 14px;
+}
+
+body .techtyl-ov-fields-wide {
+  grid-column: 1 / -1;
+}
+
+body .techtyl-ov-fields .help-block {
+  margin: 5px 0 0;
+  font-size: 12px;
+}
+
+body .techtyl-ov-iconpick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+  margin: 0 0 4px;
+  padding: 0;
+  border: 0;
+}
+
+body .techtyl-ov-iconpick > legend {
+  width: 100%;
+  margin-bottom: 6px;
+  padding: 0;
+  font-size: inherit;
+  border: 0;
+}
+
+body .techtyl-ov-iconpick > label {
+  position: relative;
+  margin: 0;
+  cursor: pointer;
+}
+
+body .techtyl-ov-iconpick > label > input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+body .techtyl-ov-iconpick > label > .fa {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  font-size: 15px;
+  color: var(--techtyl-muted);
+  background: var(--tt-raise);
+  border: 1px solid var(--techtyl-line);
+  border-radius: var(--tt-r-s);
+  transition: border-color var(--tt-t1) var(--tt-curve), color var(--tt-t1) var(--tt-curve);
+}
+
+body .techtyl-ov-iconpick > label:hover > .fa {
+  color: var(--techtyl-text);
+  border-color: var(--tt-edge);
+}
+
+body .techtyl-ov-iconpick > label > input:checked + .fa {
+  color: var(--tt-ink);
+  background: var(--tt-accent);
+  border-color: var(--tt-accent);
+}
+
+body .techtyl-ov-iconpick > label > input:focus-visible + .fa {
+  outline: 2px solid var(--tt-accent-text);
+  outline-offset: 2px;
+}
+
+/* Schmalere Fenster: eine Spalte, Reihenfolge nach Wichtigkeit */
+@media (max-width: 1199px) {
+  body .techtyl-ov-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  body .techtyl-ov-main,
+  body .techtyl-ov-side {
+    display: contents;
+  }
+
+  body .techtyl-ov-actions {
+    order: 1;
+  }
+
+  body .techtyl-ov-nodes {
+    order: 2;
+  }
+
+  body .techtyl-ov-recent {
+    order: 3;
+  }
+
+  body .techtyl-ov-system {
+    order: 4;
+  }
+
+  body .techtyl-ov-keys {
+    order: 5;
+  }
+
+  body .techtyl-ov-help {
+    order: 6;
+  }
+
+  body .techtyl-ov-actiongrid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  body .techtyl-ov-customize-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  body .techtyl-ov-addform {
+    padding-left: 0;
+    padding-top: 20px;
+    border-left: 0;
+    border-top: 1px solid var(--techtyl-line);
+  }
+}
+
+@media (max-width: 767px) {
+  body .techtyl-ov {
+    --techtyl-ov-gap: 14px;
+  }
+
+  body .techtyl-ov-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  body .techtyl-ov .techtyl-ov-kpi {
+    min-height: 0;
+    padding: 14px 14px 13px;
+  }
+
+  body .techtyl-ov a.techtyl-ov-kpi::after {
+    display: none;
+  }
+
+  body .techtyl-ov-kpi-label {
+    padding-right: 0;
+    gap: 7px;
+    font-size: 12px;
+  }
+
+  body .techtyl-ov-kpi-value {
+    margin-top: 10px;
+    font-size: 30px;
+  }
+
+  body .techtyl-ov-unit {
+    font-size: 14px;
+  }
+
+  body .techtyl-ov-kpi-foot {
+    padding-top: 12px;
+  }
+
+  body .techtyl-ov-kpi-sub,
+  body .techtyl-ov-legend {
+    font-size: 12px;
+  }
+
+  body .techtyl-ov-card-head {
+    padding: 14px 14px 12px;
+  }
+
+  body .techtyl-ov-actiongrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: 0 14px 14px;
+  }
+
+  body .techtyl-ov-node {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px 18px;
+    padding: 14px;
+  }
+
+  body .techtyl-ov-node-name {
+    grid-column: 1 / -1;
+  }
+
+  body .techtyl-ov-facts > div,
+  body .techtyl-ov-card-foot {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  body .techtyl-ov-empty {
+    padding: 14px;
+  }
+
+  /* Tabellen werden zu Zeilen mit Beschriftung */
+  body .techtyl-ov-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  body .techtyl-ov-table,
+  body .techtyl-ov-table tbody {
+    display: block;
+  }
+
+  body .techtyl-ov-table tbody tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 2px 12px;
+    padding: 12px 14px;
+    border-top: 1px solid var(--techtyl-line);
+  }
+
+  body .techtyl-ov-table tbody tr:first-child {
+    border-top: 0;
+  }
+
+  body .techtyl-ov-table td {
+    display: block;
+    padding: 0;
+    border: 0;
+    min-width: 0;
+    font-size: 13px;
+  }
+
+  body .techtyl-ov-table td:first-child {
+    grid-column: 1 / -1;
+    font-size: 14px;
+  }
+
+  body .techtyl-ov-table td.techtyl-ov-right {
+    text-align: right;
+  }
+
+  body .techtyl-ov-recent .techtyl-ov-table td[data-label]::before {
+    content: attr(data-label) ' ';
+    color: var(--techtyl-muted);
+  }
+
+  body .techtyl-ov-recent .techtyl-ov-table td[data-cell='owner'] {
+    grid-column: 1;
+  }
+
+  body .techtyl-ov-recent .techtyl-ov-table td[data-cell='created'] {
+    grid-column: 2;
+    grid-row: 2 / span 2;
+    align-self: center;
+  }
+
+  body .techtyl-ov-help {
+    padding: 6px;
+  }
+
+  body .techtyl-ov-customize-body {
+    padding: 14px;
+  }
+
+  body .techtyl-ov-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  body .techtyl-ov-cardrow-kind {
+    display: none;
+  }
+
+  /* Der Punkt stuende sonst allein in einer Zeile; der Rahmen traegt den Zustand */
+  body .techtyl-ov-update > .techtyl-ov-dot {
+    display: none;
+  }
+}
+
+/* Eingaenge (Stufe voll und ohne Attribut): Hinweis, Kacheln, dann Karten je Spalte */
+@keyframes techtyl-ov-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@keyframes techtyl-ov-grow {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+body .techtyl-ov-update,
+body .techtyl-ov .techtyl-ov-kpi,
+body .techtyl-ov-card,
+body .techtyl-ov-stamp {
+  animation: techtyl-ov-in var(--tt-t3) var(--tt-curve) backwards;
+  animation-delay: calc(40ms + var(--techtyl-ov-i, 0) * 55ms);
+}
+
+body .techtyl-ov .techtyl-ov-kpi:nth-child(1) {
+  --techtyl-ov-i: 1;
+}
+
+body .techtyl-ov .techtyl-ov-kpi:nth-child(2) {
+  --techtyl-ov-i: 2;
+}
+
+body .techtyl-ov .techtyl-ov-kpi:nth-child(3) {
+  --techtyl-ov-i: 3;
+}
+
+body .techtyl-ov .techtyl-ov-kpi:nth-child(n + 4) {
+  --techtyl-ov-i: 4;
+}
+
+body .techtyl-ov-nodes,
+body .techtyl-ov-actions {
+  --techtyl-ov-i: 5;
+}
+
+body .techtyl-ov-recent,
+body .techtyl-ov-system {
+  --techtyl-ov-i: 6;
+}
+
+body .techtyl-ov-keys,
+body .techtyl-ov-help {
+  --techtyl-ov-i: 7;
+}
+
+body .techtyl-ov-stamp {
+  --techtyl-ov-i: 8;
+}
+
+body .techtyl-ov-meter-fill,
+body .techtyl-ov-stack {
+  animation: techtyl-ov-grow 800ms var(--tt-curve) backwards;
+  animation-delay: calc(220ms + var(--techtyl-ov-i, 0) * 55ms);
+}
+
+/* Stufe dezent: keine Eingaenge, Reaktionen bleiben */
+html[data-techtyl-motion='dezent'] body .techtyl-ov-update,
+html[data-techtyl-motion='dezent'] body .techtyl-ov .techtyl-ov-kpi,
+html[data-techtyl-motion='dezent'] body .techtyl-ov-card,
+html[data-techtyl-motion='dezent'] body .techtyl-ov-stamp,
+html[data-techtyl-motion='dezent'] body .techtyl-ov-meter-fill,
+html[data-techtyl-motion='dezent'] body .techtyl-ov-stack {
+  animation: none;
+}
+
+/* Stufe aus und reduzierte Bewegung: auch kein Anheben beim Ueberfahren */
+html[data-techtyl-motion='aus'] body .techtyl-ov a.techtyl-ov-kpi:hover,
+html[data-techtyl-motion='aus'] body .techtyl-ov a.techtyl-ov-kpi:focus-visible,
+html[data-techtyl-motion='aus'] body .techtyl-ov .techtyl-ov-action:active {
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body .techtyl-ov a.techtyl-ov-kpi:hover,
+  body .techtyl-ov a.techtyl-ov-kpi:focus-visible,
+  body .techtyl-ov .techtyl-ov-action:active {
+    transform: none;
+  }
+}
+
+/* ---------- Techtyl-Gruppe in der Seitenleiste (app/AdminNav.php) ---------- */
+
+/* Eintraege kommen aus views/adminnav.blade.php und nutzen die Regeln der Seitenleiste oben
+   (Abschnitt 4). Hier steht nur, was die Gruppe zusaetzlich braucht: der Zaehler der Tickets,
+   die auf das Team warten, und sein Ersatz in der eingeklappten Leiste. */
+
+body.skin-blue .sidebar-menu > li.techtyl-nav-item > a {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+body.skin-blue .sidebar-menu > li.techtyl-nav-waiting > a {
+  padding-right: 46px;
+}
+
+body.skin-blue .sidebar-menu > li.techtyl-nav-item > a > .techtyl-nav-count {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  min-width: 22px;
+  padding: 0 7px;
+  transform: translateY(-50%);
+  border-radius: 99px;
+  background: var(--tt-accent);
+  color: var(--tt-ink);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 20px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (min-width: 768px) {
+  /* Eingeklappt blendet AdminLTE alle Texte aus; ein Punkt am Symbol zeigt wartende Tickets. */
+  body.skin-blue.sidebar-mini.sidebar-collapse .sidebar-menu > li.techtyl-nav-item > a {
+    overflow: visible;
+  }
+
+  body.skin-blue.sidebar-mini.sidebar-collapse .sidebar-menu > li.techtyl-nav-waiting > a {
+    padding-right: 0;
+  }
+
+  body.skin-blue.sidebar-mini.sidebar-collapse .sidebar-menu > li.techtyl-nav-waiting > a::after {
+    content: '';
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--tt-accent);
+    box-shadow: 0 0 0 2px var(--techtyl-surface-c);
+  }
+}

@@ -1,0 +1,1199 @@
+/* Techtyl designer parts in the dashboard: announcement, link bar, sign-in texts and the
+   personal designer (/account/design). Colours only through --techtyl-* variables, so all four
+   variants work. Motion follows html[data-techtyl-motion] and prefers-reduced-motion. */
+
+.techtyl-designer-sr {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.techtyl-designer-icon {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ---------- Shell: above the page content ---------- */
+.techtyl-designer-shell {
+  display: grid;
+  gap: 12px;
+  max-width: 1232px;
+  margin: 24px auto -6px;
+  padding: 0 16px;
+}
+
+@media (min-width: 1024px) {
+  .techtyl-designer-shell {
+    max-width: 1268px;
+    padding: 0 34px;
+  }
+}
+
+/* Announcement */
+.techtyl-designer-announce {
+  --tone: var(--techtyl-accent);
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid color-mix(in srgb, var(--tone) 42%, var(--techtyl-line));
+  border-radius: var(--techtyl-radius);
+  background: color-mix(in srgb, var(--tone) 10%, var(--techtyl-surface));
+  -webkit-backdrop-filter: var(--techtyl-glass);
+  backdrop-filter: var(--techtyl-glass);
+  color: var(--techtyl-text);
+  box-shadow: var(--techtyl-shadow);
+  overflow: hidden;
+  animation: techtyl-designer-drop 520ms var(--techtyl-spring, cubic-bezier(0.3, 1.36, 0.5, 1)) both;
+}
+
+.techtyl-designer-announce::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: var(--tone);
+}
+
+.techtyl-designer-announce[data-kind='info'] {
+  --tone: #5aa9f0;
+}
+.techtyl-designer-announce[data-kind='neu'] {
+  --tone: var(--techtyl-accent);
+}
+.techtyl-designer-announce[data-kind='erfolg'] {
+  --tone: var(--techtyl-ok);
+}
+.techtyl-designer-announce[data-kind='warnung'] {
+  --tone: var(--techtyl-warn);
+}
+.techtyl-designer-announce[data-kind='wartung'] {
+  --tone: var(--techtyl-bad);
+}
+
+.techtyl-designer-announce-icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: calc(var(--techtyl-radius) * 0.8);
+  background: color-mix(in srgb, var(--tone) 20%, transparent);
+  color: var(--tone);
+}
+
+.techtyl-designer-announce-icon .techtyl-designer-icon {
+  width: 19px;
+  height: 19px;
+}
+
+html[data-techtyl-motion='voll'] .techtyl-designer-announce-icon {
+  animation: techtyl-designer-nudge 3.6s var(--techtyl-ease, ease) 900ms 2 both;
+}
+
+.techtyl-designer-announce-text {
+  font-size: 14px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.techtyl-designer-announce-text strong {
+  font-weight: 650;
+}
+
+.techtyl-designer-announce-text a {
+  color: color-mix(in srgb, var(--tone) 70%, var(--techtyl-text));
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+}
+
+.techtyl-designer-announce-text a:hover {
+  color: var(--techtyl-text);
+}
+
+.techtyl-designer-announce-close {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: calc(var(--techtyl-radius) * 0.7);
+  background: none;
+  color: var(--techtyl-muted);
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease, transform 220ms var(--techtyl-spring, ease);
+}
+
+.techtyl-designer-announce-close:hover {
+  background: color-mix(in srgb, var(--techtyl-text) 10%, transparent);
+  color: var(--techtyl-text);
+  transform: rotate(90deg);
+}
+
+.techtyl-designer-announce.is-leiste {
+  gap: 10px;
+  padding: 7px 10px 7px 14px;
+  border-radius: calc(var(--techtyl-radius) * 0.7);
+  background: color-mix(in srgb, var(--tone) 18%, var(--techtyl-surface));
+  box-shadow: none;
+}
+
+.techtyl-designer-announce.is-leiste .techtyl-designer-announce-icon {
+  width: 26px;
+  height: 26px;
+  background: none;
+}
+
+.techtyl-designer-announce.is-leiste .techtyl-designer-announce-text {
+  font-size: 13px;
+}
+
+.techtyl-designer-announce.is-leiste .techtyl-designer-announce-close {
+  width: 26px;
+  height: 26px;
+}
+
+.techtyl-designer-announce.is-schwebend {
+  position: fixed;
+  z-index: 40;
+  right: 20px;
+  bottom: 20px;
+  width: min(400px, calc(100vw - 40px));
+  align-items: start;
+  background: color-mix(in srgb, var(--tone) 10%, var(--techtyl-raise-c, var(--techtyl-surface)));
+  box-shadow: var(--techtyl-shadow-pop, var(--techtyl-shadow));
+  animation-name: techtyl-designer-float-in;
+}
+
+.techtyl-designer-announce.is-schwebend.is-raised {
+  bottom: 80px;
+}
+
+.techtyl-designer-announce.is-leaving {
+  animation: techtyl-designer-leave 260ms var(--techtyl-ease, ease) both;
+}
+
+/* Links */
+.techtyl-designer-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+}
+
+.techtyl-designer-links.is-oben.is-links {
+  justify-content: flex-start;
+}
+.techtyl-designer-links.is-oben.is-mitte {
+  justify-content: center;
+}
+.techtyl-designer-links.is-oben.is-rechts {
+  justify-content: flex-end;
+}
+
+.techtyl-designer-links ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.techtyl-designer-links-site a {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 34px;
+  padding: 0 12px 0 10px;
+  border: 1px solid var(--techtyl-line);
+  border-radius: 999px;
+  background: var(--techtyl-surface);
+  -webkit-backdrop-filter: var(--techtyl-glass);
+  backdrop-filter: var(--techtyl-glass);
+  color: var(--techtyl-soft, var(--techtyl-text));
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: border-color 140ms ease, color 140ms ease, transform 220ms var(--techtyl-spring, ease), background 140ms ease;
+}
+
+.techtyl-designer-links-site a .techtyl-designer-icon {
+  width: 16px;
+  height: 16px;
+  color: var(--techtyl-accent);
+}
+
+.techtyl-designer-links-social a {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--techtyl-line);
+  border-radius: 50%;
+  background: var(--techtyl-surface);
+  -webkit-backdrop-filter: var(--techtyl-glass);
+  backdrop-filter: var(--techtyl-glass);
+  color: var(--techtyl-muted);
+  transition: border-color 140ms ease, color 140ms ease, transform 220ms var(--techtyl-spring, ease);
+}
+
+.techtyl-designer-links-social a .techtyl-designer-icon {
+  width: 17px;
+  height: 17px;
+}
+
+.techtyl-designer-links a:hover {
+  border-color: color-mix(in srgb, var(--techtyl-accent) 60%, var(--techtyl-line));
+  color: var(--techtyl-text);
+}
+
+html:not([data-techtyl-motion='aus']) .techtyl-designer-links a:hover {
+  transform: translateY(-2px);
+}
+
+.techtyl-designer-links.is-schwebend {
+  position: fixed;
+  z-index: 39;
+  bottom: 18px;
+  padding: 6px;
+  border: 1px solid var(--techtyl-line);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--techtyl-raise-c, var(--techtyl-surface)) 88%, transparent);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  box-shadow: var(--techtyl-shadow-pop, var(--techtyl-shadow));
+  flex-wrap: nowrap;
+  gap: 6px;
+  animation: techtyl-designer-float-in 560ms var(--techtyl-spring, ease) 200ms both;
+}
+
+.techtyl-designer-links.is-schwebend.is-links {
+  left: 18px;
+}
+.techtyl-designer-links.is-schwebend.is-rechts {
+  right: 18px;
+}
+.techtyl-designer-links.is-schwebend.is-mitte {
+  left: 50%;
+  transform: translateX(-50%);
+  animation-name: techtyl-designer-fade;
+}
+
+.techtyl-designer-links.is-schwebend a {
+  border-color: transparent;
+  background: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+.techtyl-designer-links.is-schwebend .techtyl-designer-links-site a span {
+  display: none;
+}
+
+.techtyl-designer-links.is-schwebend .techtyl-designer-links-site a {
+  width: 34px;
+  padding: 0;
+  justify-content: center;
+}
+
+html[data-techtyl-nav='sidebar'] .techtyl-designer-links.is-schwebend.is-links {
+  left: calc(var(--techtyl-nav-width, 248px) + 18px);
+}
+
+html[data-techtyl-nav='icons'] .techtyl-designer-links.is-schwebend.is-links {
+  left: calc(var(--techtyl-rail-width, 68px) + 18px);
+}
+
+@media (max-width: 760px) {
+  .techtyl-designer-links.is-oben {
+    justify-content: flex-start !important;
+  }
+
+  .techtyl-designer-links.is-schwebend.is-links,
+  .techtyl-designer-links.is-schwebend.is-rechts {
+    left: 12px !important;
+    right: 12px;
+    justify-content: center;
+    border-radius: 18px;
+  }
+
+  .techtyl-designer-links.is-schwebend.is-mitte {
+    left: 12px;
+    right: 12px;
+    transform: none;
+    justify-content: center;
+    border-radius: 18px;
+  }
+
+  .techtyl-designer-announce.is-schwebend {
+    right: 12px;
+    bottom: 12px;
+    width: calc(100vw - 24px);
+  }
+
+  .techtyl-designer-announce.is-schwebend.is-raised {
+    bottom: 74px;
+  }
+}
+
+/* ---------- Sign-in page: texts and image from the designer ---------- */
+/* Heading and subtitle: ::after carries the heading (with the accent square above it), ::before
+   the subtitle below (order 2). Without own texts the stylesheet of the theme stays as it is. */
+html[data-techtyl-logintext='an'] #app div[class*='LoginFormContainer__Container'] > form > div > div:first-child::after {
+  content: var(--techtyl-login-title, var(--techtyl-title));
+  padding-top: 32px;
+  background: linear-gradient(var(--techtyl-accent), var(--techtyl-accent)) left top / 14px 14px no-repeat;
+}
+
+html[data-techtyl-logintext='an'] #app div[class*='LoginFormContainer__Container'] > form > div > div:first-child::before {
+  content: var(--techtyl-login-subtitle, none);
+  order: 2;
+  width: auto;
+  height: auto;
+  max-width: 26em;
+  margin: 14px 0 0;
+  border-radius: 0;
+  background: none;
+  color: var(--techtyl-muted);
+  font-family: var(--techtyl-body);
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.5;
+  animation: techtyl-designer-fade 620ms var(--techtyl-ease, ease) 320ms both;
+}
+
+html[data-techtyl-loginbild='an'] #app div[class*='LoginFormContainer__Container'] > form > div > div:first-child {
+  background-image: linear-gradient(180deg, color-mix(in srgb, var(--techtyl-bg) 8%, transparent) 0%, color-mix(in srgb, var(--techtyl-bg) 30%, transparent) 45%, color-mix(in srgb, var(--techtyl-bg) 88%, transparent) 100%),
+    var(--techtyl-login-image);
+  background-size: cover;
+  background-position: center;
+}
+
+/* ---------- Personal designer (/account/design) ---------- */
+.techtyl-designer-page {
+  display: grid;
+  gap: 18px;
+  padding-bottom: 90px;
+}
+
+.techtyl-designer-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 20px;
+}
+
+.techtyl-designer-intro {
+  max-width: 44em;
+  color: var(--techtyl-muted);
+  font-size: 14px;
+}
+
+.techtyl-designer-confirm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--techtyl-bad) 45%, var(--techtyl-line));
+  border-radius: var(--techtyl-radius);
+  background: color-mix(in srgb, var(--techtyl-bad) 8%, var(--techtyl-surface));
+  font-size: 13px;
+  animation: techtyl-designer-fade 240ms ease both;
+}
+
+.techtyl-designer-confirm span {
+  max-width: 32em;
+}
+
+.techtyl-designer-section {
+  padding: 22px;
+  border: 1px solid var(--techtyl-line);
+  border-radius: calc(var(--techtyl-radius) + 2px);
+  background: var(--techtyl-surface);
+  -webkit-backdrop-filter: var(--techtyl-glass);
+  backdrop-filter: var(--techtyl-glass);
+  animation: techtyl-designer-rise 520ms var(--techtyl-ease, ease) both;
+}
+
+.techtyl-designer-section:nth-child(2) {
+  animation-delay: 40ms;
+}
+.techtyl-designer-section:nth-child(3) {
+  animation-delay: 80ms;
+}
+.techtyl-designer-section:nth-child(4) {
+  animation-delay: 120ms;
+}
+.techtyl-designer-section:nth-child(5) {
+  animation-delay: 160ms;
+}
+.techtyl-designer-section:nth-child(6) {
+  animation-delay: 200ms;
+}
+
+.techtyl-designer-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.techtyl-designer-section-head h2 {
+  margin: 0;
+  font-family: var(--techtyl-display);
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.techtyl-designer-lock {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border: 1px solid var(--techtyl-line);
+  border-radius: 999px;
+  color: var(--techtyl-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.techtyl-designer-lock .techtyl-designer-icon {
+  width: 14px;
+  height: 14px;
+}
+
+.techtyl-designer-lock-text {
+  margin: -6px 0 18px;
+  color: var(--techtyl-muted);
+  font-size: 13px;
+}
+
+.techtyl-designer-fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.techtyl-designer-section.is-locked .techtyl-designer-fieldset {
+  opacity: 0.5;
+  filter: saturate(0.4);
+  pointer-events: none;
+}
+
+.techtyl-designer-label {
+  margin: 26px 0 10px;
+  color: var(--techtyl-soft, var(--techtyl-text));
+  font-family: var(--techtyl-body);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.techtyl-designer-fieldset > .techtyl-designer-label:first-child {
+  margin-top: 0;
+}
+
+.techtyl-designer-choices {
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 3), minmax(0, 1fr));
+  gap: 10px;
+  max-width: calc(var(--cols, 3) * 220px);
+}
+
+html .techtyl-designer-choice {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding: 7px 7px 10px;
+  border: 1px solid var(--techtyl-line);
+  border-radius: var(--techtyl-radius);
+  background: var(--techtyl-raise);
+  color: var(--techtyl-text);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 140ms ease, transform 240ms var(--techtyl-spring, ease), box-shadow 240ms ease;
+}
+
+html .techtyl-designer-choice:hover {
+  border-color: var(--techtyl-edge, var(--techtyl-line));
+}
+
+html:not([data-techtyl-motion='aus']) .techtyl-designer-choice:hover {
+  transform: translateY(-2px);
+}
+
+html .techtyl-designer-choice[aria-checked='true'] {
+  border-color: var(--techtyl-accent);
+  box-shadow: inset 0 0 0 1px var(--techtyl-accent), 0 10px 26px -18px var(--techtyl-accent);
+}
+
+.techtyl-designer-choice-art {
+  display: block;
+  aspect-ratio: 5 / 3;
+  border-radius: calc(var(--techtyl-radius) * 0.7);
+  background: var(--techtyl-bg);
+  overflow: hidden;
+}
+
+.techtyl-designer-choice-art svg,
+.techtyl-designer-choice-art img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.techtyl-designer-choice-title {
+  padding: 0 3px;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+html .techtyl-designer-choice:not(:has(.techtyl-designer-choice-art)) .techtyl-designer-choice-title {
+  padding: 4px 6px 0;
+}
+
+.techtyl-designer-choice-desc {
+  padding: 0 3px;
+  color: var(--techtyl-muted);
+  font-size: 12px;
+}
+
+.techtyl-designer-choice-check {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--techtyl-accent);
+  color: var(--techtyl-accent-ink);
+  transform: scale(0);
+  transition: transform 260ms var(--techtyl-spring, ease);
+}
+
+.techtyl-designer-choice-check .techtyl-designer-icon {
+  width: 12px;
+  height: 12px;
+  stroke-width: 3;
+}
+
+html .techtyl-designer-choice[aria-checked='true'] .techtyl-designer-choice-check {
+  transform: scale(1);
+}
+
+.techtyl-designer-solid {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, var(--techtyl-bg), var(--techtyl-surface-c, var(--techtyl-surface)));
+}
+
+/* Sketches */
+.techtyl-designer-sketch .s-bg {
+  fill: var(--techtyl-bg);
+}
+.techtyl-designer-sketch .s-surface {
+  fill: var(--techtyl-surface-c, var(--techtyl-surface));
+}
+.techtyl-designer-sketch .s-text {
+  fill: var(--techtyl-text);
+  opacity: 0.85;
+}
+.techtyl-designer-sketch .s-accent-soft {
+  fill: var(--techtyl-accent);
+  opacity: 0.4;
+}
+.techtyl-designer-motion .m-card {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.techtyl-designer-motion[data-level='dezent'] .m-card {
+  animation: techtyl-designer-demo-fade 2.8s ease infinite;
+}
+.techtyl-designer-motion[data-level='voll'] .m-card {
+  animation: techtyl-designer-demo-rise 2.8s cubic-bezier(0.34, 1.4, 0.5, 1) infinite;
+}
+.techtyl-designer-motion .m-2 {
+  animation-delay: 0.12s !important;
+}
+.techtyl-designer-motion .m-3 {
+  animation-delay: 0.24s !important;
+}
+.techtyl-designer-motion .m-pulse {
+  fill: none;
+  stroke: var(--techtyl-ok);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.55;
+}
+.techtyl-designer-motion[data-level='voll'] .m-pulse {
+  opacity: 1;
+  stroke-dasharray: 24 90;
+  animation: techtyl-designer-demo-pulse 2.2s linear infinite;
+}
+
+/* Swatches */
+.techtyl-designer-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+html .techtyl-designer-swatch {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--sw);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--techtyl-text) 18%, transparent);
+  cursor: pointer;
+  transition: transform 240ms var(--techtyl-spring, ease), box-shadow 240ms ease;
+}
+
+html .techtyl-designer-swatch:hover {
+  transform: scale(1.1);
+}
+
+html .techtyl-designer-swatch[aria-checked='true'] {
+  box-shadow: 0 0 0 3px var(--techtyl-surface-c, var(--techtyl-bg)), 0 0 0 5px var(--sw);
+}
+
+html .techtyl-designer-swatch.is-custom {
+  overflow: hidden;
+  background: conic-gradient(#f06b5e, #f0c24a, #7cc48a, #3b9ef0, #9b7bf0, #e86a9a, #f06b5e);
+}
+
+html .techtyl-designer-swatch.is-custom input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.techtyl-designer-ink {
+  padding: 6px 10px;
+  border-radius: calc(var(--techtyl-radius) * 0.7);
+  background: var(--techtyl-accent);
+  color: var(--techtyl-accent-ink);
+  font-family: var(--techtyl-mono);
+  font-size: 12px;
+}
+
+/* Sliders */
+.techtyl-designer-slider {
+  display: grid;
+  gap: 6px;
+  margin-top: 16px;
+}
+
+.techtyl-designer-slider-label {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 13.5px;
+}
+
+.techtyl-designer-slider-label output {
+  color: var(--techtyl-muted);
+  font-family: var(--techtyl-mono);
+  font-size: 12px;
+}
+
+.techtyl-designer-slider input {
+  --fill: 50%;
+  width: 100%;
+  height: 22px;
+  margin: 0;
+  background: none;
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: pointer;
+}
+
+.techtyl-designer-slider input::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--techtyl-accent) 0 var(--fill), var(--techtyl-line) var(--fill) 100%);
+}
+
+.techtyl-designer-slider input::-moz-range-track {
+  height: 6px;
+  border-radius: 99px;
+  background: var(--techtyl-line);
+}
+
+.techtyl-designer-slider input::-moz-range-progress {
+  height: 6px;
+  border-radius: 99px;
+  background: var(--techtyl-accent);
+}
+
+.techtyl-designer-slider input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  margin-top: -6px;
+  border: 3px solid var(--techtyl-surface-c, var(--techtyl-bg));
+  border-radius: 50%;
+  background: var(--techtyl-text);
+  box-shadow: 0 0 0 1px var(--techtyl-line);
+  transition: transform 160ms var(--techtyl-spring, ease);
+}
+
+.techtyl-designer-slider input:hover::-webkit-slider-thumb {
+  transform: scale(1.15);
+}
+
+.techtyl-designer-slider input:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.techtyl-designer-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  margin-top: 12px;
+}
+
+.techtyl-designer-note {
+  color: var(--techtyl-muted);
+  font-size: 12.5px;
+}
+
+/* Buttons */
+html .techtyl-designer-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--techtyl-line);
+  border-radius: calc(var(--techtyl-radius) * 0.7);
+  background: var(--techtyl-raise);
+  color: var(--techtyl-text);
+  font-size: 13.5px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color 140ms ease, background 140ms ease, transform 140ms ease;
+}
+
+html .techtyl-designer-btn .techtyl-designer-icon {
+  width: 16px;
+  height: 16px;
+}
+
+html .techtyl-designer-btn:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--techtyl-accent) 55%, var(--techtyl-line));
+}
+
+html .techtyl-designer-btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+html .techtyl-designer-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+html .techtyl-designer-btn.is-ghost {
+  border-color: transparent;
+  background: none;
+  color: var(--techtyl-muted);
+}
+
+html .techtyl-designer-btn.is-ghost:hover:not(:disabled) {
+  border-color: var(--techtyl-line);
+  color: var(--techtyl-text);
+}
+
+html .techtyl-designer-btn.is-go {
+  border-color: var(--techtyl-accent);
+  background: var(--techtyl-accent);
+  color: var(--techtyl-accent-ink);
+  font-weight: 600;
+}
+
+html .techtyl-designer-btn.is-danger {
+  border-color: var(--techtyl-bad);
+  background: var(--techtyl-bad);
+  color: #fff;
+}
+
+/* Banner list */
+.techtyl-designer-banners {
+  display: grid;
+  gap: 10px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.techtyl-designer-banner {
+  display: grid;
+  grid-template-columns: 168px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 12px 8px 8px;
+  border: 1px solid var(--techtyl-line);
+  border-radius: var(--techtyl-radius);
+  background: var(--techtyl-raise);
+  transition: opacity 200ms ease;
+}
+
+.techtyl-designer-banner.is-busy {
+  opacity: 0.6;
+}
+
+.techtyl-designer-banner-image {
+  display: block;
+  height: 56px;
+  border-radius: calc(var(--techtyl-radius) * 0.7);
+  background: var(--techtyl-bg);
+  overflow: hidden;
+}
+
+.techtyl-designer-banner-image img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.techtyl-designer-banner-blank {
+  display: block;
+  height: 100%;
+  background: repeating-linear-gradient(135deg, transparent 0 8px, color-mix(in srgb, var(--techtyl-line) 60%, transparent) 8px 9px);
+}
+
+.techtyl-designer-banner-text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.techtyl-designer-banner-text strong {
+  overflow: hidden;
+  font-size: 14.5px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.techtyl-designer-banner-source {
+  color: var(--techtyl-muted);
+  font-size: 12.5px;
+}
+
+.techtyl-designer-banner-source.is-server {
+  color: var(--techtyl-accent-text, var(--techtyl-accent));
+}
+
+.techtyl-designer-banner-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+/* States */
+.techtyl-designer-state {
+  display: grid;
+  justify-items: start;
+  gap: 12px;
+}
+
+.techtyl-designer-skeleton {
+  display: block;
+  width: 100%;
+  height: 220px;
+  border-radius: var(--techtyl-radius);
+  background: linear-gradient(90deg, var(--techtyl-surface) 0%, var(--techtyl-raise) 50%, var(--techtyl-surface) 100%) 0 0 / 200% 100%;
+  animation: techtyl-designer-shimmer 1.4s linear infinite;
+}
+
+.techtyl-designer-empty {
+  padding: 18px;
+  border: 1px dashed var(--techtyl-line);
+  border-radius: var(--techtyl-radius);
+  color: var(--techtyl-muted);
+  font-size: 13.5px;
+  text-align: center;
+}
+
+/* Save bar and notices */
+.techtyl-designer-savebar {
+  position: fixed;
+  z-index: 45;
+  left: 50%;
+  bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 8px 8px 16px;
+  border: 1px solid var(--techtyl-line);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--techtyl-raise-c, var(--techtyl-surface)) 92%, transparent);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  box-shadow: var(--techtyl-shadow-pop, var(--techtyl-shadow));
+  transform: translate(-50%, 170%);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 420ms var(--techtyl-spring, ease), opacity 220ms ease;
+}
+
+.techtyl-designer-savebar.is-open {
+  transform: translate(-50%, 0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.techtyl-designer-savebar-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--techtyl-accent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--techtyl-accent) 25%, transparent);
+}
+
+.techtyl-designer-savebar-text {
+  margin-right: 6px;
+  font-size: 13.5px;
+  white-space: nowrap;
+}
+
+.techtyl-designer-toast-wrap {
+  position: fixed;
+  z-index: 46;
+  top: 18px;
+  right: 18px;
+  pointer-events: none;
+}
+
+.techtyl-designer-toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 380px;
+  padding: 12px 14px;
+  border: 1px solid var(--techtyl-line);
+  border-radius: var(--techtyl-radius);
+  background: var(--techtyl-raise-c, var(--techtyl-surface));
+  box-shadow: var(--techtyl-shadow-pop, var(--techtyl-shadow));
+  font-size: 13.5px;
+  animation: techtyl-designer-float-in 420ms var(--techtyl-spring, ease) both;
+}
+
+.techtyl-designer-toast.is-ok .techtyl-designer-icon {
+  color: var(--techtyl-ok);
+}
+
+.techtyl-designer-toast.is-bad {
+  border-color: color-mix(in srgb, var(--techtyl-bad) 50%, var(--techtyl-line));
+}
+
+.techtyl-designer-toast.is-bad .techtyl-designer-icon {
+  color: var(--techtyl-bad);
+}
+
+@media (max-width: 760px) {
+  .techtyl-designer-section {
+    padding: 16px;
+  }
+
+  .techtyl-designer-choices {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .techtyl-designer-banner {
+    grid-template-columns: 96px minmax(0, 1fr);
+  }
+
+  .techtyl-designer-banner-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+  }
+
+  .techtyl-designer-savebar {
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    transform: translateY(170%);
+  }
+
+  .techtyl-designer-savebar.is-open {
+    transform: none;
+  }
+
+  .techtyl-designer-savebar-text {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+/* ---------- Motion ---------- */
+@keyframes techtyl-designer-drop {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.985);
+  }
+}
+
+@keyframes techtyl-designer-float-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.97);
+  }
+}
+
+@keyframes techtyl-designer-leave {
+  to {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+}
+
+@keyframes techtyl-designer-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes techtyl-designer-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+@keyframes techtyl-designer-nudge {
+  0%,
+  70%,
+  100% {
+    transform: none;
+  }
+  76% {
+    transform: rotate(-12deg);
+  }
+  82% {
+    transform: rotate(10deg);
+  }
+  88% {
+    transform: rotate(-6deg);
+  }
+}
+
+@keyframes techtyl-designer-shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes techtyl-designer-demo-fade {
+  0%,
+  12% {
+    opacity: 0;
+  }
+  32%,
+  86% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes techtyl-designer-demo-rise {
+  0%,
+  10% {
+    opacity: 0;
+    transform: translateY(12px) scale(0.92);
+  }
+  34%,
+  86% {
+    opacity: 1;
+    transform: none;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes techtyl-designer-demo-pulse {
+  from {
+    stroke-dashoffset: 114;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+html[data-techtyl-motion='dezent'] .techtyl-designer-announce,
+html[data-techtyl-motion='dezent'] .techtyl-designer-links.is-schwebend,
+html[data-techtyl-motion='dezent'] .techtyl-designer-section,
+html[data-techtyl-motion='dezent'] .techtyl-designer-toast {
+  animation-name: techtyl-designer-fade;
+  animation-timing-function: ease;
+}
+
+html[data-techtyl-motion='aus'] .techtyl-designer-announce,
+html[data-techtyl-motion='aus'] .techtyl-designer-links,
+html[data-techtyl-motion='aus'] .techtyl-designer-section,
+html[data-techtyl-motion='aus'] .techtyl-designer-toast,
+html[data-techtyl-motion='aus'] .techtyl-designer-savebar,
+html[data-techtyl-motion='aus'] .techtyl-designer-announce-icon {
+  animation: none;
+  transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .techtyl-designer-announce,
+  .techtyl-designer-links,
+  .techtyl-designer-section,
+  .techtyl-designer-toast,
+  .techtyl-designer-savebar,
+  .techtyl-designer-choice,
+  .techtyl-designer-motion .m-card,
+  .techtyl-designer-motion .m-pulse,
+  .techtyl-designer-announce-icon {
+    animation: none !important;
+    transition: none !important;
+  }
+}

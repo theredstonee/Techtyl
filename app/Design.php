@@ -2,6 +2,9 @@
 
 namespace Pterodactyl\BlueprintFramework\Extensions\{identifier};
 
+use Pterodactyl\BlueprintFramework\Extensions\{identifier}\Designer\Clean;
+use Pterodactyl\BlueprintFramework\Extensions\{identifier}\Designer\Motifs;
+
 /**
  * Design-Einstellungen von Techtyl: Standardwerte, Pruefung und Ausgabe als CSS-Variablen.
  * Einzige Stelle, an der Werte aus der Datenbank in CSS uebersetzt werden.
@@ -16,15 +19,28 @@ class Design
     public const MOTION = ['aus', 'dezent', 'voll'];
     public const SERVER_LAYOUT = ['raster', 'liste', 'kompakt'];
 
+    public const LOGIN_TITLE_MAX = 60;
+    public const LOGIN_SUBTITLE_MAX = 160;
+
+    /** Wert von "motif" fuer "bewusst kein Bild" (sonst Schluessel eines mitgelieferten Motivs). */
+    public const MOTIF_NONE = 'none';
+
+    /**
+     * Wert von "background" fuer "bewusst kein Bild". Leer ('') bedeutet: das mitgelieferte
+     * Standardbild der jeweils aktiven Variante (siehe backgroundFor()).
+     */
+    public const BACKGROUND_NONE = 'none';
+
     /**
      * Welche Einstellungen ein Nutzer selbst setzen darf, gruppiert nach der Admin-Grenze,
-     * die sie freigibt. Die Bildadresse (background) ist nie frei waehlbar, eigene Bilder
-     * kommen nur ueber den Upload.
+     * die sie freigibt. Die Bildadresse (background) ist nie frei waehlbar: eigene Bilder
+     * kommen nur ueber den Upload, mitgelieferte ueber den Motiv-Schluessel (motif).
+     * Die Login-Werte (login_*) setzt nur der Admin.
      */
     public const GROUPS = [
         'appearance' => ['variant', 'accent', 'radius', 'motion'],
         'layout' => ['navigation', 'server_layout', 'banners', 'banner_height'],
-        'background' => ['dim', 'opacity', 'blur'],
+        'background' => ['dim', 'opacity', 'blur', 'motif'],
     ];
 
     /** @return string[] */
@@ -64,7 +80,30 @@ class Design
             'dim' => ['integer', 'min:0', 'max:90'],
             'opacity' => ['integer', 'min:35', 'max:100'],
             'blur' => ['integer', 'min:0', 'max:24'],
+            'motif' => ['string', 'max:40', 'regex:/^[a-z0-9][a-z0-9-]{0,39}$/'],
         ];
+    }
+
+    /**
+     * Regeln fuer den kompletten Admin-Standard aus dem Designer (alle Schluessel, auch die,
+     * die nur der Admin setzt).
+     *
+     * @return array<string, array<int, mixed>>
+     */
+    public static function adminRules(string $prefix): array
+    {
+        $rules = [];
+        foreach (self::rules() as $key => $keyRules) {
+            if ($key !== 'motif') {
+                $rules[$prefix . $key] = array_merge(['required'], $keyRules);
+            }
+        }
+        $rules[$prefix . 'background'] = ['nullable', 'string', 'max:500'];
+        $rules[$prefix . 'login_title'] = ['nullable', 'string', 'max:' . (self::LOGIN_TITLE_MAX + 40)];
+        $rules[$prefix . 'login_subtitle'] = ['nullable', 'string', 'max:' . (self::LOGIN_SUBTITLE_MAX + 40)];
+        $rules[$prefix . 'login_image'] = ['nullable', 'string', 'max:500'];
+
+        return $rules;
     }
 
     /**
@@ -110,8 +149,15 @@ class Design
                 }
             }
         }
-        if (!empty($allowed['background']) && self::backgroundUrl($ownBackground) !== '') {
-            $design['background'] = self::backgroundUrl($ownBackground);
+        // Bildwahl des Nutzers: eigener Upload vor mitgeliefertem Motiv vor "kein Bild".
+        if (!empty($allowed['background'])) {
+            if (self::backgroundUrl($ownBackground) !== '') {
+                $design['background'] = self::backgroundUrl($ownBackground);
+            } elseif (($own['motif'] ?? '') === self::MOTIF_NONE) {
+                $design['background'] = self::BACKGROUND_NONE;
+            } elseif (Motifs::exists($own['motif'] ?? null)) {
+                $design['background'] = Motifs::url($own['motif']);
+            }
         }
 
         return $design;
@@ -133,6 +179,10 @@ class Design
             'dim' => 55,
             'opacity' => 100,
             'blur' => 0,
+            'motif' => '',
+            'login_title' => '',
+            'login_subtitle' => '',
+            'login_image' => '',
         ];
     }
 
@@ -164,11 +214,34 @@ class Design
             'motion' => $pick('motion', self::MOTION),
             'banners' => filter_var($input['banners'] ?? $d['banners'], FILTER_VALIDATE_BOOLEAN),
             'banner_height' => $range('banner_height', 48, 160),
-            'background' => self::backgroundUrl($input['background'] ?? ''),
+            'background' => ($input['background'] ?? null) === self::BACKGROUND_NONE ? self::BACKGROUND_NONE : self::backgroundUrl($input['background'] ?? ''),
             'dim' => $range('dim', 0, 90),
             'opacity' => $range('opacity', 35, 100),
             'blur' => $range('blur', 0, 24),
+            'motif' => ($input['motif'] ?? null) === self::MOTIF_NONE || Motifs::exists($input['motif'] ?? null) ? $input['motif'] : '',
+            'login_title' => Clean::line($input['login_title'] ?? '', self::LOGIN_TITLE_MAX),
+            'login_subtitle' => Clean::line($input['login_subtitle'] ?? '', self::LOGIN_SUBTITLE_MAX),
+            'login_image' => self::backgroundUrl($input['login_image'] ?? ''),
         ];
+    }
+
+    /**
+     * Tatsaechliche Bildadresse des Hintergrunds: '' bei "kein Bild", das Standardbild der Variante,
+     * wenn nichts gewaehlt ist, sonst die gespeicherte Adresse.
+     *
+     * @param array<string, mixed> $design
+     */
+    public static function backgroundFor(array $design): string
+    {
+        $background = $design['background'] ?? '';
+        if ($background === self::BACKGROUND_NONE) {
+            return '';
+        }
+        if ($background === '' || !is_string($background)) {
+            return Motifs::variantDefault($design['variant'] ?? self::defaults()['variant']);
+        }
+
+        return self::backgroundUrl($background);
     }
 
     /** Erlaubt nur https-Adressen und Pfade auf dem eigenen Panel, ohne Zeichen, die aus url("...") ausbrechen. */
@@ -207,7 +280,8 @@ class Design
     public static function toCss(array $design): string
     {
         $design = self::sanitize($design);
-        $background = $design['background'] === '' ? 'none' : 'url("' . $design['background'] . '")';
+        $resolved = self::backgroundFor($design);
+        $background = $resolved === '' ? 'none' : 'url("' . $resolved . '")';
 
         $vars = [
             '--techtyl-accent' => $design['accent'],
@@ -217,7 +291,16 @@ class Design
             '--techtyl-dim' => (string) ($design['dim'] / 100),
             '--techtyl-opacity' => $design['opacity'] . '%',
             '--techtyl-blur' => $design['blur'] . 'px',
+            '--techtyl-login-image' => $design['login_image'] === '' ? 'none' : 'url("' . $design['login_image'] . '")',
         ];
+        // Login-Texte als CSS-Zeichenketten (jedes Sonderzeichen als Hex-Folge, siehe Clean::cssString).
+        // Nur gesetzt, wenn vorhanden, damit das Stylesheet sonst auf den Panel-Namen zurueckfallen kann.
+        if ($design['login_title'] !== '') {
+            $vars['--techtyl-login-title'] = Clean::cssString($design['login_title']);
+        }
+        if ($design['login_subtitle'] !== '') {
+            $vars['--techtyl-login-subtitle'] = Clean::cssString($design['login_subtitle']);
+        }
 
         $css = '';
         foreach ($vars as $property => $value) {
@@ -243,6 +326,8 @@ class Design
             'data-techtyl-servers' => $design['server_layout'],
             'data-techtyl-motion' => $design['motion'],
             'data-techtyl-banners' => $design['banners'] ? 'an' : 'aus',
+            'data-techtyl-logintext' => $design['login_title'] !== '' || $design['login_subtitle'] !== '' ? 'an' : 'aus',
+            'data-techtyl-loginbild' => $design['login_image'] !== '' ? 'an' : 'aus',
         ];
     }
 }
