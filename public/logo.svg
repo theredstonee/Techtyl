@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Techtyl">
+  <rect width="256" height="256" rx="56" fill="#0f1c23"/>
+  <path d="M56 70h98v34h-32v88H88v-88H56z" fill="#e9f0ee"/>
+  <rect x="166" y="70" width="34" height="34" rx="7" fill="#f0a33b"/>
+</svg>
