@@ -134,7 +134,7 @@ class AccountController extends Controller
         try {
             $name = Avatar::store((string) $request->file('image')->getRealPath());
         } catch (ImageRejected $e) {
-            throw ValidationException::withMessages(['image' => [$this->imageMessage($e->getMessage())]]);
+            throw ValidationException::withMessages(['image' => [$e->getMessage()]]);
         } catch (\Throwable $e) {
             Log::error('techtyl account: Profilbild konnte nicht gespeichert werden', ['error' => $e->getMessage()]);
             throw new HttpException(500, I18n::t('account.image_failed'));
@@ -320,18 +320,6 @@ class AccountController extends Controller
     }
 
     /* ------------------------------------------------------------------ intern */
-
-    /** The shared image pipeline reports in German ASCII; map its messages to the user's language. */
-    private function imageMessage(string $message): string
-    {
-        return match (true) {
-            str_contains($message, 'zu klein') => I18n::t('account.image_small'),
-            str_contains($message, 'zu viele Pixel') => I18n::t('account.image_pixels'),
-            str_contains($message, 'Bildformat') => I18n::t('account.image_format'),
-            str_contains($message, 'Erlaubt sind nur') => I18n::t('account.image_type'),
-            default => I18n::t('account.image_invalid'),
-        };
-    }
 
     private function avatarResponse(User $user): JsonResponse
     {

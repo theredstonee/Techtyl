@@ -12,6 +12,7 @@ use Illuminate\View\Factory as ViewFactory;
 use Pterodactyl\Http\Controllers\Controller;
 use Pterodactyl\Http\Requests\Admin\AdminFormRequest;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Pterodactyl\BlueprintFramework\Extensions\{identifier}\I18n;
 use Pterodactyl\BlueprintFramework\Extensions\{identifier}\Media;
 use Pterodactyl\BlueprintFramework\Extensions\{identifier}\Design;
 use Pterodactyl\BlueprintFramework\Extensions\{identifier}\Limits;
@@ -109,34 +110,43 @@ class {identifier}ExtensionController extends Controller
         }
         $this->prune();
 
-        return $this->back('Design gespeichert.');
+        return $this->back(I18n::t('admin.saved_design'));
     }
 
     /** Grenzen speichern und Standardbilder hochladen; das Feld "action" waehlt den Vorgang. */
     public function post(Request $request): RedirectResponse
     {
-        $action = $request->validate(['action' => ['required', 'string', 'max:60', 'regex:/^[a-z]+([.-][a-z]+)*$/']])['action'];
+        $action = $request->validate(['action' => ['required', 'string', 'max:60', 'regex:/^[a-z]+([.-][a-z]+)*$/']], [
+            'action.required' => I18n::t('admin.v_action'),
+            'action.string' => I18n::t('admin.v_action'),
+            'action.max' => I18n::t('admin.v_action'),
+            'action.regex' => I18n::t('admin.v_action'),
+        ])['action'];
 
         // Module schalten.
         if ($action === 'modules') {
             $this->blueprint->dbSet(Design::TABLE, Modules::RECORD, Modules::encode((array) $request->input('modules', [])));
 
-            return $this->backTo('modules', 'Module gespeichert.');
+            return $this->backTo('modules', I18n::t('admin.saved_modules'));
         }
 
         // Account area: profile pictures, Gravatar fallback, editable names.
         if ($action === 'account') {
             \Pterodactyl\BlueprintFramework\Extensions\{identifier}\Account\AccountSettings::save($request->only(['uploads', 'gravatar', 'names']));
 
-            return $this->backTo('modules', \Pterodactyl\BlueprintFramework\Extensions\{identifier}\I18n::t('core.saved'));
+            return $this->backTo('modules', I18n::t('core.saved'));
         }
 
         // Standardsprache fuer Gaeste und Konten ohne eigene Sprachwahl.
         if ($action === 'locale') {
-            $locale = $request->validate(['locale' => 'required|string|in:' . implode(',', \Pterodactyl\BlueprintFramework\Extensions\{identifier}\I18n::SUPPORTED)])['locale'];
-            $this->blueprint->dbSet(Design::TABLE, \Pterodactyl\BlueprintFramework\Extensions\{identifier}\I18n::RECORD, $locale);
+            $locale = $request->validate(['locale' => 'required|string|in:' . implode(',', I18n::SUPPORTED)], [
+                'locale.required' => I18n::t('admin.v_locale'),
+                'locale.string' => I18n::t('admin.v_locale'),
+                'locale.in' => I18n::t('admin.v_locale'),
+            ])['locale'];
+            $this->blueprint->dbSet(Design::TABLE, I18n::RECORD, $locale);
 
-            return $this->backTo('modules', \Pterodactyl\BlueprintFramework\Extensions\{identifier}\I18n::t('core.saved', [], $locale));
+            return $this->backTo('modules', I18n::t('core.saved', [], $locale));
         }
 
         // Aktionen eines Moduls heissen "<schluessel>.<aktion>" und werden an dessen Admin-Klasse gereicht.
@@ -150,17 +160,27 @@ class {identifier}ExtensionController extends Controller
         abort_unless(in_array($action, ['limits', 'background', 'egg-banner'], true), 404);
 
         if ($action === 'limits') {
+            $uploadRange = ['min' => Limits::MIN_UPLOAD_KB, 'max' => Limits::MAX_UPLOAD_KB];
             $limits = Limits::sanitize($request->validate([
                 'user_background' => 'nullable|boolean',
                 'user_banners' => 'nullable|boolean',
                 'user_appearance' => 'nullable|boolean',
                 'user_layout' => 'nullable|boolean',
                 'max_upload_kb' => 'required|integer|min:' . Limits::MIN_UPLOAD_KB . '|max:' . Limits::MAX_UPLOAD_KB,
+            ], [
+                'user_background.boolean' => I18n::t('admin.v_bool'),
+                'user_banners.boolean' => I18n::t('admin.v_bool'),
+                'user_appearance.boolean' => I18n::t('admin.v_bool'),
+                'user_layout.boolean' => I18n::t('admin.v_bool'),
+                'max_upload_kb.required' => I18n::t('admin.v_upload_required'),
+                'max_upload_kb.integer' => I18n::t('admin.v_upload', $uploadRange),
+                'max_upload_kb.min' => I18n::t('admin.v_upload', $uploadRange),
+                'max_upload_kb.max' => I18n::t('admin.v_upload', $uploadRange),
             ]));
             $this->blueprint->dbSet(Design::TABLE, Limits::RECORD, json_encode($limits));
             Settings::flush();
 
-            return $this->back('Grenzen gespeichert.');
+            return $this->back(I18n::t('admin.saved_limits'));
         }
 
         if ($action === 'background') {
@@ -173,10 +193,14 @@ class {identifier}ExtensionController extends Controller
             $this->storeDefaultBackground($name);
             Media::delete($previous);
 
-            return $this->back('Standard-Hintergrund gespeichert.');
+            return $this->back(I18n::t('admin.saved_background'));
         }
 
-        $eggId = (int) $request->validate(['egg_id' => 'required|integer|exists:eggs,id'])['egg_id'];
+        $eggId = (int) $request->validate(['egg_id' => 'required|integer|exists:eggs,id'], [
+            'egg_id.required' => I18n::t('admin.v_egg_required'),
+            'egg_id.integer' => I18n::t('admin.v_egg'),
+            'egg_id.exists' => I18n::t('admin.v_egg'),
+        ])['egg_id'];
         $name = Media::receive($request, 'banner', Limits::MAX_UPLOAD_KB);
         try {
             $previous = DB::table('techtyl_egg_banners')->where('egg_id', $eggId)->value('file');
@@ -187,7 +211,7 @@ class {identifier}ExtensionController extends Controller
         }
         Media::delete($previous);
 
-        return $this->back('Standard-Banner gespeichert.');
+        return $this->back(I18n::t('admin.saved_banner'));
     }
 
     /** DELETE /admin/extensions/techtyl/background/0 und /egg-banner/<Egg-ID>. */
@@ -205,7 +229,7 @@ class {identifier}ExtensionController extends Controller
                 Media::delete($previous);
             }
 
-            return $this->back('Standard-Hintergrund entfernt.');
+            return $this->back(I18n::t('admin.removed_background'));
         }
 
         if ($target === 'egg-banner' && ctype_digit($id) && strlen($id) <= 10) {
@@ -215,7 +239,7 @@ class {identifier}ExtensionController extends Controller
                 Media::delete($previous);
             }
 
-            return $this->back('Standard-Banner entfernt.');
+            return $this->back(I18n::t('admin.removed_banner'));
         }
 
         throw new NotFoundHttpException();
@@ -270,5 +294,20 @@ class {identifier}DesignFormRequest extends AdminFormRequest
             'opacity' => 'required|integer|min:35|max:100',
             'blur' => 'required|integer|min:0|max:24',
         ];
+    }
+
+    /** @return array<string, string> */
+    public function messages(): array
+    {
+        $invalid = I18n::t('admin.v_design');
+        $messages = ['banners.boolean' => I18n::t('admin.v_bool')];
+        foreach (['variant', 'accent', 'radius', 'navigation', 'server_layout', 'motion', 'banner_height', 'background', 'dim', 'opacity', 'blur'] as $field) {
+            foreach (['required', 'string', 'integer', 'in', 'regex', 'min', 'max'] as $rule) {
+                $messages[$field . '.' . $rule] = $invalid;
+            }
+        }
+        $messages['accent.regex'] = I18n::t('admin.v_accent');
+
+        return $messages;
     }
 }

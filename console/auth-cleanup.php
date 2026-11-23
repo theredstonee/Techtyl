@@ -4,13 +4,14 @@
 // Wird von Blueprint innerhalb eines Artisan-Kommandos eingebunden.
 
 use Illuminate\Support\Facades\Schema;
+use Pterodactyl\BlueprintFramework\Extensions\{identifier}\I18n;
 use Pterodactyl\BlueprintFramework\Extensions\{identifier}\Modules\Auth\Registrations;
 
 if (!Schema::hasTable(Registrations::TABLE)) {
-    echo "techtyl auth: Tabellen fehlen, nichts zu tun\n";
+    echo I18n::t('core.auth_tables_missing') . "\n";
 
     return;
 }
 
 $deleted = Registrations::cleanup();
-echo "techtyl auth: {$deleted} abgelaufene Registrierungen entfernt\n";
+echo I18n::t('core.auth_removed', ['count' => $deleted]) . "\n";

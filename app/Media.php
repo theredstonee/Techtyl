@@ -62,11 +62,11 @@ class Media
         $request->validate([
             'image' => ['required', 'file', 'max:' . $maxKilobytes, 'mimetypes:' . implode(',', ImageProcessor::MIME_TYPES)],
         ], [
-            'image.required' => 'Es wurde kein Bild hochgeladen.',
-            'image.file' => 'Es wurde kein Bild hochgeladen.',
-            'image.uploaded' => 'Das Bild konnte nicht hochgeladen werden (zu gross?).',
-            'image.max' => 'Das Bild ist zu gross (hoechstens ' . $maxKilobytes . ' KB).',
-            'image.mimetypes' => 'Erlaubt sind nur JPEG-, PNG- und WebP-Bilder.',
+            'image.required' => I18n::t('core.image_required'),
+            'image.file' => I18n::t('core.image_required'),
+            'image.uploaded' => I18n::t('core.image_upload'),
+            'image.max' => I18n::t('core.image_max', ['size' => $maxKilobytes]),
+            'image.mimetypes' => I18n::t('core.image_type'),
         ]);
 
         try {
@@ -81,7 +81,7 @@ class Media
             throw ValidationException::withMessages(['image' => [$e->getMessage()]]);
         } catch (\Throwable $e) {
             Log::error('techtyl: Bild-Upload fehlgeschlagen', ['kind' => $kind, 'error' => $e->getMessage()]);
-            throw new HttpException(500, 'Das Bild konnte nicht gespeichert werden.');
+            throw new HttpException(500, I18n::t('core.image_store'));
         }
     }
 

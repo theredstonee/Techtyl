@@ -56,30 +56,30 @@ class ImageProcessor
     public static function process(string $path, string $kind): array
     {
         if (!isset(self::KINDS[$kind]) || !function_exists('imagecreatetruecolor')) {
-            throw new ImageRejected('Bilder koennen auf diesem Server nicht verarbeitet werden.');
+            throw new ImageRejected(I18n::t('core.image_unsupported'));
         }
         if (!is_file($path) || !is_readable($path)) {
-            throw new ImageRejected('Die Datei konnte nicht gelesen werden.');
+            throw new ImageRejected(I18n::t('core.image_unreadable'));
         }
 
         $type = self::detect($path);
         if ($type === null) {
-            throw new ImageRejected('Erlaubt sind nur JPEG-, PNG- und WebP-Bilder.');
+            throw new ImageRejected(I18n::t('core.image_type'));
         }
 
         $info = @getimagesize($path);
         if ($info === false || image_type_to_mime_type($info[2]) !== $type) {
-            throw new ImageRejected('Die Datei ist kein gueltiges Bild.');
+            throw new ImageRejected(I18n::t('core.image_invalid'));
         }
         [$width, $height] = [(int) $info[0], (int) $info[1]];
         if ($width < self::MIN_SIDE || $height < self::MIN_SIDE) {
-            throw new ImageRejected('Das Bild ist zu klein (mindestens ' . self::MIN_SIDE . ' x ' . self::MIN_SIDE . ' Pixel).');
+            throw new ImageRejected(I18n::t('core.image_small', ['size' => self::MIN_SIDE]));
         }
         if ($width > self::MAX_SIDE || $height > self::MAX_SIDE || $width * $height > self::MAX_PIXELS) {
-            throw new ImageRejected('Das Bild hat zu viele Pixel (hoechstens ' . self::MAX_SIDE . ' Pixel Kantenlaenge und 25 Megapixel).');
+            throw new ImageRejected(I18n::t('core.image_pixels', ['side' => self::MAX_SIDE]));
         }
         if (!self::readable()[$type]) {
-            throw new ImageRejected('Dieses Bildformat kann auf diesem Server nicht verarbeitet werden. Bitte ein anderes Format verwenden.');
+            throw new ImageRejected(I18n::t('core.image_format'));
         }
 
         [$maxWidth, $maxHeight] = self::KINDS[$kind];
@@ -89,7 +89,7 @@ class ImageProcessor
 
         // GD haelt das Bild unkomprimiert im Speicher; vorher pruefen, statt den Prozess abstuerzen zu lassen.
         if (!self::reserveMemory(($width * $height + 2 * $targetWidth * $targetHeight) * 5 + 16 * 1024 * 1024)) {
-            throw new ImageRejected('Das Bild hat zu viele Pixel fuer diesen Server. Bitte ein kleineres Bild verwenden.');
+            throw new ImageRejected(I18n::t('core.image_server'));
         }
 
         $source = match ($type) {
@@ -98,7 +98,7 @@ class ImageProcessor
             'image/webp' => @imagecreatefromwebp($path),
         };
         if (!$source instanceof \GdImage) {
-            throw new ImageRejected('Die Datei ist kein gueltiges Bild.');
+            throw new ImageRejected(I18n::t('core.image_invalid'));
         }
 
         try {
@@ -112,7 +112,7 @@ class ImageProcessor
             [$ext, $mime] = self::outputFormat();
             $target = imagecreatetruecolor($targetWidth, $targetHeight);
             if (!$target instanceof \GdImage) {
-                throw new ImageRejected('Das Bild konnte nicht verarbeitet werden.');
+                throw new ImageRejected(I18n::t('core.image_process'));
             }
 
             if ($ext === 'jpg') {
@@ -137,7 +137,7 @@ class ImageProcessor
                 $data = (string) ob_get_clean();
             }
             if (!$written || $data === '') {
-                throw new ImageRejected('Das Bild konnte nicht verarbeitet werden.');
+                throw new ImageRejected(I18n::t('core.image_process'));
             }
 
             return ['data' => $data, 'ext' => $ext, 'mime' => $mime, 'width' => $targetWidth, 'height' => $targetHeight];

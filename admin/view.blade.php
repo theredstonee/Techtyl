@@ -1,10 +1,13 @@
+@php
+  $t = fn (string $key, array $replace = []) => \Pterodactyl\BlueprintFramework\Extensions\{identifier}\I18n::t('admin.' . $key, $replace);
+@endphp
 <div class="techtyl-admin">
   <ul class="nav nav-tabs techtyl-tabs" role="tablist">
     <li class="@if ($tab === 'design') active @endif"><a href="{{ $root }}">Design</a></li>
-    <li class="@if ($tab === 'modules') active @endif"><a href="{{ $root }}?tab=modules">Module</a></li>
-    @foreach ($modules as $key => $module)
+    <li class="@if ($tab === 'modules') active @endif"><a href="{{ $root }}?tab=modules">{{ $t('modules') }}</a></li>
+    @foreach (array_keys($modules) as $key)
       @if ($moduleStates[$key])
-        <li class="@if ($tab === $key) active @endif"><a href="{{ $root }}?tab={{ $key }}">{{ $module[1] }}</a></li>
+        <li class="@if ($tab === $key) active @endif"><a href="{{ $root }}?tab={{ $key }}">{{ $t('module_' . $key) }}</a></li>
       @endif
     @endforeach
   </ul>
@@ -37,17 +40,18 @@
 
   @if (!$tablesReady)
     <div class="alert alert-warning">
-      Die Datenbank-Tabellen von Techtyl fehlen noch. Eigene Bilder, Banner und Ordner funktionieren erst nach
-      <code>php artisan migrate --force</code> im Panel-Ordner (bei Docker-Installationen fuehrt Blueprint diesen Schritt nicht selbst aus).
+      {{ $t('tables_missing') }}
+      <code>php artisan migrate --force</code>
+      {{ $t('tables_missing_after') }}
     </div>
   @endif
 
   <div class="row">
     <div class="col-md-12">
       <div class="box">
-        <div class="box-header with-border"><h3 class="box-title">Standard-Banner je Egg</h3></div>
+        <div class="box-header with-border"><h3 class="box-title">{{ $t('egg_banners') }}</h3></div>
         <div class="box-body">
-          <p class="text-muted small">Server ohne eigenes Banner zeigen das Banner ihres Eggs.</p>
+          <p class="text-muted small">{{ $t('egg_banners_hint') }}</p>
           @if ($tablesReady)
             <form method="POST" action="{{ $root }}" enctype="multipart/form-data">
               {{ csrf_field() }}
@@ -56,15 +60,15 @@
                 <label for="techtyl-egg">Egg</label>
                 <select class="form-control" id="techtyl-egg" name="egg_id" required>
                   @foreach ($eggs as $egg)
-                    <option value="{{ $egg->id }}">{{ $egg->nest }} / {{ $egg->name }}@if (isset($eggBanners[$egg->id])) (hat Banner)@endif</option>
+                    <option value="{{ $egg->id }}">{{ $egg->nest }} / {{ $egg->name }}@if (isset($eggBanners[$egg->id])) {{ $t('egg_has_banner') }}@endif</option>
                   @endforeach
                 </select>
               </div>
               <div class="form-group">
-                <label for="techtyl-egg-file">Bild</label>
+                <label for="techtyl-egg-file">{{ $t('image') }}</label>
                 <input type="file" id="techtyl-egg-file" name="image" accept="image/jpeg,image/png,image/webp" required>
               </div>
-              <button type="submit" class="btn btn-primary">Banner speichern</button>
+              <button type="submit" class="btn btn-primary">{{ $t('save_banner') }}</button>
             </form>
           @endif
         </div>
@@ -82,7 +86,7 @@
                         <form method="POST" action="{{ $root }}/egg-banner/{{ $egg->id }}">
                           {{ csrf_field() }}
                           <input type="hidden" name="_method" value="DELETE">
-                          <button type="submit" class="btn btn-danger btn-xs">Entfernen</button>
+                          <button type="submit" class="btn btn-danger btn-xs">{{ $t('remove') }}</button>
                         </form>
                       </td>
                     </tr>
@@ -101,22 +105,22 @@
     <div class="row">
       <div class="col-md-8">
         <div class="box">
-          <div class="box-header with-border"><h3 class="box-title">Module</h3></div>
+          <div class="box-header with-border"><h3 class="box-title">{{ $t('modules') }}</h3></div>
           <form method="POST" action="{{ $root }}">
             {{ csrf_field() }}
             <input type="hidden" name="action" value="modules">
             <div class="box-body">
-              <p class="text-muted">Abgeschaltete Module sind fuer Nutzer nicht erreichbar. Ihre Daten bleiben erhalten.</p>
-              @foreach ($modules as $key => $module)
+              <p class="text-muted">{{ $t('modules_hint') }}</p>
+              @foreach (array_keys($modules) as $key)
                 <div class="form-group techtyl-module">
                   <input type="hidden" name="modules[{{ $key }}]" value="0">
-                  <label><input type="checkbox" name="modules[{{ $key }}]" value="1" @if ($moduleStates[$key]) checked @endif> {{ $module[1] }}</label>
-                  <p class="text-muted small">{{ $module[2] }}</p>
+                  <label><input type="checkbox" name="modules[{{ $key }}]" value="1" @if ($moduleStates[$key]) checked @endif> {{ $t('module_' . $key) }}</label>
+                  <p class="text-muted small">{{ $t('module_' . $key . '_desc') }}</p>
                 </div>
               @endforeach
             </div>
             <div class="box-footer">
-              <button type="submit" class="btn btn-primary pull-right">Module speichern</button>
+              <button type="submit" class="btn btn-primary pull-right">{{ $t('save_modules') }}</button>
             </div>
           </form>
         </div>
@@ -168,11 +172,11 @@
 
   @if (isset($modules[$tab]))
     @if (!empty($moduleData['moduleError']))
-      <div class="alert alert-danger">Die Einstellungen dieses Moduls konnten nicht geladen werden. Details stehen im Panel-Log.</div>
+      <div class="alert alert-danger">{{ $t('module_error') }}</div>
     @elseif ($moduleView !== null)
       @include($moduleView, $moduleData)
     @else
-      <div class="alert alert-info">Dieses Modul hat noch keine Einstellungen.</div>
+      <div class="alert alert-info">{{ $t('module_empty') }}</div>
     @endif
   @endif
 </div>

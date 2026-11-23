@@ -13,6 +13,7 @@ use Pterodactyl\Http\Controllers\Controller;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Pterodactyl\BlueprintFramework\Extensions\{identifier}\I18n;
 use Pterodactyl\BlueprintFramework\Extensions\{identifier}\Media;
 use Pterodactyl\BlueprintFramework\Extensions\{identifier}\Design;
 use Pterodactyl\BlueprintFramework\Extensions\{identifier}\Limits;
@@ -80,20 +81,20 @@ class ClientController extends Controller
                 $rules['design.' . $key] = array_merge(['sometimes', 'nullable'], $keyRules);
             }
         }
-        $request->validate($rules);
+        $request->validate($rules, $this->designMessages());
 
         // Nur bekannte Schluessel; die Werte sind durch die Regeln oben geprueft und laufen vor dem
         // Speichern noch einmal durch Design::partial().
         $input = (array) $request->input('design');
         if (array_diff(array_keys($input), Design::userKeys()) !== []) {
-            throw ValidationException::withMessages(['design' => ['Unbekannte Einstellung.']]);
+            throw ValidationException::withMessages(['design' => [I18n::t('core.design_unknown')]]);
         }
 
         $user = $request->user();
         $permissions = Limits::permissions(Settings::limits());
         foreach (array_keys($input) as $key) {
             if (empty($permissions[Design::groupOf($key)])) {
-                throw new AccessDeniedHttpException('Diese Einstellung darf nicht geaendert werden.');
+                throw new AccessDeniedHttpException(I18n::t('core.design_locked'));
             }
         }
         // Motiv: nur "none" oder ein mitgeliefertes Motiv (sonst wuerde es still verworfen).
@@ -116,7 +117,7 @@ class ClientController extends Controller
         $user = $request->user();
         $limits = Settings::limits();
         if (!$limits['user_background']) {
-            throw new AccessDeniedHttpException('Eigene Hintergrundbilder sind abgeschaltet.');
+            throw new AccessDeniedHttpException(I18n::t('core.background_off'));
         }
 
         $name = Media::receive($request, 'background', $limits['max_upload_kb']);
@@ -197,13 +198,13 @@ class ClientController extends Controller
 
     public function folderStore(Request $request): JsonResponse
     {
-        $name = trim($request->validate(['name' => self::FOLDER_NAME_RULES])['name']);
+        $name = trim($request->validate(['name' => self::FOLDER_NAME_RULES], $this->folderNameMessages())['name']);
         $user = $request->user();
 
         $id = DB::transaction(function () use ($user, $name) {
             $existing = DB::table('techtyl_folders')->where('user_id', $user->id)->lockForUpdate()->pluck('position');
             if ($existing->count() >= self::MAX_FOLDERS) {
-                throw ValidationException::withMessages(['name' => ['Es sind hoechstens ' . self::MAX_FOLDERS . ' Ordner moeglich.']]);
+                throw ValidationException::withMessages(['name' => [I18n::t('core.folder_limit', ['max' => self::MAX_FOLDERS])]]);
             }
 
             return DB::table('techtyl_folders')->insertGetId([
@@ -220,7 +221,7 @@ class ClientController extends Controller
 
     public function folderUpdate(Request $request, string $folder): JsonResponse
     {
-        $name = trim($request->validate(['name' => self::FOLDER_NAME_RULES])['name']);
+        $name = trim($request->validate(['name' => self::FOLDER_NAME_RULES], $this->folderNameMessages())['name']);
         $user = $request->user();
         $id = $this->ownFolderId($user, $folder);
 
@@ -246,6 +247,14 @@ class ClientController extends Controller
         $ids = $request->validate([
             'folders' => ['present', 'array', 'max:' . self::MAX_FOLDERS],
             'folders.*' => ['required', 'integer', 'min:1', 'distinct'],
+        ], [
+            'folders.present' => I18n::t('core.v_folders'),
+            'folders.array' => I18n::t('core.v_folders'),
+            'folders.max' => I18n::t('core.v_folders'),
+            'folders.*.required' => I18n::t('core.v_folders'),
+            'folders.*.integer' => I18n::t('core.v_folders'),
+            'folders.*.min' => I18n::t('core.v_folders'),
+            'folders.*.distinct' => I18n::t('core.v_folders'),
         ])['folders'];
         $ids = array_map('intval', $ids);
         $user = $request->user();
@@ -253,7 +262,7 @@ class ClientController extends Controller
         DB::transaction(function () use ($user, $ids) {
             $own = DB::table('techtyl_folders')->where('user_id', $user->id)->lockForUpdate()->pluck('id')->map(fn ($id) => (int) $id)->all();
             if (count($ids) !== count($own) || array_diff($own, $ids) !== []) {
-                throw ValidationException::withMessages(['folders' => ['Die Liste muss genau die eigenen Ordner enthalten.']]);
+                throw ValidationException::withMessages(['folders' => [I18n::t('core.folder_list')]]);
             }
             foreach ($ids as $position => $id) {
                 DB::table('techtyl_folders')->where('id', $id)->where('user_id', $user->id)->update(['position' => $position]);
@@ -272,6 +281,14 @@ class ClientController extends Controller
         $uuids = $request->validate([
             'servers' => ['present', 'array', 'max:' . self::MAX_SERVERS_PER_REQUEST],
             'servers.*' => ['required', 'string', 'uuid', 'distinct'],
+        ], [
+            'servers.present' => I18n::t('core.v_servers'),
+            'servers.array' => I18n::t('core.v_servers'),
+            'servers.max' => I18n::t('core.v_servers'),
+            'servers.*.required' => I18n::t('core.v_servers'),
+            'servers.*.string' => I18n::t('core.v_servers'),
+            'servers.*.uuid' => I18n::t('core.v_servers'),
+            'servers.*.distinct' => I18n::t('core.v_servers'),
         ])['servers'];
         $user = $request->user();
         $id = $this->ownFolderId($user, $folder);
@@ -282,7 +299,7 @@ class ClientController extends Controller
         $serverIds = [];
         foreach ($uuids as $uuid) {
             if (!isset($allowed[$uuid])) {
-                throw ValidationException::withMessages(['servers' => ['Mindestens ein Server wurde nicht gefunden.']]);
+                throw ValidationException::withMessages(['servers' => [I18n::t('core.server_missing')]]);
             }
             $serverIds[] = (int) $allowed[$uuid];
         }
@@ -311,10 +328,10 @@ class ClientController extends Controller
     private function authorizeBanner(User $user, Server $server, array $limits): void
     {
         if (!$user->can(Permission::ACTION_SETTINGS_RENAME, $server)) {
-            throw new AccessDeniedHttpException('Keine Berechtigung fuer das Banner dieses Servers.');
+            throw new AccessDeniedHttpException(I18n::t('core.banner_forbidden'));
         }
         if (!$limits['user_banners'] && !$user->root_admin) {
-            throw new AccessDeniedHttpException('Eigene Banner sind abgeschaltet.');
+            throw new AccessDeniedHttpException(I18n::t('core.banners_off'));
         }
     }
 
@@ -322,10 +339,41 @@ class ClientController extends Controller
     {
         $id = ctype_digit($folder) && strlen($folder) <= 10 ? (int) $folder : 0;
         if ($id < 1 || !DB::table('techtyl_folders')->where('id', $id)->where('user_id', $user->id)->exists()) {
-            throw new NotFoundHttpException('Der Ordner wurde nicht gefunden.');
+            throw new NotFoundHttpException(I18n::t('core.folder_missing'));
         }
 
         return $id;
+    }
+
+    /** @return array<string, string> */
+    private function designMessages(): array
+    {
+        $invalid = I18n::t('core.v_design');
+
+        return [
+            'design.required' => I18n::t('core.v_design_required'),
+            'design.array' => $invalid,
+            'design.max' => $invalid,
+            'design.*.string' => $invalid,
+            'design.*.integer' => $invalid,
+            'design.*.boolean' => $invalid,
+            'design.*.in' => $invalid,
+            'design.*.regex' => $invalid,
+            'design.*.min' => $invalid,
+            'design.*.max' => $invalid,
+        ];
+    }
+
+    /** @return array<string, string> */
+    private function folderNameMessages(): array
+    {
+        return [
+            'name.required' => I18n::t('core.folder_name_required'),
+            'name.string' => I18n::t('core.folder_name_required'),
+            'name.min' => I18n::t('core.folder_name_required'),
+            'name.max' => I18n::t('core.folder_name_long', ['max' => 40]),
+            'name.regex' => I18n::t('core.folder_name_chars'),
+        ];
     }
 
     /** @param array<string, mixed> $values */

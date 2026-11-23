@@ -107,7 +107,7 @@ class Eggs
 
         return app(NestCreationService::class)->handle([
             'name' => $name,
-            'description' => 'Allgemeine Anwendungen wie Node.js, Python, Bun und Deno (mit Techtyl geliefert).',
+            'description' => I18n::t('core.nest_generic'),
         ]);
     }
 }
