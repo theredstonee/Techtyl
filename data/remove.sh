@@ -4,6 +4,10 @@
 
 cd "${PTERODACTYL_DIRECTORY:-.}" || exit 0
 
+# Ersetzte Panel-Bausteine zuerst zurueckschreiben, damit der folgende Neubau das Original enthaelt.
+php .blueprint/extensions/techtyl/private/patch.php restore \
+  || echo "techtyl: Originale konnten nicht vollstaendig wiederhergestellt werden (.blueprint/extensions/techtyl/private/.backup)."
+
 MIGRATION="2026_11_23_170000_create_techtyl_tables"
 
 # Tabellen entfernen und den Eintrag in "migrations" loeschen, damit eine spaetere

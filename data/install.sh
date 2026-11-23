@@ -10,4 +10,9 @@ php artisan migrate --force || echo "techtyl: Tabellen konnten nicht angelegt we
 php artisan tinker --execute="echo 'techtyl eggs: ' . json_encode(\\Pterodactyl\\BlueprintFramework\\Extensions\\techtyl\\Eggs::importOnce());" \
   || echo "techtyl: Eggs konnten nicht importiert werden; der Import wird beim Oeffnen der Techtyl-Einstellungen nachgeholt."
 
+# Eigene Bausteine statt der Panel-Komponenten einsetzen (Originale werden gesichert).
+# Laeuft vor dem Neubau der Oberflaeche, damit die Ersetzungen im Bundle landen.
+php .blueprint/extensions/techtyl/private/patch.php apply \
+  || echo "techtyl: Bausteine konnten nicht ersetzt werden; das Panel nutzt an diesen Stellen seine normalen Komponenten."
+
 exit 0
