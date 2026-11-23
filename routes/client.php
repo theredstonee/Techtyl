@@ -32,5 +32,10 @@ Route::patch('/folders/{folder}', [ClientController::class, 'folderUpdate'])->wh
 Route::delete('/folders/{folder}', [ClientController::class, 'folderDelete'])->whereNumber('folder');
 Route::put('/folders/{folder}/servers', [ClientController::class, 'folderServers'])->whereNumber('folder');
 
+// Konto und Profil (app/Account/routes.client.php) unter /account/...
+if (is_file(base_path('app/BlueprintFramework/Extensions/{identifier}/Account/routes.client.php'))) {
+    Route::prefix('/account')->group(base_path('app/BlueprintFramework/Extensions/{identifier}/Account/routes.client.php'));
+}
+
 // Routen der Module (app/Modules/<Ordner>/routes.client.php), jeweils unter /<schluessel>/...
 \Pterodactyl\BlueprintFramework\Extensions\{identifier}\Modules::routes('client');

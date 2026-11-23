@@ -74,10 +74,18 @@ if ($mode === 'restore') {
     exit(0);
 }
 
-$list = is_file($listFile) ? json_decode((string) file_get_contents($listFile), true) : [];
-if (!is_array($list)) {
-    techtyl_out('patches.json ist ungueltig, es wird nichts veraendert');
-    exit(0);
+// patches.json plus jede Datei in patches/*.json (je Bereich eine eigene Liste).
+$files = array_merge(is_file($listFile) ? [$listFile] : [], glob(__DIR__ . '/patches/*.json') ?: []);
+$list = [];
+foreach ($files as $file) {
+    $decoded = json_decode((string) file_get_contents($file), true);
+    if (!is_array($decoded)) {
+        techtyl_out(basename($file) . ' ist ungueltig, es wird nichts veraendert');
+        exit(0);
+    }
+    foreach ($decoded as $entry) {
+        $list[] = $entry;
+    }
 }
 
 // Ersetzungen je Datei sammeln.
