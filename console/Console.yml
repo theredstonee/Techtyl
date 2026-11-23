@@ -1,1 +1,2 @@
-- { Signature: 'tickets-autoclose', Description: 'Schliesst Tickets ohne Antwort des Nutzers und raeumt verwaiste Anhaenge weg', Path: 'tickets-autoclose.php', Interval: 'hourly' }
+- { Signature: 'tickets-autoclose', Description: 'Closes tickets without a user reply and removes orphaned attachments', Path: 'tickets-autoclose.php', Interval: 'hourly' }
+- { Signature: 'auth-cleanup', Description: 'Removes expired, unconfirmed registrations', Path: 'auth-cleanup.php', Interval: 'hourly' }

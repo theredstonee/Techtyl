@@ -38,3 +38,8 @@ Authentication:
   Container:
     BeforeContent: ''
     AfterContent: 'auth/AuthExtras'
+
+Account:
+  Overview:
+    BeforeContent: ''
+    AfterContent: 'auth/AccountLinks'

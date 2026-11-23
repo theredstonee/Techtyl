@@ -1,1 +1,32 @@
-[]
+[
+  {
+    "file": "resources/scripts/routers/DashboardRouter.tsx",
+    "search": "import NavigationBar from '@/components/NavigationBar';",
+    "replace": "import NavigationBar from '@blueprint/extensions/techtyl/theme/Navigation';",
+    "note": "Kopfleiste -> Techtyl-Navigation (Seitenleiste, Symbol-Leiste, oben; Benutzermenue, Strg+K)"
+  },
+  {
+    "file": "resources/scripts/routers/ServerRouter.tsx",
+    "search": "import NavigationBar from '@/components/NavigationBar';",
+    "replace": "import NavigationBar from '@blueprint/extensions/techtyl/theme/Navigation';",
+    "note": "dieselbe Navigation innerhalb eines Servers"
+  },
+  {
+    "file": "resources/scripts/routers/DashboardRouter.tsx",
+    "search": "import SubNavigation from '@/components/elements/SubNavigation';",
+    "replace": "import SubNavigation from '@blueprint/extensions/techtyl/theme/AccountNavigation';",
+    "note": "Reiterleiste der Kontoseiten entfaellt (Seiten stehen in der Hauptnavigation)"
+  },
+  {
+    "file": "resources/scripts/routers/ServerRouter.tsx",
+    "search": "import SubNavigation from '@/components/elements/SubNavigation';",
+    "replace": "import SubNavigation from '@blueprint/extensions/techtyl/theme/ServerNavigation';",
+    "note": "Reiterleiste eines Servers -> gruppierte Seitenleiste mit Name und Zustand"
+  },
+  {
+    "file": "resources/scripts/components/dashboard/DashboardContainer.tsx",
+    "search": "import ServerRow from '@/components/dashboard/ServerRow';",
+    "replace": "import ServerRow from '@blueprint/extensions/techtyl/theme/ServerCard';",
+    "note": "Zeile der Serverliste -> Karte mit Banner, Zustand und Auslastung in Prozent"
+  }
+]

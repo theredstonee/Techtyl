@@ -1,0 +1,327 @@
+/* Techtyl, Modul Registrierung und Anmeldung: Zusaetze auf der Anmeldeseite und der Konto-Seite.
+   Farben und Masse kommen aus den --techtyl-* Variablen; die Rueckfallwerte greifen nur,
+   wenn das Stylesheet des Themes fehlt. */
+
+.techtyl-auth-extras,
+.techtyl-auth-links {
+  --ta-accent: var(--techtyl-accent, #f0a33b);
+  --ta-accent-ink: var(--techtyl-accent-ink, #17130b);
+  --ta-line: var(--techtyl-line, #2c4753);
+  --ta-text: var(--techtyl-text, #e9f0ee);
+  --ta-muted: var(--techtyl-muted, #93a9ac);
+  --ta-surface: var(--techtyl-surface, #172a33);
+  --ta-raise: var(--techtyl-raise, #1f3742);
+  --ta-bg: var(--techtyl-bg, #0f1c23);
+  --ta-r: var(--techtyl-radius, 10px);
+  --ta-bad: var(--techtyl-bad, #f0685f);
+  --ta-ok: var(--techtyl-ok, #5fd39a);
+  color: var(--ta-text);
+}
+
+/* ---------- Anmeldeseite ---------- */
+
+.techtyl-auth-extras {
+  display: grid;
+  gap: 16px;
+  margin: 18px 4px 0;
+  font-size: 14px;
+  /* The theme lays the sign-in card out as a two-column grid; stay in the form column. */
+  grid-column: 2;
+}
+
+.techtyl-auth-check {
+  display: grid;
+  gap: 8px;
+  min-height: 65px;
+}
+
+.techtyl-auth-problem {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ta-bad);
+}
+
+.techtyl-auth-or {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 12px;
+  font-size: 12px;
+  color: var(--ta-muted);
+}
+
+.techtyl-auth-or::before,
+.techtyl-auth-or::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--ta-line);
+}
+
+.techtyl-auth-providers {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+}
+
+.techtyl-auth-provider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 46px;
+  padding: 7px 14px 7px 8px;
+  font-weight: 500;
+  color: var(--ta-text);
+  text-decoration: none;
+  background: var(--ta-surface);
+  border: 1px solid var(--ta-line);
+  border-radius: calc(var(--ta-r) * 0.7);
+  transition: border-color 0.15s, transform 0.12s, background-color 0.15s;
+}
+
+.techtyl-auth-provider:hover {
+  color: var(--ta-text);
+  border-color: var(--ta-accent);
+  background: var(--ta-raise);
+}
+
+.techtyl-auth-provider:active {
+  transform: translateY(1px);
+}
+
+.techtyl-auth-provider:focus-visible,
+.techtyl-auth-button:focus-visible,
+.techtyl-auth-register a:focus-visible {
+  outline: 2px solid var(--ta-accent);
+  outline-offset: 2px;
+}
+
+.techtyl-auth-provider i,
+.techtyl-auth-tile {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 30px;
+  height: 30px;
+  font-style: normal;
+  font-weight: 800;
+  font-size: 15px;
+  color: #fff;
+  background: var(--ta-muted);
+  border-radius: calc(var(--ta-r) * 0.5);
+}
+
+.techtyl-auth-provider-discord i,
+i.techtyl-auth-provider-discord {
+  background: #5865f2;
+}
+
+.techtyl-auth-provider-google i,
+i.techtyl-auth-provider-google {
+  background: #1a73e8;
+}
+
+.techtyl-auth-register {
+  margin: 0;
+  text-align: center;
+  color: var(--ta-muted);
+}
+
+.techtyl-auth-register a {
+  color: var(--ta-text);
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-color: var(--ta-accent);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
+.techtyl-auth-register a:hover {
+  color: var(--ta-accent);
+}
+
+/* ---------- Konto-Seite ---------- */
+
+.techtyl-auth-links {
+  margin: 0 0 40px;
+  padding: 20px 22px 8px;
+  background: var(--ta-surface);
+  border: 1px solid var(--ta-line);
+  border-radius: var(--ta-r);
+}
+
+.techtyl-auth-links header h2 {
+  margin: 0 0 4px;
+  font-size: 18px;
+  font-weight: 650;
+}
+
+.techtyl-auth-links header p {
+  margin: 0 0 14px;
+  font-size: 14px;
+  color: var(--ta-muted);
+}
+
+.techtyl-auth-links ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.techtyl-auth-links li {
+  padding: 13px 0;
+  border-top: 1px solid var(--ta-line);
+}
+
+.techtyl-auth-link-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.techtyl-auth-tile {
+  width: 38px;
+  height: 38px;
+  font-size: 18px;
+}
+
+.techtyl-auth-link-text {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+
+.techtyl-auth-link-text span {
+  font-size: 13px;
+  color: var(--ta-muted);
+  overflow-wrap: anywhere;
+}
+
+.techtyl-auth-button {
+  flex: none;
+  min-height: 36px;
+  padding: 6px 14px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ta-text);
+  background: var(--ta-raise);
+  border: 1px solid var(--ta-line);
+  border-radius: calc(var(--ta-r) * 0.7);
+  cursor: pointer;
+  transition: border-color 0.15s, filter 0.15s;
+}
+
+.techtyl-auth-button:hover {
+  border-color: var(--ta-accent);
+}
+
+.techtyl-auth-button.is-primary {
+  color: var(--ta-accent-ink);
+  background: var(--ta-accent);
+  border-color: var(--ta-accent);
+  font-weight: 600;
+}
+
+.techtyl-auth-button.is-primary:hover {
+  filter: brightness(1.07);
+}
+
+.techtyl-auth-button.is-quiet {
+  background: none;
+  border-color: transparent;
+  color: var(--ta-muted);
+}
+
+.techtyl-auth-button[disabled] {
+  opacity: 0.55;
+  cursor: default;
+  filter: none;
+}
+
+.techtyl-auth-confirm {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0 2px 52px;
+  font-size: 14px;
+}
+
+.techtyl-auth-confirm label {
+  color: var(--ta-muted);
+}
+
+.techtyl-auth-confirm-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.techtyl-auth-confirm input {
+  flex: 1 1 200px;
+  min-width: 0;
+  height: 36px;
+  padding: 0 12px;
+  font: inherit;
+  color: var(--ta-text);
+  background: var(--ta-bg);
+  border: 1px solid var(--ta-line);
+  border-radius: calc(var(--ta-r) * 0.7);
+}
+
+.techtyl-auth-confirm input:focus {
+  outline: none;
+  border-color: var(--ta-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ta-accent) 26%, transparent);
+}
+
+.techtyl-auth-confirm input[aria-invalid='true'] {
+  border-color: var(--ta-bad);
+}
+
+.techtyl-auth-note {
+  margin: 0 0 14px;
+  padding: 9px 13px;
+  font-size: 14px;
+  border: 1px solid var(--ta-line);
+  border-left: 3px solid var(--ta-ok);
+  border-radius: calc(var(--ta-r) * 0.7);
+  background: color-mix(in srgb, var(--ta-ok) 10%, transparent);
+}
+
+.techtyl-auth-note-bad {
+  border-left-color: var(--ta-bad);
+  background: color-mix(in srgb, var(--ta-bad) 10%, transparent);
+}
+
+html[data-techtyl-motion='voll'] .techtyl-auth-confirm,
+html[data-techtyl-motion='voll'] .techtyl-auth-note,
+html[data-techtyl-motion='voll'] .techtyl-auth-ways,
+html[data-techtyl-motion='voll'] .techtyl-auth-register {
+  animation: techtyl-auth-rise 0.3s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+@keyframes techtyl-auth-rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .techtyl-auth-extras *,
+  .techtyl-auth-links * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+@media (max-width: 560px) {
+  .techtyl-auth-confirm {
+    margin-left: 0;
+  }
+}
