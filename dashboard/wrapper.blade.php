@@ -6,5 +6,6 @@
 @endphp
 <style id="techtyl-vars">{!! \Pterodactyl\BlueprintFramework\Extensions\{identifier}\Design::toCss($techtylDesign) !!}</style>
 <div id="techtyl-backdrop" aria-hidden="true"></div>
+<div id="techtyl-locale" data-locale="{{ \Pterodactyl\BlueprintFramework\Extensions\{identifier}\I18n::fallbackLocale() }}" hidden></div>
 <script id="techtyl-attributes" type="application/json">@json($techtylAttributes)</script>
 <script src="/extensions/{identifier}/techtyl.js?v={version}" defer></script>
