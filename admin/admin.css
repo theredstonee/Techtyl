@@ -1,13 +1,3148 @@
-/* Techtyl Admin. Wird ohne Neubau geladen. Die Gestaltung des gesamten Admin-Bereichs
-   folgt, sobald die Klassen am Test-Panel geprueft sind. */
+/* Techtyl Admin.
+   Gestaltet den gesamten Admin-Bereich (AdminLTE 2 / Bootstrap 3) in der Techtyl-Sprache.
+   Farben je Variante stehen hier selbst (dashboard.css wird im Admin nicht geladen),
+   Akzent, Ecken, Hintergrund, Deckkraft und Unschaerfe kommen als --techtyl-* aus dem Wrapper.
+   Aufbau: 1 Schriften, 2 Variablen, 3 Grundlage, 4 Geruest, 5 Flaechen, 6 Tabellen,
+   7 Formulare, 8 Knoepfe, 9 Marken und Meldungen, 10 Reiter und Seiten, 11 Dialoge,
+   12 Blueprint, 13 Techtyl-Seite, 14 Schmale Fenster, 15 Bewegung (Konzept und Stufen stehen dort). */
 
-.techtyl-admin .box {
-  border-top-color: var(--techtyl-accent, #f0a33b);
-  border-radius: var(--techtyl-radius, 10px);
+/* ---------- 1 Schriften (liegen in public/fonts, SIL OFL 1.1) ---------- */
+
+@font-face {
+  font-family: 'Bricolage Grotesque';
+  src: url('/extensions/techtyl/fonts/bricolage-grotesque-var.woff2') format('woff2');
+  font-weight: 200 800;
+  font-stretch: 75% 100%;
+  font-style: normal;
+  font-display: swap;
 }
 
-.techtyl-admin input[type='color'] {
+@font-face {
+  font-family: 'IBM Plex Sans';
+  src: url('/extensions/techtyl/fonts/plex-sans-400.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'IBM Plex Sans';
+  src: url('/extensions/techtyl/fonts/plex-sans-500.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'IBM Plex Sans';
+  src: url('/extensions/techtyl/fonts/plex-sans-600.woff2') format('woff2');
+  font-weight: 600 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'IBM Plex Mono';
+  src: url('/extensions/techtyl/fonts/plex-mono-400.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'IBM Plex Mono';
+  src: url('/extensions/techtyl/fonts/plex-mono-500.woff2') format('woff2');
+  font-weight: 500 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ---------- 2 Variablen ---------- */
+
+/* Akzent und Radius werden hier bewusst nicht gesetzt: sie kommen aus dem Wrapper
+   und wuerden sonst je nach Reihenfolge ueberschrieben. */
+:root {
+  --techtyl-bg: #0f1c23;
+  --techtyl-surface-c: #172a33;
+  --techtyl-raise-c: #1f3742;
+  --techtyl-line: #2c4753;
+  --techtyl-text: #e9f0ee;
+  --techtyl-muted: #93a9ac;
+  --techtyl-ok: #5fd39a;
+  --techtyl-warn: #f0c24a;
+  --techtyl-bad: #f0685f;
+  --techtyl-field: #0f1c23;
+  color-scheme: dark;
+}
+
+html[data-techtyl-variant='papier'] {
+  --techtyl-bg: #e9ecef;
+  --techtyl-surface-c: #f8f9fa;
+  --techtyl-raise-c: #ffffff;
+  --techtyl-line: #c9d0d8;
+  --techtyl-text: #161c2b;
+  --techtyl-muted: #5b6578;
+  --techtyl-ok: #187a4c;
+  --techtyl-warn: #9a6a00;
+  --techtyl-bad: #b8322a;
+  --techtyl-field: #ffffff;
+  color-scheme: light;
+}
+
+html[data-techtyl-variant='hafen'] {
+  --techtyl-bg: #190f24;
+  --techtyl-surface-c: #2a1b3a;
+  --techtyl-raise-c: #392650;
+  --techtyl-line: #4c3766;
+  --techtyl-text: #f5edf7;
+  --techtyl-muted: #b3a1c2;
+  --techtyl-ok: #62e0c4;
+  --techtyl-field: #190f24;
+}
+
+html[data-techtyl-variant='kiefer'] {
+  --techtyl-bg: #121f19;
+  --techtyl-surface-c: #1b2d24;
+  --techtyl-raise-c: #253c30;
+  --techtyl-line: #35503f;
+  --techtyl-text: #eef0e2;
+  --techtyl-muted: #9fb09f;
+  --techtyl-ok: #8fdc8a;
+  --techtyl-field: #121f19;
+}
+
+body {
+  --tt-accent: var(--techtyl-accent, #f0a33b);
+  --tt-r: var(--techtyl-radius, 10px);
+  --tt-r-s: calc(var(--tt-r) * 0.7);
+  --tt-surface: color-mix(in srgb, var(--techtyl-surface-c) var(--techtyl-opacity, 100%), transparent);
+  --tt-raise: color-mix(in srgb, var(--techtyl-raise-c) var(--techtyl-opacity, 100%), transparent);
+  --tt-glass: blur(var(--techtyl-blur, 0px));
+  /* Rand von Bedienelementen: deutlicher als die Trennlinie, damit Felder erkennbar bleiben. */
+  --tt-edge: color-mix(in srgb, var(--techtyl-muted) 48%, var(--techtyl-line));
+  /* Schrift auf Akzentflaechen und Akzent als Textfarbe. Rueckfall fuer aeltere Browser. */
+  --tt-ink: #1d1404;
+  --tt-accent-text: color-mix(in srgb, var(--tt-accent) 72%, var(--techtyl-text));
+  --tt-display: 'Bricolage Grotesque', 'Segoe UI', system-ui, sans-serif;
+  --tt-body: 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;
+  --tt-mono: 'IBM Plex Mono', Consolas, 'Liberation Mono', monospace;
+  /* Bewegung: drei Dauern, eine Kurve. --tt-ease ist die Kurzform fuer schnelle Reaktionen. */
+  --tt-t1: 120ms;
+  --tt-t2: 220ms;
+  --tt-t3: 380ms;
+  --tt-curve: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --tt-ease: var(--tt-t1) var(--tt-curve);
+}
+
+/* Die Akzentfarbe ist frei waehlbar. Schrift darauf und Akzent-Text werden deshalb aus ihrer
+   Helligkeit berechnet, damit beides in jeder Variante lesbar bleibt. */
+@supports (color: oklch(from red l c h)) {
+  body {
+    --tt-ink: oklch(from var(--tt-accent) clamp(0.17, calc((0.66 - l) * 999), 0.99) 0.025 h);
+    --tt-accent-text: oklch(from var(--tt-accent) max(l, 0.76) c h);
+  }
+
+  html[data-techtyl-variant='papier'] body {
+    --tt-accent-text: oklch(from var(--tt-accent) min(l, 0.46) c h);
+  }
+}
+
+/* ---------- 3 Grundlage ---------- */
+
+html {
+  background: var(--techtyl-bg);
+}
+
+/* Die Grundfarbe liegt auf html; body bleibt durchsichtig, damit Bild und Abdunklung
+   (body::before/::after) darunter sichtbar sind. */
+body,
+body.skin-blue {
+  background-color: transparent;
+  color: var(--techtyl-text);
+  font-family: var(--tt-body);
+  font-size: 15px;
+  line-height: 1.5;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Hintergrundbild aus dem Designer, darueber die Abdunklung. Kein eigener Stapel am
+   .wrapper: Dialoge liegen in der Seite, ihr Schleier aber direkt in body. */
+body.skin-blue::before,
+body.skin-blue::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+
+body.skin-blue::before {
+  background-image: var(--techtyl-background, none);
+  background-size: cover;
+  background-position: center;
+}
+
+body.skin-blue::after {
+  background: var(--techtyl-bg);
+  opacity: var(--techtyl-dim, 0.55);
+}
+
+body.skin-blue .wrapper {
+  background: transparent;
+  box-shadow: none;
+}
+
+body h1,
+body h2,
+body h3,
+body h4,
+body h5,
+body h6,
+body .h1,
+body .h2,
+body .h3,
+body .h4 {
+  font-family: var(--tt-display);
+  font-weight: 650;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--techtyl-text);
+}
+
+body h1 small,
+body h2 small,
+body h3 small,
+body h4 small,
+body h5 small,
+body h6 small {
+  font-family: var(--tt-body);
+  letter-spacing: 0;
+  color: var(--techtyl-muted);
+}
+
+/* Verweise bleiben ruhig: Textfarbe mit feiner Linie, Akzent erst beim Ueberfahren. */
+body a {
+  color: var(--techtyl-text);
+  text-decoration: underline;
+  text-decoration-color: var(--tt-edge);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  transition: color var(--tt-ease), text-decoration-color var(--tt-ease);
+}
+
+body a:hover,
+body a:focus {
+  color: var(--tt-accent-text);
+  text-decoration: underline;
+  text-decoration-color: currentColor;
+}
+
+body a:has(> .btn),
+body a:has(> button),
+body a.btn,
+body .sidebar a,
+body .main-header a,
+body .nav > li > a,
+body .pagination a,
+body .dropdown-menu a {
+  text-decoration: none;
+}
+
+body p {
+  margin: 0 0 10px;
+}
+
+body strong,
+body b,
+body .text-bold,
+body .strong {
+  font-weight: 600 !important;
+}
+
+body small,
+body .small {
+  font-size: 13px;
+}
+
+body hr {
+  border-color: var(--techtyl-line);
+}
+
+body ::selection {
+  background: var(--tt-accent);
+  color: var(--tt-ink);
+}
+
+/* Tastatur-Fokus: ueberall derselbe Ring. */
+body :focus {
+  outline: 0;
+}
+
+body :focus-visible {
+  outline: 2px solid var(--tt-accent-text);
+  outline-offset: 2px;
+}
+
+/* Technische Werte */
+body code,
+body kbd,
+body samp,
+body .callout code {
+  font-family: var(--tt-mono);
+  font-size: 0.87em;
+  font-weight: 400;
+  line-height: 1.5;
+  padding: 1px 6px;
+  color: var(--techtyl-text);
+  background: var(--tt-raise);
+  border: 1px solid var(--techtyl-line);
+  border-radius: calc(var(--tt-r) * 0.4);
+  box-shadow: none;
+  word-break: break-word;
+}
+
+body pre {
+  font-family: var(--tt-mono);
+  font-size: 13px;
+  line-height: 1.65;
+  padding: 14px;
+  color: var(--techtyl-text);
+  background: var(--techtyl-field);
+  border: 1px solid var(--techtyl-line);
+  border-radius: var(--tt-r-s);
+  overflow: auto;
+}
+
+body pre code {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: inherit;
+}
+
+/* Hilfsfarben aus AdminLTE auf die Zustandsfarben abbilden */
+body .text-muted,
+body .text-gray,
+body .help-block {
+  color: var(--techtyl-muted) !important;
+}
+
+body .text-danger,
+body .text-red {
+  color: var(--techtyl-bad) !important;
+}
+
+body .text-success,
+body .text-green {
+  color: var(--techtyl-ok) !important;
+}
+
+body .text-warning,
+body .text-yellow,
+body .text-orange {
+  color: var(--techtyl-warn) !important;
+}
+
+body .text-info,
+body .text-primary,
+body .text-blue,
+body .text-aqua,
+body .text-light-blue {
+  color: var(--techtyl-text) !important;
+}
+
+/* Farbflaechen der Vorlage werden neutral; die Bedeutung traegt nur noch das Symbol. */
+body [class*='bg-'] {
+  --tt-tone: var(--techtyl-muted);
+  background-color: var(--tt-raise) !important;
+  color: var(--techtyl-text) !important;
+}
+
+body .info-box-icon[class*='bg-'] > i,
+body .small-box[class*='bg-'] .icon {
+  color: var(--tt-tone);
+}
+
+body .bg-green,
+body .bg-success,
+body .bg-olive,
+body .bg-lime,
+body .bg-teal {
+  --tt-tone: var(--techtyl-ok);
+}
+
+body .bg-red,
+body .bg-danger,
+body .bg-maroon {
+  --tt-tone: var(--techtyl-bad);
+}
+
+body .bg-yellow,
+body .bg-warning,
+body .bg-orange {
+  --tt-tone: var(--techtyl-warn);
+}
+
+body .bg-blue,
+body .bg-primary,
+body .bg-info,
+body .bg-aqua,
+body .bg-light-blue,
+body .bg-navy,
+body .bg-purple,
+body .bg-fuchsia {
+  --tt-tone: var(--techtyl-muted);
+}
+
+/* ---------- 4 Geruest ---------- */
+
+/* Kopfzeile */
+body.skin-blue .main-header {
+  box-shadow: none;
+  background: transparent;
+}
+
+body.skin-blue .main-header .navbar,
+body.skin-blue .main-header .logo {
+  background: var(--tt-surface);
+  border-bottom: 1px solid var(--techtyl-line);
+  -webkit-backdrop-filter: var(--tt-glass);
+  backdrop-filter: var(--tt-glass);
+}
+
+body.skin-blue .main-header .navbar {
+  min-height: 50px;
+}
+
+body.skin-blue .main-header .logo {
+  height: 50px;
+  padding: 0 18px;
+  border-right: 1px solid var(--techtyl-line);
+  text-align: left;
+  font-family: var(--tt-display);
+  font-size: 21px;
+  font-weight: 800;
+  font-stretch: 80%;
+  letter-spacing: -0.02em;
+  line-height: 49px;
+  color: var(--techtyl-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-decoration: none;
+}
+
+body.skin-blue .main-header .logo:hover {
+  background: var(--tt-surface);
+  color: var(--techtyl-text);
+}
+
+/* Markenzeichen: kleines Akzent-Quadrat hinter dem Namen */
+body.skin-blue .main-header .logo::after {
+  content: '';
+  display: inline-block;
+  width: 0.42em;
+  height: 0.42em;
+  margin-left: 4px;
+  background: var(--tt-accent);
+  border-radius: calc(var(--tt-r) / 5);
+}
+
+body.skin-blue .main-header .navbar .sidebar-toggle {
+  height: 50px;
+  padding: 15px 16px;
+  color: var(--techtyl-muted);
+  border-radius: 0;
+  transition: color var(--tt-ease), background-color var(--tt-ease);
+}
+
+body.skin-blue .main-header .navbar .sidebar-toggle:hover,
+body.skin-blue .main-header .navbar .sidebar-toggle:focus-visible {
+  color: var(--techtyl-text);
+  background: var(--tt-raise);
+  text-decoration: none;
+}
+
+body.skin-blue .main-header .navbar .navbar-custom-menu {
+  padding-right: 8px;
+}
+
+body.skin-blue .main-header .navbar .nav > li > a {
+  height: 38px;
+  margin: 6px 2px;
+  padding: 0 11px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--techtyl-muted);
+  border-radius: var(--tt-r-s);
+  font-weight: 500;
+  transition: color var(--tt-ease), background-color var(--tt-ease);
+}
+
+body.skin-blue .main-header .navbar .nav > li > a:hover,
+body.skin-blue .main-header .navbar .nav > li > a:focus,
+body.skin-blue .main-header .navbar .nav > li > a:active {
+  background: var(--tt-raise);
+  color: var(--techtyl-text);
+  text-decoration: none;
+}
+
+body.skin-blue .main-header .navbar .nav > li.user-menu > a {
+  color: var(--techtyl-text);
+}
+
+body.skin-blue .main-header .navbar .nav > li.user-menu .user-image {
+  float: none;
+  width: 24px;
+  height: 24px;
+  margin: 0;
+  border-radius: 50%;
+}
+
+/* Seitenleiste */
+body.skin-blue .main-sidebar,
+body.skin-blue .left-side {
+  background: var(--tt-surface);
+  border-right: 1px solid var(--techtyl-line);
+  box-shadow: none;
+  -webkit-backdrop-filter: var(--tt-glass);
+  backdrop-filter: var(--tt-glass);
+}
+
+body.skin-blue .sidebar {
+  padding: 10px 0 16px;
+}
+
+body.skin-blue .sidebar-menu > li.header {
+  padding: 18px 20px 6px;
+  background: none;
+  color: var(--techtyl-muted);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0;
+  /* Die Vorlage liefert die Gruppen in Grossbuchstaben; hier als normaler Text. */
+  text-transform: lowercase;
+}
+
+body.skin-blue .sidebar-menu > li.header::first-letter {
+  text-transform: uppercase;
+}
+
+body.skin-blue .sidebar-menu > li.header:first-child {
+  padding-top: 6px;
+}
+
+body.skin-blue .sidebar-menu > li > a {
+  position: relative;
+  margin: 2px 10px;
+  padding: 8px 10px;
+  border-left: 0;
+  border-radius: var(--tt-r-s);
+  color: var(--techtyl-muted);
+  font-weight: 500;
+  transition: color var(--tt-ease), background-color var(--tt-ease);
+}
+
+body.skin-blue .sidebar-menu > li > a > .fa,
+body.skin-blue .sidebar-menu > li > a > .bi,
+body.skin-blue .sidebar-menu > li > a > .ion {
+  width: 20px;
+  margin-right: 6px;
+  text-align: center;
+  font-size: 14px;
+}
+
+body.skin-blue .sidebar-menu > li:hover > a,
+body.skin-blue .sidebar-menu > li > a:focus-visible,
+body.skin-blue .sidebar-menu > li.menu-open > a {
+  background: var(--tt-raise);
+  color: var(--techtyl-text);
+  text-decoration: none;
+}
+
+body.skin-blue .sidebar-menu > li.active > a {
+  background: var(--tt-raise);
+  color: var(--techtyl-text);
+}
+
+/* Aktiv-Indikator: waechst beim Ueberfahren an und steht beim aktiven Eintrag voll. */
+body.skin-blue .sidebar-menu > li > a::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 7px;
+  bottom: 7px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--techtyl-muted);
+  opacity: 0;
+  transform: scaleY(0.2);
+  transition: transform var(--tt-t2) var(--tt-curve), opacity var(--tt-t2) var(--tt-curve);
+}
+
+body.skin-blue .sidebar-menu > li:hover > a::before,
+body.skin-blue .sidebar-menu > li > a:focus-visible::before {
+  opacity: 0.6;
+  transform: scaleY(0.55);
+}
+
+body.skin-blue .sidebar-menu > li.active > a::before {
+  background: var(--tt-accent);
+  opacity: 1;
+  transform: scaleY(1);
+}
+
+body.skin-blue .sidebar-menu > li > a:focus-visible {
+  outline-offset: -2px;
+}
+
+@media (min-width: 768px) {
+  /* Eingeklappte Leiste: nur Symbole */
+  body.skin-blue.sidebar-mini.sidebar-collapse .sidebar-menu > li > a {
+    margin: 2px 7px;
+    padding: 8px 0;
+    text-align: center;
+  }
+
+  body.skin-blue.sidebar-mini.sidebar-collapse .sidebar-menu > li > a > .fa,
+  body.skin-blue.sidebar-mini.sidebar-collapse .sidebar-menu > li > a > .bi {
+    margin-right: 0;
+  }
+
+  body.skin-blue.sidebar-mini.sidebar-collapse .main-header .logo {
+    padding: 0;
+    text-align: center;
+  }
+
+  body.skin-blue.sidebar-mini.sidebar-collapse .main-header .logo > span {
+    display: none;
+  }
+
+  body.skin-blue.sidebar-mini.sidebar-collapse .main-header .logo::after {
+    width: 12px;
+    height: 12px;
+    margin: 0;
+    vertical-align: middle;
+  }
+}
+
+/* Inhalt */
+body.skin-blue .content-wrapper {
+  background: transparent;
+}
+
+body .content-header {
+  padding: 32px 32px 0;
+  position: relative;
+}
+
+body .content-header > h1 {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 700;
+  font-stretch: 88%;
+  line-height: 1.1;
+}
+
+body .content-header > h1 > small {
+  display: block;
+  padding: 0;
+  margin-top: 6px;
+  font-size: 15px;
+  font-weight: 400;
+  font-stretch: 100%;
+  line-height: 1.45;
+  color: var(--techtyl-muted);
+}
+
+body .content-header > .breadcrumb {
+  top: 38px;
+  right: 32px;
+  padding: 0;
+  margin: 0;
+  background: none;
+  border-radius: 0;
+  font-size: 13px;
+}
+
+body .content-header > .breadcrumb > li > a {
+  color: var(--techtyl-muted);
+}
+
+body .content-header > .breadcrumb > li > a:hover {
+  color: var(--techtyl-text);
+}
+
+body .breadcrumb > .active {
+  color: var(--techtyl-text);
+}
+
+body .content-header > .breadcrumb > li + li::before,
+body .breadcrumb > li + li::before {
+  content: '/';
+  padding: 0 7px;
+  color: var(--techtyl-muted);
+  opacity: 0.7;
+}
+
+body .content {
+  padding: 24px 32px 48px;
+}
+
+/* Fusszeile */
+body .main-footer {
+  padding: 16px 32px;
+  background: transparent;
+  border-top: 1px solid var(--techtyl-line);
+  color: var(--techtyl-muted);
+  font-size: 13px;
+}
+
+body .main-footer a {
+  color: var(--techtyl-muted);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+body .main-footer a:hover {
+  color: var(--techtyl-text);
+}
+
+body .main-footer .pull-right {
+  margin-top: -4px !important;
+  margin-right: 0 !important;
+  font-family: var(--tt-mono);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* ---------- 5 Flaechen ---------- */
+
+body .box,
+body .nav-tabs-custom > .tab-content,
+body .info-box,
+body .small-box,
+body .well,
+body .panel {
+  background: var(--tt-surface);
+  border: 1px solid var(--techtyl-line);
+  border-radius: var(--tt-r);
+  box-shadow: none !important;
+  color: var(--techtyl-text);
+  -webkit-backdrop-filter: var(--tt-glass);
+  backdrop-filter: var(--tt-glass);
+}
+
+body .box {
+  margin-bottom: 24px;
+}
+
+body .box.box-default,
+body .box.box-primary,
+body .box.box-info,
+body .box.box-success,
+body .box.box-warning,
+body .box.box-danger {
+  border-color: var(--techtyl-line);
+}
+
+body .box-header {
+  padding: 16px 20px 14px;
+  background: none;
+  color: var(--techtyl-text);
+  border-radius: 0;
+}
+
+body .box-header.with-border {
+  border-bottom: 1px solid var(--techtyl-line);
+}
+
+body .box-header .box-title,
+body .box-header > .fa,
+body .box-header > .glyphicon,
+body .box-header > .ion {
+  font-family: var(--tt-display);
+  font-size: 17px;
+  font-weight: 650;
+  line-height: 1.25;
+}
+
+/* Statt farbiger Oberkante: ein Zustandspunkt vor dem Titel, nur wo er etwas bedeutet. */
+body .box.box-danger > .box-header .box-title::before,
+body .box.box-warning > .box-header .box-title::before,
+body .box.box-success > .box-header .box-title::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 9px;
+  border-radius: 50%;
+  vertical-align: 0.12em;
+  background: var(--techtyl-bad);
+}
+
+body .box.box-warning > .box-header .box-title::before {
+  background: var(--techtyl-warn);
+}
+
+body .box.box-success > .box-header .box-title::before {
+  background: var(--techtyl-ok);
+}
+
+body .box-header > .box-tools {
+  top: 12px;
+  right: 16px;
+}
+
+body .box-body {
+  padding: 20px;
+  border-radius: 0;
+}
+
+body .box-body.no-padding {
+  padding: 0;
+}
+
+body .box-footer {
+  padding: 14px 20px;
+  background: none;
+  border-top: 1px solid var(--techtyl-line);
+  border-radius: 0;
+  color: var(--techtyl-text);
+}
+
+body .box .overlay,
+body .overlay-wrapper > .overlay {
+  background: color-mix(in srgb, var(--techtyl-surface-c) 78%, transparent);
+  border-radius: var(--tt-r);
+}
+
+body .box .overlay > .fa {
+  color: var(--techtyl-text);
+}
+
+body .well {
+  padding: 16px;
+}
+
+/* Kennzahl-Kacheln (Node-Uebersicht) */
+body .info-box {
+  min-height: 78px;
+  display: flex;
+  align-items: stretch;
+  overflow: hidden;
+}
+
+body .info-box .info-box-icon {
+  float: none;
+  flex: none;
+  width: 64px;
+  height: auto;
+  display: grid;
+  place-items: center;
+  font-size: 26px;
+  line-height: 1;
+  border-radius: 0;
+  border-right: 1px solid var(--techtyl-line);
+}
+
+body .info-box .info-box-content,
+body .info-box .number-info-box-content {
+  margin-left: 0;
+  padding: 12px 16px;
+  flex: 1;
+  min-width: 0;
+}
+
+body .info-box .info-box-text {
+  text-transform: none;
+  font-size: 13px;
+  color: var(--techtyl-muted);
+}
+
+body .info-box .info-box-number {
+  font-family: var(--tt-display);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.25;
+  font-variant-numeric: tabular-nums;
+}
+
+body .info-box .progress-description {
+  font-size: 13px;
+  color: var(--techtyl-muted);
+}
+
+body .small-box {
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+
+body .box .small-box,
+body .box .info-box {
+  background: var(--tt-raise) !important;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+body .small-box > .inner {
+  padding: 16px 64px 14px 16px;
+}
+
+body .small-box h3 {
+  margin: 0 0 2px;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--techtyl-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+body .small-box p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--techtyl-muted);
+}
+
+body .small-box .icon {
+  top: 14px;
+  right: 16px;
+  font-size: 34px;
+  line-height: 1;
+  color: var(--techtyl-muted);
+  opacity: 0.55;
+  transition: none;
+}
+
+body .small-box:hover .icon {
+  font-size: 34px;
+}
+
+body .small-box > .small-box-footer {
+  padding: 8px 16px;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+body .small-box > .small-box-footer:hover {
+  background: none;
+  color: var(--tt-accent-text);
+}
+
+body .small-box > .small-box-footer .fa {
+  margin-left: 4px;
+  color: var(--techtyl-muted);
+}
+
+body .small-box > .small-box-footer {
+  background: none;
+  border-top: 1px solid var(--techtyl-line);
+  color: var(--techtyl-text);
+}
+
+/* Auslastung als Prozent-Balken */
+body .progress,
+body .info-box .progress {
+  height: 6px;
+  margin: 6px 0;
+  background: var(--techtyl-line);
+  border-radius: 99px;
+  box-shadow: none;
+  overflow: hidden;
+}
+
+body .progress.progress-table-bottom {
+  border-radius: 0;
+  height: 4px !important;
+}
+
+body .progress > .progress-bar,
+body .info-box .progress .progress-bar {
+  background: var(--tt-accent);
+  border-radius: 99px;
+  box-shadow: none;
+}
+
+body .progress > .progress-bar-success {
+  background: var(--techtyl-ok);
+}
+
+body .progress > .progress-bar-warning {
+  background: var(--techtyl-warn);
+}
+
+body .progress > .progress-bar-danger {
+  background: var(--techtyl-bad);
+}
+
+/* ---------- 6 Tabellen ---------- */
+
+body .table {
+  margin-bottom: 0;
+  font-size: 15px !important;
+  color: var(--techtyl-text);
+  font-variant-numeric: tabular-nums;
+}
+
+body .table > thead > tr > th,
+body .table > tbody > tr > th,
+body .table > tfoot > tr > th {
+  padding: 12px 20px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--techtyl-muted);
+  border-top: 1px solid var(--techtyl-line);
+  border-bottom: 0;
+  vertical-align: bottom;
+  white-space: nowrap;
+}
+
+body .table > thead > tr > td,
+body .table > tbody > tr > td,
+body .table > tfoot > tr > td {
+  padding: 14px 20px;
+  border-top: 1px solid var(--techtyl-line);
+  vertical-align: middle;
+}
+
+body .table > thead:first-child > tr:first-child > th,
+body .table > tbody:first-child > tr:first-child > th,
+body .table > tbody:first-child > tr:first-child > td {
+  border-top: 0;
+}
+
+body .table-hover > tbody > tr {
+  transition: background-color var(--tt-ease);
+}
+
+body .table-hover > tbody > tr:hover,
+body .table-hover > tbody > tr:hover + tr.server-description,
+body tr:hover + tr.server-description {
+  background-color: color-mix(in srgb, var(--techtyl-raise-c) 45%, transparent) !important;
+}
+
+body .table-striped > tbody > tr:nth-of-type(odd) {
+  background-color: color-mix(in srgb, var(--techtyl-raise-c) 22%, transparent);
+}
+
+body .table-bordered,
+body .table-bordered > thead > tr > th,
+body .table-bordered > tbody > tr > th,
+body .table-bordered > tbody > tr > td {
+  border-color: var(--techtyl-line);
+}
+
+body .table > tbody > tr.danger > td,
+body .table > tbody > tr > td.danger {
+  background: color-mix(in srgb, var(--techtyl-bad) 8%, transparent);
+}
+
+body .table > tbody > tr.warning > td,
+body .table > tbody > tr > td.warning {
+  background: color-mix(in srgb, var(--techtyl-warn) 8%, transparent);
+}
+
+body .table > tbody > tr.success > td,
+body .table > tbody > tr > td.success {
+  background: color-mix(in srgb, var(--techtyl-ok) 8%, transparent);
+}
+
+body .table > tbody > tr.info > td,
+body .table > tbody > tr.active > td {
+  background: var(--tt-raise);
+}
+
+/* Einzelne Vorlagen setzen den linken Zellenabstand fest auf 15px; hier an das Raster angleichen. */
+body .table > tbody > tr > td[style*='padding-left: 15px'] {
+  padding-left: 20px !important;
+}
+
+body .table-responsive {
+  border: 0;
+  margin-bottom: 0;
+}
+
+/* Letzte Zeile folgt der Rundung der Flaeche */
+body .box > .box-body:last-child .table > tbody:last-child > tr:last-child > td:first-child {
+  border-bottom-left-radius: var(--tt-r);
+}
+
+body .box > .box-body:last-child .table > tbody:last-child > tr:last-child > td:last-child {
+  border-bottom-right-radius: var(--tt-r);
+}
+
+body .table .fa,
+body .table .bi {
+  color: var(--techtyl-muted);
+}
+
+body .table .text-success .fa,
+body .table .fa.text-success,
+body .table .fa.text-green {
+  color: var(--techtyl-ok);
+}
+
+body .table .fa.text-danger,
+body .table .fa.text-red {
+  color: var(--techtyl-bad);
+}
+
+body dl dt {
+  font-weight: 500;
+  color: var(--techtyl-muted);
+  font-size: 13px;
+}
+
+body dl dd {
+  margin-bottom: 10px;
+}
+
+/* ---------- 7 Formulare ---------- */
+
+body label,
+body .control-label {
+  margin-bottom: 5px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--techtyl-muted);
+}
+
+body .form-group {
+  margin-bottom: 16px;
+}
+
+body label.control-label > span,
+body label.control-label > span.field-required::before {
+  font-style: normal;
+  color: var(--techtyl-bad);
+}
+
+body label.control-label > span.field-optional::before {
+  color: var(--techtyl-muted);
+}
+
+body .form-control,
+body input.form-control,
+body textarea.form-control,
+body select.form-control {
   height: 40px;
+  padding: 8px 12px;
+  font-family: var(--tt-body);
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--techtyl-text);
+  background-color: var(--techtyl-field);
+  border: 1px solid var(--tt-edge);
+  border-radius: var(--tt-r-s);
+  box-shadow: none;
+  transition: border-color var(--tt-ease), box-shadow var(--tt-ease);
+}
+
+body textarea.form-control {
+  height: auto;
+  min-height: 84px;
+  line-height: 1.55;
+}
+
+body select.form-control[multiple],
+body select.form-control[size] {
+  height: auto;
+}
+
+body .form-control::placeholder {
+  color: var(--techtyl-muted);
+  opacity: 0.75;
+}
+
+body .form-control:hover {
+  border-color: var(--techtyl-muted);
+}
+
+body .form-control:focus,
+body .form-control:focus-visible {
+  border-color: var(--tt-accent-text);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--tt-accent-text) 38%, transparent);
+  outline: 0;
+}
+
+body .form-control[disabled],
+body .form-control[readonly],
+body fieldset[disabled] .form-control,
+body input.form-autocomplete-stop[readonly] {
+  background-color: var(--tt-raise);
+  border-color: var(--techtyl-line);
+  color: var(--techtyl-muted);
+}
+
+body .form-control[disabled],
+body fieldset[disabled] .form-control {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+body .form-control[readonly],
+body input.form-autocomplete-stop[readonly] {
+  cursor: text;
+  color: var(--techtyl-text);
+}
+
+body select.form-control {
+  padding-right: 30px;
+  cursor: pointer;
+}
+
+body select.form-control option,
+body select.form-control optgroup {
+  background: var(--techtyl-surface-c);
+  color: var(--techtyl-text);
+}
+
+body .input-sm {
+  height: 34px;
+  padding: 5px 10px;
+  font-size: 14px;
+}
+
+body .input-group .input-group-addon {
+  padding: 8px 12px;
+  font-size: 14px;
+  color: var(--techtyl-muted);
+  background: var(--tt-raise);
+  border: 1px solid var(--tt-edge);
+  border-radius: var(--tt-r-s);
+}
+
+body .input-group .form-control:not(:first-child),
+body .input-group .input-group-addon:not(:first-child),
+body .input-group .input-group-btn:not(:first-child) > .btn {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+body .input-group .form-control:not(:last-child),
+body .input-group .input-group-addon:not(:last-child),
+body .input-group .input-group-btn:not(:last-child) > .btn {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+body .input-group .input-group-addon:first-child {
+  border-right: 0;
+}
+
+body .input-group .input-group-addon:last-child {
+  border-left: 0;
+}
+
+body .input-group .input-group-btn > .btn {
+  height: 40px;
+  border-color: var(--tt-edge);
+}
+
+body .input-group-sm > .input-group-btn > .btn,
+body .input-group-sm > .input-group-btn > a > .btn,
+body .input-group-sm > .form-control {
+  height: 34px;
+}
+
+/* Suche + "Create New" in den Listenkoepfen: drei Teile, ein Koerper */
+body .input-group .input-group-btn > .btn:not(:last-child) {
+  border-radius: 0;
+}
+
+body .input-group .input-group-btn > a > .btn {
+  border-radius: 0 var(--tt-r-s) var(--tt-r-s) 0 !important;
+}
+
+body p.small,
+body p:has(> small:only-child),
+body .help-block {
+  font-size: 13px;
+  line-height: 1.5 !important;
+}
+
+body p > small:only-child {
+  font-size: inherit;
+}
+
+body p.text-muted.small,
+body .form-group > p.small,
+body .form-group p:has(> small:only-child),
+body .form-group .help-block {
+  margin: 6px 0 0 !important;
+}
+
+/* Fehlerzustand */
+body .has-error .form-control {
+  border-color: var(--techtyl-bad);
+}
+
+body .has-error .form-control:focus {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--techtyl-bad) 38%, transparent);
+}
+
+body .has-error .control-label,
+body .has-error .help-block {
+  color: var(--techtyl-bad) !important;
+}
+
+body .has-success .form-control {
+  border-color: var(--techtyl-ok);
+}
+
+body .has-warning .form-control {
+  border-color: var(--techtyl-warn);
+}
+
+/* Checkbox und Radio ohne Huelle */
+body input[type='checkbox'],
+body input[type='radio'] {
+  -webkit-appearance: none;
+  appearance: none;
+  position: relative;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin: 0 6px 0 0;
+  vertical-align: -4px;
+  background: var(--techtyl-field);
+  border: 1px solid var(--tt-edge);
+  border-radius: calc(var(--tt-r) * 0.35);
+  cursor: pointer;
+  transition: background-color var(--tt-ease), border-color var(--tt-ease);
+}
+
+body input[type='radio'] {
+  border-radius: 50%;
+}
+
+body input[type='checkbox']:hover,
+body input[type='radio']:hover {
+  border-color: var(--techtyl-muted);
+}
+
+body input[type='checkbox']:checked,
+body input[type='radio']:checked {
+  background: var(--tt-accent);
+  border-color: var(--tt-accent);
+}
+
+body input[type='checkbox']:checked::after {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 1.5px;
+  width: 5px;
+  height: 10px;
+  border: solid var(--tt-ink);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+body input[type='radio']:checked::after {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  background: var(--tt-ink);
+}
+
+body input[type='checkbox']:disabled,
+body input[type='radio']:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+body label:has(> input[type='checkbox']),
+body label:has(> input[type='radio']),
+body .checkbox label,
+body .radio label,
+body .checkbox-inline,
+body .radio-inline {
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--techtyl-text);
+  cursor: pointer;
+}
+
+/* Checkbox und Radio mit Huelle (.checkbox / .radio zeichnen das Kaestchen am Label) */
+body .checkbox,
+body .radio {
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+
+body .checkbox label::before,
+body .radio label::before {
+  width: 18px;
+  height: 18px;
+  top: 2px;
+  background: var(--techtyl-field);
+  border: 1px solid var(--tt-edge);
+  transition: background-color var(--tt-ease), border-color var(--tt-ease);
+}
+
+body .checkbox label::before {
+  border-radius: calc(var(--tt-r) * 0.35);
+}
+
+body .checkbox label::after {
+  width: 18px;
+  height: 18px;
+  top: 2px;
+  padding: 2px 0 0 3.5px;
+  font-size: 11px;
+  color: var(--tt-ink);
+}
+
+body .checkbox input[type='checkbox']:checked + label::before,
+body .radio input[type='radio']:checked + label::before {
+  background: var(--tt-accent);
+  border-color: var(--tt-accent);
+}
+
+body .checkbox input[type='checkbox']:checked + label::after {
+  color: var(--tt-ink);
+}
+
+body .radio label::after {
+  width: 8px;
+  height: 8px;
+  left: 5px;
+  top: 7px;
+  background-color: var(--tt-ink) !important;
+}
+
+body .checkbox input[type='checkbox']:focus-visible + label::before,
+body .radio input[type='radio']:focus-visible + label::before {
+  outline: 2px solid var(--tt-accent-text);
+  outline-offset: 2px;
+}
+
+body .checkbox input[type='checkbox']:disabled + label::before,
+body .radio input[type='radio']:disabled + label::before {
+  background: var(--tt-raise);
+}
+
+body input[type='file'] {
+  color: var(--techtyl-muted);
+  font-size: 14px;
+}
+
+body input[type='range'] {
+  accent-color: var(--tt-accent);
+}
+
+body input[type='color'].form-control {
+  width: 64px;
   padding: 4px;
-  max-width: 120px;
+  cursor: pointer;
+}
+
+/* select2 */
+body .select2-container--default .select2-selection--single,
+body .select2-container--default .select2-selection--multiple {
+  min-height: 40px;
+  height: auto;
+  padding: 0;
+  background-color: var(--techtyl-field);
+  border: 1px solid var(--tt-edge);
+  border-radius: var(--tt-r-s);
+  transition: border-color var(--tt-ease), box-shadow var(--tt-ease);
+}
+
+body .select2-container--default .select2-selection--single {
+  height: 40px;
+}
+
+body .select2-container--default .select2-selection--single .select2-selection__rendered {
+  margin-top: 0;
+  padding: 0 34px 0 12px;
+  line-height: 38px;
+  color: var(--techtyl-text);
+}
+
+body .select2-container--default .select2-selection--single .select2-selection__placeholder {
+  color: var(--techtyl-muted);
+}
+
+body .select2-container--default .select2-selection--single .select2-selection__arrow {
+  height: 38px;
+  right: 8px;
+}
+
+body .select2-container--default .select2-selection--single .select2-selection__arrow b {
+  border-color: var(--techtyl-muted) transparent transparent;
+}
+
+body .select2-container--default.select2-container--open .select2-selection--single .select2-selection__arrow b {
+  border-color: transparent transparent var(--techtyl-muted);
+}
+
+body .select2-container--default.select2-container--focus .select2-selection--single,
+body .select2-container--default.select2-container--focus .select2-selection--multiple,
+body .select2-container--default.select2-container--open .select2-selection--single,
+body .select2-container--default.select2-container--open .select2-selection--multiple {
+  border-color: var(--tt-accent-text) !important;
+  background-color: var(--techtyl-field);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--tt-accent-text) 38%, transparent);
+}
+
+body .select2-container--default .select2-selection--multiple {
+  min-height: 40px !important;
+}
+
+body .select2-container--default .select2-selection--multiple .select2-selection__rendered {
+  padding: 3px 12px;
+  display: block;
+}
+
+body .select2-container--default .select2-selection--multiple .select2-selection__choice {
+  margin: 3px 4px 3px 0;
+  padding: 2px 8px;
+  background: var(--tt-raise);
+  border: 1px solid var(--techtyl-line);
+  border-radius: calc(var(--tt-r) * 0.45);
+  color: var(--techtyl-text);
+  font-size: 14px;
+}
+
+body .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+  margin-right: 6px;
+  color: var(--techtyl-muted);
+}
+
+body .select2-container--default .select2-selection--multiple .select2-selection__choice__remove:hover {
+  color: var(--techtyl-bad);
+}
+
+body .select2-container--default .select2-search--inline .select2-search__field {
+  margin-top: 5px;
+  color: var(--techtyl-text);
+  font-family: var(--tt-body);
+}
+
+body .select2-container--default.select2-container--disabled .select2-selection--single,
+body .select2-container--default.select2-container--disabled .select2-selection--multiple {
+  background: var(--tt-raise);
+  border-color: var(--techtyl-line);
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+body .select2-dropdown {
+  background: var(--techtyl-surface-c);
+  border: 1px solid var(--tt-edge);
+  border-radius: var(--tt-r-s);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
+  overflow: hidden;
+}
+
+body .select2-container--default .select2-search--dropdown {
+  padding: 8px;
+}
+
+body .select2-container--default .select2-search--dropdown .select2-search__field {
+  padding: 7px 10px;
+  background: var(--techtyl-field);
+  border: 1px solid var(--tt-edge) !important;
+  border-radius: calc(var(--tt-r) * 0.5);
+  color: var(--techtyl-text);
+  font-family: var(--tt-body);
+}
+
+body .select2-container--default .select2-search--dropdown .select2-search__field:focus {
+  border-color: var(--tt-accent-text) !important;
+}
+
+body .select2-results__option {
+  padding: 8px 12px;
+  background: transparent;
+  color: var(--techtyl-text);
+}
+
+body .select2-container--default .select2-results__option[aria-selected='true'],
+body .select2-container--default .select2-results__option[aria-selected='true']:hover {
+  background: transparent;
+  color: var(--techtyl-text);
+  font-weight: 600;
+}
+
+body .select2-container--default .select2-results__option--highlighted[aria-selected] {
+  background: var(--techtyl-raise-c);
+  color: var(--techtyl-text);
+  box-shadow: inset 3px 0 0 var(--tt-accent);
+}
+
+body .select2-container--default .select2-results__option[aria-disabled='true'] {
+  color: var(--techtyl-muted);
+  opacity: 0.6;
+}
+
+body .select2-container--default .select2-results__group {
+  padding: 8px 12px 4px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--techtyl-muted);
+}
+
+body .select2-results__option .user-block .username,
+body .select2-results__option .user-block .username > a,
+body .select2-selection__rendered .user-block .username > a {
+  color: inherit;
+  font-weight: 500;
+}
+
+body .select2-results__option .user-block .description,
+body li.select2-results__option--highlighted[aria-selected='false'] > .user-block > .description {
+  color: inherit;
+  opacity: 0.75;
+}
+
+/* ---------- 8 Knoepfe ---------- */
+
+body .btn {
+  --tt-btn-tone: var(--techtyl-line);
+  padding: 8px 14px;
+  font-family: var(--tt-body);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--techtyl-text) !important;
+  background-color: var(--tt-raise);
+  background-image: none;
+  border: 1px solid var(--tt-edge);
+  border-radius: var(--tt-r-s);
+  box-shadow: none;
+  text-shadow: none;
+  transition: background-color var(--tt-ease), border-color var(--tt-ease), color var(--tt-ease),
+    transform var(--tt-ease);
+}
+
+/* Druck-Rueckmeldung */
+body .btn:active:not([disabled]):not(.disabled) {
+  transform: scale(0.97);
+}
+
+body .btn:hover,
+body .btn:focus,
+body .btn:active,
+body .btn.active,
+body .open > .dropdown-toggle.btn {
+  background-color: var(--tt-raise);
+  border-color: var(--tt-accent-text);
+  color: var(--techtyl-text) !important;
+  box-shadow: none;
+  text-decoration: none;
+}
+
+body .btn:active {
+  background-color: color-mix(in srgb, var(--tt-accent) 14%, var(--techtyl-raise-c));
+}
+
+body .btn.active,
+body .btn.active.focus {
+  background-color: color-mix(in srgb, var(--tt-accent) 20%, var(--techtyl-raise-c));
+}
+
+body .btn small {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+body .btn-sm,
+body .btn-group-sm > .btn {
+  padding: 5px 10px;
+  font-size: 13px;
+  border-radius: var(--tt-r-s);
+}
+
+body .btn-xs,
+body .btn-group-xs > .btn {
+  padding: 2px 8px;
+  font-size: 13px;
+  border-radius: calc(var(--tt-r) * 0.5);
+}
+
+body .btn-lg {
+  padding: 11px 18px;
+  font-size: 16px;
+  border-radius: var(--tt-r-s);
+}
+
+/* Hauptaktion: Akzentflaeche */
+body .btn-primary,
+body .btn-primary:focus {
+  background-color: var(--tt-accent);
+  border-color: var(--tt-accent);
+  color: var(--tt-ink) !important;
+  font-weight: 600;
+}
+
+body .btn-primary:hover,
+body .btn-primary:active,
+body .btn.btn-primary:hover,
+body .btn-primary.active {
+  background-color: color-mix(in srgb, var(--tt-accent) 86%, var(--techtyl-text));
+  border-color: color-mix(in srgb, var(--tt-accent) 86%, var(--techtyl-text));
+  color: var(--tt-ink) !important;
+}
+
+/* Anlegen und Speichern sind in der Vorlage gruen markiert: hier dieselbe Hauptaktion. */
+body .btn-success,
+body .btn-success:focus {
+  background-color: var(--tt-accent);
+  border-color: var(--tt-accent);
+  color: var(--tt-ink) !important;
+  font-weight: 600;
+}
+
+body .btn-success:hover,
+body .btn-success:active {
+  background-color: color-mix(in srgb, var(--tt-accent) 86%, var(--techtyl-text));
+  border-color: color-mix(in srgb, var(--tt-accent) 86%, var(--techtyl-text));
+  color: var(--tt-ink) !important;
+}
+
+/* Warnen und Loeschen: ruhige Flaeche, die Farbe sitzt nur in Schrift und Rand. */
+body .btn-warning {
+  --tt-btn-tone: var(--techtyl-warn);
+}
+
+body .btn-danger {
+  --tt-btn-tone: var(--techtyl-bad);
+}
+
+body .btn-warning,
+body .btn-danger,
+body .btn-warning:focus,
+body .btn-danger:focus {
+  background-color: transparent;
+  border-color: color-mix(in srgb, var(--tt-btn-tone) 55%, var(--techtyl-surface-c));
+  color: color-mix(in srgb, var(--tt-btn-tone) 82%, var(--techtyl-text)) !important;
+}
+
+body .btn-warning:hover,
+body .btn-danger:hover,
+body .btn-warning:active,
+body .btn-danger:active {
+  background-color: color-mix(in srgb, var(--tt-btn-tone) 14%, var(--techtyl-surface-c));
+  border-color: var(--tt-btn-tone);
+  color: var(--techtyl-text) !important;
+}
+
+/* Auswahlgruppen (z. B. 2-Faktor-Pflicht): nur die gewaehlte Stufe traegt den Akzent. */
+body .btn-group[data-toggle='buttons'] > .btn,
+body .btn-group[data-toggle='buttons'] > .btn:focus {
+  background-color: transparent;
+  border-color: var(--tt-edge);
+  color: var(--techtyl-muted) !important;
+  font-weight: 500;
+}
+
+body .btn-group[data-toggle='buttons'] > .btn:hover {
+  background-color: var(--tt-raise);
+  border-color: var(--tt-edge);
+  color: var(--techtyl-text) !important;
+}
+
+body .btn-group[data-toggle='buttons'] > .btn.active,
+body .btn-group[data-toggle='buttons'] > .btn.active:hover,
+body .btn-group[data-toggle='buttons'] > .btn.active:focus {
+  background-color: var(--tt-accent);
+  border-color: var(--tt-accent);
+  color: var(--tt-ink) !important;
+  font-weight: 600;
+  z-index: 2;
+}
+
+body .btn-group[data-toggle='buttons'] > .btn:has(input:focus-visible) {
+  outline: 2px solid var(--tt-accent-text);
+  outline-offset: 2px;
+  z-index: 3;
+}
+
+/* Uebersicht: die vier Verweise auf Hilfe und Projekt sind Nebensache und bleiben neutral. */
+body .content > .row > .text-center > a > .btn,
+body .content > .row > .text-center > a > .btn:focus {
+  padding: 12px 14px;
+  background-color: var(--tt-surface);
+  border-color: var(--techtyl-line);
+  color: var(--techtyl-text) !important;
+  font-weight: 500;
+}
+
+body .content > .row > .text-center > a > .btn:hover {
+  background-color: var(--tt-surface);
+  border-color: var(--tt-edge);
+  color: var(--techtyl-text) !important;
+}
+
+body .content > .row > .text-center > a > .btn > .fa {
+  margin-right: 6px;
+  color: var(--techtyl-muted);
+}
+
+body .content > .row > .text-center > a > .btn > small {
+  color: var(--techtyl-muted);
+  font-size: 13px;
+  opacity: 1;
+}
+
+body .btn-link,
+body .btn-clear {
+  background: transparent;
+  border-color: transparent;
+  color: var(--techtyl-text) !important;
+}
+
+body .btn-link:hover,
+body .btn-clear:hover {
+  background: var(--tt-raise);
+  border-color: transparent;
+}
+
+body .btn[disabled],
+body .btn.disabled,
+body fieldset[disabled] .btn {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: auto;
+}
+
+body .btn-group > .btn + .btn {
+  margin-left: -1px;
+}
+
+body .btn .fa,
+body .btn .bi {
+  color: inherit;
+}
+
+body .btn .caret {
+  margin-left: 4px;
+}
+
+body .close {
+  color: var(--techtyl-text);
+  opacity: 0.6;
+  text-shadow: none;
+  font-weight: 400;
+}
+
+body .close:hover,
+body .close:focus {
+  color: var(--techtyl-text);
+  opacity: 1;
+}
+
+/* Aufklappmenues */
+body .dropdown-menu {
+  padding: 5px;
+  background: var(--techtyl-surface-c);
+  border: 1px solid var(--tt-edge);
+  border-radius: var(--tt-r-s);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
+  font-size: 15px;
+  opacity: 0;
+  transform: translateY(-6px) scale(0.98);
+  transform-origin: top;
+  transition: opacity var(--tt-t1) var(--tt-curve), transform var(--tt-t2) var(--tt-curve),
+    display var(--tt-t2) allow-discrete;
+}
+
+body .open > .dropdown-menu {
+  opacity: 1;
+  transform: none;
+}
+
+@starting-style {
+  body .open > .dropdown-menu {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+}
+
+body .dropdown-menu > li > a {
+  padding: 7px 10px;
+  color: var(--techtyl-text);
+  border-radius: calc(var(--tt-r) * 0.45);
+}
+
+body .dropdown-menu > li > a:hover,
+body .dropdown-menu > li > a:focus {
+  background: var(--techtyl-raise-c);
+  color: var(--techtyl-text);
+  text-decoration: none;
+}
+
+body .dropdown-menu > .divider {
+  background: var(--techtyl-line);
+}
+
+body .tooltip-inner {
+  padding: 5px 9px;
+  background: var(--techtyl-text);
+  color: var(--techtyl-bg);
+  border-radius: calc(var(--tt-r) * 0.45);
+  font-family: var(--tt-body);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+body .tooltip.top .tooltip-arrow {
+  border-top-color: var(--techtyl-text);
+}
+
+body .tooltip.bottom .tooltip-arrow {
+  border-bottom-color: var(--techtyl-text);
+}
+
+body .tooltip.left .tooltip-arrow {
+  border-left-color: var(--techtyl-text);
+}
+
+body .tooltip.right .tooltip-arrow {
+  border-right-color: var(--techtyl-text);
+}
+
+body .tooltip.in {
+  opacity: 1;
+}
+
+/* ---------- 9 Marken und Meldungen ---------- */
+
+/* Marken: neutrale Pille; ein Punkt zeigt den Zustand, wo es einen gibt. */
+body .label,
+body .badge,
+body tag {
+  display: inline-block;
+  padding: 2px 9px;
+  font-family: var(--tt-body);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--techtyl-text) !important;
+  background-color: var(--tt-raise) !important;
+  border: 1px solid var(--techtyl-line);
+  border-radius: 99px;
+  text-shadow: none;
+  vertical-align: baseline;
+  white-space: nowrap;
+}
+
+body .label-success::before,
+body .label-danger::before,
+body .label-warning::before,
+body .label.bg-green::before,
+body .label.bg-red::before,
+body .label.bg-maroon::before,
+body .label.bg-yellow::before,
+body .label.bg-orange::before,
+body tag[green]::before,
+body tag[red]::before {
+  content: '';
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 6px;
+  border-radius: 50%;
+  vertical-align: 0.08em;
+  background: var(--techtyl-ok);
+}
+
+body .label-danger::before,
+body .label.bg-red::before,
+body .label.bg-maroon::before,
+body tag[red]::before {
+  background: var(--techtyl-bad);
+}
+
+body .label-warning::before,
+body .label.bg-yellow::before,
+body .label.bg-orange::before {
+  background: var(--techtyl-warn);
+}
+
+body tag {
+  font-family: var(--tt-mono);
+}
+
+body .alert,
+body .callout,
+body .callout.callout-slim {
+  --tt-tone: var(--techtyl-muted);
+  position: relative;
+  margin-bottom: 24px;
+  padding: 13px 16px 13px 38px;
+  color: var(--techtyl-text) !important;
+  background: color-mix(in srgb, var(--tt-tone) 7%, var(--techtyl-surface-c)) !important;
+  border: 1px solid color-mix(in srgb, var(--tt-tone) 38%, var(--techtyl-surface-c)) !important;
+  border-radius: var(--tt-r-s);
+  text-shadow: none;
+}
+
+/* Zustandspunkt wie bei den Statusanzeigen */
+body .alert::before,
+body .callout::before {
+  content: '';
+  position: absolute;
+  left: 16px;
+  top: 20px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--tt-tone);
+}
+
+body .alert-danger,
+body .callout-danger,
+body .callout.callout-danger.callout-slim {
+  --tt-tone: var(--techtyl-bad);
+}
+
+body .alert-warning,
+body .callout-warning,
+body .callout.callout-warning.callout-slim {
+  --tt-tone: var(--techtyl-warn);
+}
+
+body .alert-success,
+body .callout-success,
+body .callout.callout-success.callout-slim {
+  --tt-tone: var(--techtyl-ok);
+}
+
+body .alert-info,
+body .callout-info,
+body .callout.callout-info.callout-slim {
+  --tt-tone: var(--techtyl-muted);
+}
+
+body .alert a,
+body .callout a,
+body .callout-slim a {
+  color: var(--techtyl-text) !important;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+body .alert h4,
+body .callout h4 {
+  margin: 0 0 4px;
+  font-size: 16px;
+}
+
+body .alert p:last-child,
+body .callout p:last-child {
+  margin-bottom: 0;
+}
+
+body .alert ul,
+body .callout ul {
+  margin: 6px 0 0;
+  padding-left: 18px;
+}
+
+body .alert br {
+  display: none;
+}
+
+body .alert .close {
+  top: 0;
+  right: 0;
+  color: var(--techtyl-text);
+  opacity: 0.7;
+}
+
+body .alert > .fa:first-child,
+body .alert > .icon {
+  margin-right: 6px;
+  color: var(--tt-tone);
+}
+
+body .callout-nomargin {
+  margin: 0;
+}
+
+/* Blueprint-Hinweis oben rechts (erscheint nach dem Speichern, verschwindet von selbst) */
+@keyframes techtyl-notice {
+  0% {
+    opacity: 0;
+    transform: translateX(36px);
+  }
+
+  4%,
+  94% {
+    opacity: 1;
+    transform: none;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateX(36px);
+  }
+}
+
+@keyframes techtyl-notice-still {
+  0%,
+  96% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+body .notification {
+  top: 66px;
+  right: 16px;
+  padding: 12px 16px;
+  background-color: var(--techtyl-surface-c);
+  color: var(--techtyl-text);
+  border: 1px solid var(--tt-edge);
+  border-radius: var(--tt-r-s);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
+  animation-name: techtyl-notice;
+  animation-timing-function: var(--tt-curve);
+  pointer-events: none;
+}
+
+/* ---------- 10 Reiter und Seiten ---------- */
+
+/* Einfache Reiter (nav-tabs) und die Reiterleisten der Detailseiten sehen gleich aus. */
+body .nav-tabs {
+  display: flex;
+  gap: 2px;
+  margin: 0 0 24px;
+  border-bottom: 1px solid var(--techtyl-line);
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+}
+
+body .nav-tabs > li {
+  float: none;
+  flex: none;
+  margin: 0;
+}
+
+body .nav-tabs > li > a,
+body .nav-tabs > li.active > a,
+body .nav-tabs > li.active > a:hover,
+body .nav-tabs > li.active > a:focus {
+  position: relative;
+  margin: 0;
+  padding: 9px 14px;
+  background: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  color: var(--techtyl-muted);
+  font-weight: 500;
+  white-space: nowrap;
+  transition: color var(--tt-ease);
+}
+
+body .nav-tabs > li > a:hover,
+body .nav-tabs > li > a:focus,
+body .nav-tabs > li.active > a,
+body .nav-tabs > li.active > a:hover,
+body .nav-tabs > li.active > a:focus {
+  color: var(--techtyl-text);
+  background: none;
+}
+
+body .nav-tabs > li > a:focus-visible {
+  outline-offset: -2px;
+}
+
+body .nav-tabs > li > a::after {
+  content: '';
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 0;
+  height: 2px;
+  border-radius: 2px 2px 0 0;
+  background: var(--tt-edge);
+  opacity: 0;
+  transform: scaleX(0.3);
+  transition: transform var(--tt-t2) var(--tt-curve), opacity var(--tt-t2) var(--tt-curve);
+}
+
+body .nav-tabs > li > a:hover::after {
+  opacity: 1;
+  transform: scaleX(1);
+}
+
+body .nav-tabs > li.active > a::after {
+  background: var(--tt-accent);
+  opacity: 1;
+  transform: scaleX(1);
+}
+
+body .nav-tabs-custom {
+  margin-bottom: 24px;
+  background: none;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+body .nav-tabs-custom > .nav-tabs,
+body .nav-tabs-custom.nav-tabs-floating > .nav-tabs {
+  display: flex;
+  gap: 2px;
+  margin: 0;
+  border-bottom: 1px solid var(--techtyl-line) !important;
+  border-radius: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+}
+
+body .nav-tabs-custom > .nav-tabs > li,
+body .nav-tabs-custom.nav-tabs-floating > .nav-tabs > li {
+  float: none;
+  flex: none;
+  margin: 0 !important;
+  border-top: 0;
+  border-radius: 0 !important;
+}
+
+body .nav-tabs-custom > .nav-tabs > li > a,
+body .nav-tabs-custom > .nav-tabs > li.active > a,
+body .nav-tabs-custom > .nav-tabs > li.active:hover > a {
+  margin: 0;
+  padding: 9px 14px;
+  background: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0 !important;
+  color: var(--techtyl-muted);
+  font-weight: 500;
+  white-space: nowrap;
+  transition: color var(--tt-ease), border-color var(--tt-ease);
+}
+
+body .nav-tabs-custom > .nav-tabs > li > a:hover,
+body .nav-tabs-custom > .nav-tabs > li > a:focus {
+  color: var(--techtyl-text);
+  background: none;
+  text-decoration: none;
+}
+
+body .nav-tabs-custom > .nav-tabs > li.active > a,
+body .nav-tabs-custom > .nav-tabs > li.active:hover > a {
+  color: var(--techtyl-text);
+}
+
+body .nav-tabs-custom > .nav-tabs > li > a::after {
+  content: '';
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 0;
+  height: 2px;
+  border-radius: 2px 2px 0 0;
+  background: var(--tt-edge);
+  opacity: 0;
+  transform: scaleX(0.3);
+  transition: transform var(--tt-t2) var(--tt-curve), opacity var(--tt-t2) var(--tt-curve);
+}
+
+body .nav-tabs-custom > .nav-tabs > li > a:hover::after {
+  opacity: 1;
+  transform: scaleX(1);
+}
+
+body .nav-tabs-custom > .nav-tabs > li.active > a::after {
+  background: var(--tt-accent);
+  opacity: 1;
+  transform: scaleX(1);
+}
+
+body .nav-tabs-custom > .nav-tabs > li.tab-danger > a {
+  color: var(--techtyl-bad);
+}
+
+body .nav-tabs-custom > .nav-tabs > li.tab-danger.active > a::after {
+  background: var(--techtyl-bad);
+}
+
+body .nav-tabs-custom > .nav-tabs > li.tab-success > a {
+  color: var(--techtyl-ok);
+}
+
+body .nav-tabs-custom > .nav-tabs > li > a:focus-visible {
+  outline-offset: -2px;
+}
+
+body .nav-tabs-custom > .nav-tabs > li.header {
+  padding: 9px 14px;
+  font-family: var(--tt-display);
+  font-size: 17px;
+  color: var(--techtyl-text);
+}
+
+body .nav-tabs-custom > .tab-content {
+  margin-top: 16px;
+  padding: 18px;
+}
+
+body .tab-pane .box-footer {
+  margin: 18px -18px -18px;
+}
+
+body .nav-pills > li > a,
+body .nav-stacked > li > a {
+  color: var(--techtyl-muted);
+  border-radius: var(--tt-r-s);
+  border-left: 0;
+}
+
+body .nav-pills > li > a:hover,
+body .nav-stacked > li > a:hover {
+  background: var(--tt-raise);
+  color: var(--techtyl-text);
+}
+
+body .nav-pills > li.active > a,
+body .nav-pills > li.active > a:hover,
+body .nav-pills > li.active > a:focus,
+body .nav-stacked > li.active > a,
+body .nav-stacked > li.active > a:hover {
+  background: var(--tt-raise);
+  color: var(--techtyl-text);
+  border-top-color: transparent;
+  border-left: 0;
+  box-shadow: inset 3px 0 0 var(--tt-accent);
+}
+
+body .pagination {
+  margin: 0;
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+body .pagination > li > a,
+body .pagination > li > span {
+  float: none;
+  display: block;
+  min-width: 34px;
+  margin: 0;
+  padding: 5px 10px !important;
+  text-align: center;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  color: var(--techtyl-text);
+  background: transparent;
+  border: 1px solid var(--techtyl-line);
+  border-radius: var(--tt-r-s) !important;
+  transition: border-color var(--tt-ease);
+}
+
+body .pagination > li > a:hover,
+body .pagination > li > a:focus {
+  color: var(--techtyl-text);
+  background: var(--tt-raise);
+  border-color: var(--tt-accent-text);
+  text-decoration: none;
+}
+
+body .pagination > .active > a,
+body .pagination > .active > span,
+body .pagination > .active > a:hover,
+body .pagination > .active > span:hover {
+  color: var(--techtyl-text);
+  background: var(--tt-raise);
+  border-color: var(--techtyl-muted);
+  font-weight: 600;
+}
+
+body .pagination > .disabled > a,
+body .pagination > .disabled > span,
+body .pagination > .disabled > span:hover {
+  color: var(--techtyl-muted);
+  background: transparent;
+  border-color: var(--techtyl-line);
+  opacity: 0.6;
+}
+
+body .box-footer.with-border .pagination,
+body .box-footer .pagination {
+  vertical-align: middle;
+}
+
+/* ---------- 11 Dialoge ---------- */
+
+body .modal-backdrop,
+body .sweet-overlay {
+  background-color: color-mix(in srgb, var(--techtyl-bg) 60%, #000);
+}
+
+body .modal-backdrop.in {
+  opacity: 0.72;
+}
+
+body .sweet-overlay {
+  background-color: color-mix(in srgb, color-mix(in srgb, var(--techtyl-bg) 60%, #000) 72%, transparent);
+}
+
+body .modal-content {
+  background: var(--techtyl-surface-c);
+  border: 1px solid var(--tt-edge);
+  border-radius: var(--tt-r);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+  color: var(--techtyl-text);
+}
+
+body .modal-header,
+body .modal-body,
+body .modal-footer {
+  background: var(--techtyl-surface-c);
+  border-color: var(--techtyl-line);
+  color: var(--techtyl-text);
+}
+
+body .modal-header {
+  padding: 16px 18px;
+  border-radius: var(--tt-r) var(--tt-r) 0 0;
+}
+
+body .modal-body {
+  padding: 18px;
+}
+
+body .modal-footer {
+  padding: 13px 18px;
+  border-radius: 0 0 var(--tt-r) var(--tt-r);
+}
+
+body .modal.fade .modal-dialog {
+  opacity: 0;
+  transform: translateY(14px) scale(0.98);
+  transition: transform var(--tt-t2) var(--tt-curve), opacity var(--tt-t2) var(--tt-curve);
+}
+
+body .modal.in .modal-dialog {
+  opacity: 1;
+  transform: none;
+}
+
+body .modal-title {
+  font-size: 19px;
+  font-weight: 650;
+}
+
+body .sweet-alert {
+  padding: 24px;
+  background: var(--techtyl-surface-c);
+  border: 1px solid var(--tt-edge);
+  border-radius: var(--tt-r);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+  font-family: var(--tt-body);
+}
+
+body .sweet-alert h2 {
+  margin: 14px 0 8px;
+  font-family: var(--tt-display);
+  font-size: 22px;
+  font-weight: 650;
+  line-height: 1.2;
+  color: var(--techtyl-text);
+}
+
+body .sweet-alert p {
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.5 !important;
+  color: var(--techtyl-muted);
+}
+
+body .sweet-alert .sa-icon.sa-success::before,
+body .sweet-alert .sa-icon.sa-success::after,
+body .sweet-alert .sa-icon.sa-success .sa-fix {
+  background: var(--techtyl-surface-c);
+}
+
+body .sweet-alert .sa-icon.sa-success {
+  border-color: var(--techtyl-ok);
+}
+
+body .sweet-alert .sa-icon.sa-success .sa-placeholder {
+  border-color: color-mix(in srgb, var(--techtyl-ok) 30%, transparent);
+}
+
+body .sweet-alert .sa-icon.sa-success .sa-line {
+  background-color: var(--techtyl-ok);
+}
+
+body .sweet-alert .sa-icon.sa-error {
+  border-color: var(--techtyl-bad);
+}
+
+body .sweet-alert .sa-icon.sa-error .sa-line {
+  background-color: var(--techtyl-bad);
+}
+
+body .sweet-alert .sa-icon.sa-warning {
+  border-color: var(--techtyl-warn);
+}
+
+body .sweet-alert .sa-icon.sa-warning .sa-body,
+body .sweet-alert .sa-icon.sa-warning .sa-dot {
+  background-color: var(--techtyl-warn);
+}
+
+body .sweet-alert .sa-icon.sa-info {
+  border-color: var(--techtyl-muted);
+}
+
+body .sweet-alert .sa-icon.sa-info::before,
+body .sweet-alert .sa-icon.sa-info::after {
+  background-color: var(--techtyl-muted);
+}
+
+body .sweet-alert button,
+body .sweet-alert button.cancel,
+body .sweet-alert button.confirm {
+  margin: 20px 4px 0;
+  padding: 9px 18px;
+  font-family: var(--tt-body);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--techtyl-text);
+  background-color: var(--techtyl-raise-c) !important;
+  border: 1px solid var(--tt-edge);
+  border-radius: var(--tt-r-s);
+  box-shadow: none !important;
+}
+
+body .sweet-alert button:hover {
+  border-color: var(--tt-accent-text);
+}
+
+body .sweet-alert button.confirm {
+  color: var(--tt-ink);
+  background-color: var(--tt-accent) !important;
+  border-color: var(--tt-accent);
+  font-weight: 600;
+}
+
+body .sweet-alert fieldset input {
+  height: 40px;
+  padding: 8px 12px;
+  background: var(--techtyl-field);
+  border: 1px solid var(--tt-edge);
+  border-radius: var(--tt-r-s);
+  box-shadow: none;
+  color: var(--techtyl-text);
+  font-family: var(--tt-body);
+  font-size: 15px;
+}
+
+body .sweet-alert .sa-error-container {
+  background: transparent;
+}
+
+body .sweet-alert .sa-error-container p {
+  color: var(--techtyl-bad);
+}
+
+body .sweet-alert .la-ball-fall {
+  color: var(--tt-ink);
+}
+
+/* ---------- 12 Blueprint ---------- */
+
+body .content-header .blueprint-page-header,
+body .content .blueprint-statusbar,
+body .content-header .blueprint-statusbar {
+  width: 100%;
+  padding: 16px 18px;
+  background: var(--tt-surface);
+  background-image: none;
+  border: 1px solid var(--techtyl-line);
+  border-radius: var(--tt-r);
+  color: var(--techtyl-muted);
+}
+
+body .content-header .blueprint-page-header .h4 {
+  font-size: 22px;
+  font-weight: 700;
+  font-stretch: 88%;
+  color: var(--techtyl-text);
+}
+
+body .content .blueprint-statusbar.blueprint-statusbar-danger,
+body .content-header .blueprint-statusbar.blueprint-statusbar-danger {
+  background-image: none;
+  border-color: color-mix(in srgb, var(--techtyl-bad) 50%, var(--techtyl-surface-c));
+  box-shadow: inset 3px 0 0 var(--techtyl-bad);
+}
+
+body .content .blueprint-statusbar.blueprint-statusbar-warning,
+body .content-header .blueprint-statusbar.blueprint-statusbar-warning {
+  background-image: none;
+  border-color: color-mix(in srgb, var(--techtyl-warn) 50%, var(--techtyl-surface-c));
+  box-shadow: inset 3px 0 0 var(--techtyl-warn);
+}
+
+/* Extension-Kacheln: Symbol, Name, Version. Das weichgezeichnete Doppelbild entfaellt. */
+body .btn.extension-btn,
+body .btn.extension-btn:focus {
+  position: relative;
+  height: 78px;
+  padding: 0 44px 0 78px !important;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: left;
+  background: var(--tt-surface);
+  border: 1px solid var(--techtyl-line);
+  border-radius: var(--tt-r);
+  color: var(--techtyl-text) !important;
+  overflow: hidden;
+}
+
+body .btn.extension-btn:hover,
+body .btn.extension-btn:active {
+  background: var(--tt-surface);
+  border-color: var(--tt-accent-text);
+}
+
+body .extension-btn .extension-btn-overlay,
+body .extension-btn .extension-btn-image {
+  display: none;
+}
+
+body .extension-btn .extension-btn-image2 {
+  left: 15px;
+  top: 15px;
+  width: 46px;
+  height: 46px;
+  object-fit: cover;
+  border-radius: var(--tt-r-s);
+  background: var(--tt-raise);
+}
+
+body .extension-btn .extension-btn-text,
+body .extension-btn .extension-btn-version {
+  position: static;
+  width: 100%;
+  margin: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+body .extension-btn .extension-btn-text {
+  font-family: var(--tt-display);
+  font-size: 18px;
+  font-weight: 650;
+  line-height: 1.25;
+}
+
+body .extension-btn .extension-btn-version {
+  margin-top: 2px;
+  font-family: var(--tt-mono);
+  font-size: 12px;
+  line-height: 1.4 !important;
+  color: var(--techtyl-muted);
+  opacity: 1 !important;
+}
+
+body .extension-btn .extension-btn-version * {
+  opacity: 1 !important;
+}
+
+body .extension-btn > i.bi {
+  top: 50% !important;
+  right: 14px !important;
+  transform: translateY(-50%);
+  font-size: 22px !important;
+  line-height: 1;
+  color: var(--techtyl-muted);
+}
+
+body .extension-btn .extension-btn-update {
+  background: color-mix(in srgb, var(--techtyl-ok) 18%, var(--techtyl-surface-c));
+  border-color: color-mix(in srgb, var(--techtyl-ok) 50%, var(--techtyl-surface-c));
+  color: var(--techtyl-text) !important;
+  font-weight: 500;
+  border-radius: 99px;
+}
+
+body .content .blueprint-add {
+  width: 78px;
+  height: 78px;
+  background: transparent;
+  border: 1px dashed var(--tt-edge);
+  border-radius: var(--tt-r);
+  color: var(--techtyl-muted);
+  transition: border-color var(--tt-ease), color var(--tt-ease);
+}
+
+body .content .blueprint-add:hover {
+  border-color: var(--tt-accent-text);
+  color: var(--techtyl-text);
+}
+
+body .btn.btn-gray,
+body .btn.btn-gray-alt {
+  background-color: var(--tt-raise);
+  border-color: var(--tt-edge);
+  color: var(--techtyl-text) !important;
+}
+
+body .btn.btn-gray:hover,
+body .btn.btn-gray-alt:hover {
+  background-color: var(--tt-raise);
+  border-color: var(--tt-accent-text);
+}
+
+body .content-header > img {
+  width: 34px !important;
+  height: 34px !important;
+  margin-right: 10px !important;
+  border-radius: var(--tt-r-s) !important;
+}
+
+body .content-header > h1[ext-title] {
+  align-items: center;
+  gap: 4px;
+  min-height: 34px;
+}
+
+body .content-header .btn.pull-right {
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+}
+
+body .byte-img {
+  opacity: 0.25;
+}
+
+body .blueprint\:push-repo {
+  background-color: var(--techtyl-surface-c);
+  border: 1px solid var(--tt-edge);
+  border-radius: var(--tt-r-s);
+  color: var(--techtyl-muted);
+}
+
+body .blueprint\:push-repo::after {
+  border-color: transparent transparent var(--tt-edge) transparent;
+}
+
+/* Blueprint-Dialoge bestehen aus getrennten Karten fuer Kopf, Inhalt und Fuss. */
+body .modal-content[style*='transparent'] {
+  border: 0;
+  box-shadow: none;
+}
+
+body .modal-content[style*='transparent'] .modal-header,
+body .modal-content[style*='transparent'] .modal-body,
+body .modal-content[style*='transparent'] .modal-footer {
+  border: 1px solid var(--tt-edge) !important;
+  border-radius: var(--tt-r) !important;
+}
+
+body .modal-content[style*='transparent'] .close {
+  color: var(--techtyl-text) !important;
+}
+
+/* ---------- 13 Techtyl-Seite ---------- */
+
+/* Einstellungen an/aus als Schalter wie in der Vorschau */
+body .techtyl-admin input[type='checkbox'] {
+  width: 38px;
+  height: 22px;
+  margin-right: 10px;
+  vertical-align: -6px;
+  background: var(--tt-edge);
+  border: 0;
+  border-radius: 99px;
+  transition: background-color var(--tt-ease);
+}
+
+body .techtyl-admin input[type='checkbox']::after,
+body .techtyl-admin input[type='checkbox']:checked::after {
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 3px;
+  width: 16px;
+  height: 16px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--techtyl-surface-c);
+  transform: none;
+  transition: transform var(--tt-ease);
+}
+
+body .techtyl-admin input[type='checkbox']:checked {
+  background: var(--tt-accent);
+}
+
+body .techtyl-admin input[type='checkbox']:checked::after {
+  transform: translateX(16px);
+  background: var(--tt-ink);
+}
+
+body .techtyl-admin input[type='number'].form-control {
+  max-width: 140px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- 14 Schmale Fenster ---------- */
+
+@media (max-width: 991px) {
+  body .content-header > .breadcrumb {
+    position: static;
+    float: none;
+    margin-top: 10px;
+    padding: 0;
+    background: none !important;
+  }
+}
+
+@media (max-width: 767px) {
+  body.skin-blue .main-header .logo {
+    border-right: 0;
+  }
+
+  body.skin-blue .main-sidebar {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background: var(--techtyl-surface-c);
+  }
+
+  body .content-header {
+    padding: 18px 16px 0;
+  }
+
+  body .content-header > h1 {
+    font-size: 25px;
+  }
+
+  body .content {
+    padding: 16px 16px 32px;
+  }
+
+  body .main-footer {
+    padding: 14px 16px;
+  }
+
+  body .box-header {
+    padding: 13px 14px 11px;
+  }
+
+  body .box-body {
+    padding: 14px;
+  }
+
+  body .box-footer {
+    padding: 12px 14px;
+  }
+
+  body .box-header > .box-tools,
+  body .box-header > .box-tools.search01 {
+    position: relative !important;
+    top: 0;
+    right: 0;
+    width: 100%;
+    padding: 12px 0 0;
+    float: none !important;
+  }
+
+  body .box-header > .box-tools .input-group {
+    width: 100% !important;
+  }
+
+  body .box-header > .box-tools .input-group .form-control {
+    float: none !important;
+  }
+
+  body .table > thead > tr > th,
+  body .table > tbody > tr > th,
+  body .table > tbody > tr > td {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  body .table-responsive > .table > tbody > tr > td,
+  body .table-responsive > .table > thead > tr > th {
+    white-space: nowrap;
+  }
+
+  body .box-body.table-responsive,
+  body .box-body:has(> .table) {
+    overflow-x: auto;
+  }
+
+  body .btn {
+    white-space: normal;
+  }
+
+  body .input-group-btn .btn,
+  body .btn-group > .btn {
+    white-space: nowrap;
+  }
+
+  body .modal-dialog {
+    margin: 12px;
+  }
+
+  body .sweet-alert {
+    width: auto;
+    left: 12px;
+    right: 12px;
+    margin-left: 0;
+  }
+
+  body .techtyl-admin input[type='number'].form-control {
+    max-width: none;
+  }
+}
+
+/* ---------- 15 Bewegung ---------- */
+
+/* Konzept: Flaechen steigen beim Laden kurz und gestaffelt auf (Kopf, dann Boxen zeilenweise,
+   dann Tabellenzeilen), Reaktionen auf Eingaben sind schnell (--tt-t1), Wechsel von Flaechen
+   mittel (--tt-t2), Eingaenge lang (--tt-t3). Bewegt werden nur transform und opacity; Farben
+   blenden ueber. Nichts haelt die Bedienung auf: Eingaenge blockieren keine Klicks.
+   Stufen ueber html[data-techtyl-motion]: voll = alles, dezent = nur Reaktionen,
+   aus und prefers-reduced-motion = keine Bewegung.
+   Die Eingaenge gelten ohne Attribut, weil es erst nach dem ersten Bild gesetzt wird. */
+
+@keyframes techtyl-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+@keyframes techtyl-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes techtyl-drop {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+}
+
+@keyframes techtyl-grow-y {
+  from {
+    opacity: 0;
+    transform: scaleY(0);
+  }
+}
+
+@keyframes techtyl-grow-x {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+@keyframes techtyl-focus {
+  from {
+    outline-color: transparent;
+    outline-offset: 6px;
+  }
+}
+
+/* Reaktionen (voll und dezent) */
+body :focus-visible {
+  animation: techtyl-focus var(--tt-t2) var(--tt-curve);
+}
+
+body .select2-container--open .select2-dropdown {
+  animation: techtyl-drop var(--tt-t2) var(--tt-curve);
+  transform-origin: top;
+}
+
+body .tooltip.fade {
+  transition: opacity var(--tt-t1) var(--tt-curve);
+}
+
+/* Eingaenge beim Laden (nur voll) */
+body .content > .row:nth-child(2) {
+  --tt-row: 1;
+}
+
+body .content > .row:nth-child(3) {
+  --tt-row: 2;
+}
+
+body .content > .row:nth-child(4) {
+  --tt-row: 3;
+}
+
+body .content > .row:nth-child(n + 5) {
+  --tt-row: 4;
+}
+
+body .content .row > [class*='col-']:nth-child(2) {
+  --tt-col: 1;
+}
+
+body .content .row > [class*='col-']:nth-child(3) {
+  --tt-col: 2;
+}
+
+body .content .row > [class*='col-']:nth-child(n + 4) {
+  --tt-col: 3;
+}
+
+body .content-header,
+body .content .box,
+body .content .nav-tabs-custom,
+body .content .info-box,
+body .content .small-box,
+body .content .alert,
+body .content .callout,
+body .content > .row > .text-center > a > .btn,
+body .content .extension-btn,
+body .content .blueprint-add {
+  animation: techtyl-rise var(--tt-t3) var(--tt-curve) backwards;
+  animation-delay: calc(60ms + (var(--tt-row, 0) + var(--tt-col, 0)) * 45ms);
+}
+
+body .content-header {
+  animation-delay: 0ms;
+}
+
+/* Verschachtelte Flaechen steigen nicht ein zweites Mal auf. */
+body .content .box .box,
+body .content .box .callout,
+body .content .box .alert,
+body .content .tab-content .box {
+  animation: none;
+}
+
+body .content .table > tbody > tr {
+  animation: techtyl-fade var(--tt-t3) var(--tt-curve) backwards;
+  animation-delay: calc(140ms + (var(--tt-row, 0) + var(--tt-col, 0)) * 45ms + var(--tt-n, 10) * 22ms);
+}
+
+body .content .table > tbody > tr:nth-child(1) {
+  --tt-n: 0;
+}
+
+body .content .table > tbody > tr:nth-child(2) {
+  --tt-n: 1;
+}
+
+body .content .table > tbody > tr:nth-child(3) {
+  --tt-n: 2;
+}
+
+body .content .table > tbody > tr:nth-child(4) {
+  --tt-n: 3;
+}
+
+body .content .table > tbody > tr:nth-child(5) {
+  --tt-n: 4;
+}
+
+body .content .table > tbody > tr:nth-child(6) {
+  --tt-n: 5;
+}
+
+body .content .table > tbody > tr:nth-child(7) {
+  --tt-n: 6;
+}
+
+body .content .table > tbody > tr:nth-child(8) {
+  --tt-n: 7;
+}
+
+body .content .table > tbody > tr:nth-child(9) {
+  --tt-n: 8;
+}
+
+body .content .table > tbody > tr:nth-child(10) {
+  --tt-n: 9;
+}
+
+body.skin-blue .sidebar-menu > li.active > a::before {
+  transform-origin: center;
+  animation: techtyl-grow-y var(--tt-t3) var(--tt-curve) 80ms backwards;
+}
+
+body .nav-tabs > li.active > a::after {
+  animation: techtyl-grow-x var(--tt-t3) var(--tt-curve) 120ms backwards;
+}
+
+body .progress > .progress-bar {
+  transform-origin: left;
+  animation: techtyl-grow-x 600ms var(--tt-curve) 200ms backwards;
+}
+
+/* Stufe dezent: keine Eingaenge, Reaktionen bleiben. */
+html[data-techtyl-motion='dezent'] body .content-header,
+html[data-techtyl-motion='dezent'] body .content .box,
+html[data-techtyl-motion='dezent'] body .content .nav-tabs-custom,
+html[data-techtyl-motion='dezent'] body .content .info-box,
+html[data-techtyl-motion='dezent'] body .content .small-box,
+html[data-techtyl-motion='dezent'] body .content .alert,
+html[data-techtyl-motion='dezent'] body .content .callout,
+html[data-techtyl-motion='dezent'] body .content > .row > .text-center > a > .btn,
+html[data-techtyl-motion='dezent'] body .content .extension-btn,
+html[data-techtyl-motion='dezent'] body .content .blueprint-add,
+html[data-techtyl-motion='dezent'] body .content .table > tbody > tr,
+html[data-techtyl-motion='dezent'] body.skin-blue .sidebar-menu > li.active > a::before,
+html[data-techtyl-motion='dezent'] body .nav-tabs > li.active > a::after,
+html[data-techtyl-motion='dezent'] body .progress > .progress-bar {
+  animation: none;
+}
+
+/* Stufe aus: gar keine Bewegung. Ladesymbole drehen weiter, sonst wirkten sie eingefroren. */
+html[data-techtyl-motion='aus'] body *:not(.fa-spin):not(.notification),
+html[data-techtyl-motion='aus'] body *::before,
+html[data-techtyl-motion='aus'] body *::after {
+  animation: none !important;
+  transition: none !important;
+}
+
+html[data-techtyl-motion='aus'] body .btn:active {
+  transform: none !important;
+}
+
+html[data-techtyl-motion='aus'] body .notification {
+  animation-name: techtyl-notice-still !important;
+  transition: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body *:not(.fa-spin):not(.notification),
+  body *::before,
+  body *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+
+  body .btn:active {
+    transform: none !important;
+  }
+
+  body .notification {
+    animation-name: techtyl-notice-still !important;
+    transition: none !important;
+  }
 }
