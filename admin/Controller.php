@@ -124,6 +124,13 @@ class {identifier}ExtensionController extends Controller
             return $this->backTo('modules', 'Module gespeichert.');
         }
 
+        // Account area: profile pictures, Gravatar fallback, editable names.
+        if ($action === 'account') {
+            \Pterodactyl\BlueprintFramework\Extensions\{identifier}\Account\AccountSettings::save($request->only(['uploads', 'gravatar', 'names']));
+
+            return $this->backTo('modules', \Pterodactyl\BlueprintFramework\Extensions\{identifier}\I18n::t('core.saved'));
+        }
+
         // Standardsprache fuer Gaeste und Konten ohne eigene Sprachwahl.
         if ($action === 'locale') {
             $locale = $request->validate(['locale' => 'required|string|in:' . implode(',', \Pterodactyl\BlueprintFramework\Extensions\{identifier}\I18n::SUPPORTED)])['locale'];

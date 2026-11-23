@@ -1,0 +1,50 @@
+[
+  {
+    "file": "resources/scripts/routers/routes.ts",
+    "search": "import AccountOverviewContainer from '@/components/dashboard/AccountOverviewContainer';",
+    "replace": "import AccountOverviewContainer from '@blueprint/extensions/techtyl/account/pages/Overview';",
+    "note": "account: overview page -> Techtyl account overview"
+  },
+  {
+    "file": "resources/scripts/routers/routes.ts",
+    "search": "import AccountApiContainer from '@/components/dashboard/AccountApiContainer';",
+    "replace": "import AccountApiContainer from '@blueprint/extensions/techtyl/account/pages/ApiKeys';",
+    "note": "account: API keys page"
+  },
+  {
+    "file": "resources/scripts/routers/routes.ts",
+    "search": "import AccountSSHContainer from '@/components/dashboard/ssh/AccountSSHContainer';",
+    "replace": "import AccountSSHContainer from '@blueprint/extensions/techtyl/account/pages/SshKeys';",
+    "note": "account: SSH keys page"
+  },
+  {
+    "file": "resources/scripts/routers/routes.ts",
+    "search": "import ActivityLogContainer from '@/components/dashboard/activity/ActivityLogContainer';",
+    "replace": "import ActivityLogContainer from '@blueprint/extensions/techtyl/account/pages/Activity';",
+    "note": "account: activity log grouped by day"
+  },
+  {
+    "file": "resources/scripts/routers/routes.ts",
+    "search": "    account: [\n        {\n            path: '/',\n            name: 'Account',\n            component: AccountOverviewContainer,\n            exact: true,\n        },\n        {\n            path: '/api',\n            name: 'API Credentials',\n            component: AccountApiContainer,\n        },\n        {\n            path: '/ssh',\n            name: 'SSH Keys',\n            component: AccountSSHContainer,\n        },\n        {\n            path: '/activity',\n            name: 'Activity',\n            component: ActivityLogContainer,\n        },\n    ],",
+    "replace": "    account: [\n        {\n            path: '/',\n            name: 'Account',\n            component: AccountOverviewContainer,\n            exact: true,\n        },\n        {\n            path: '/profile',\n            name: 'Profile',\n            component: lazy(() => import('@blueprint/extensions/techtyl/account/pages/Profile')),\n        },\n        {\n            path: '/security',\n            name: 'Security',\n            component: lazy(() => import('@blueprint/extensions/techtyl/account/pages/Security')),\n        },\n        {\n            path: '/api',\n            name: 'API Keys',\n            component: AccountApiContainer,\n        },\n        {\n            path: '/ssh',\n            name: 'SSH Keys',\n            component: AccountSSHContainer,\n        },\n        {\n            path: '/activity',\n            name: 'Activity',\n            component: ActivityLogContainer,\n        },\n    ],",
+    "note": "account: adds /account/profile and /account/security (lazy, self-contained)"
+  },
+  {
+    "file": "resources/views/admin/users/index.blade.php",
+    "search": "                        @foreach ($users as $user)\n",
+    "replace": "                        @if (class_exists('\\Pterodactyl\\BlueprintFramework\\Extensions\\techtyl\\Account\\Avatar'))\n                            @php(\\Pterodactyl\\BlueprintFramework\\Extensions\\techtyl\\Account\\Avatar::preload($users))\n                        @endif\n                        @foreach ($users as $user)\n",
+    "note": "account: load the profile pictures of the listed users with one query"
+  },
+  {
+    "file": "resources/views/admin/users/index.blade.php",
+    "search": "<td class=\"text-center\"><img src=\"https://www.gravatar.com/avatar/{{ md5(strtolower($user->email)) }}?s=100\" style=\"height:20px;\" class=\"img-circle\" /></td>",
+    "replace": "<td class=\"text-center\">@if (class_exists('\\Pterodactyl\\BlueprintFramework\\Extensions\\techtyl\\Account\\Avatar')){!! \\Pterodactyl\\BlueprintFramework\\Extensions\\techtyl\\Account\\Avatar::html($user, 22) !!}@else<img src=\"https://www.gravatar.com/avatar/{{ md5(strtolower($user->email)) }}?s=100\" style=\"height:20px;\" class=\"img-circle\" />@endif</td>",
+    "note": "account: user list shows Techtyl profile pictures or initials instead of Gravatar"
+  },
+  {
+    "file": "resources/views/layouts/admin.blade.php",
+    "search": "<img src=\"https://www.gravatar.com/avatar/{{ md5(strtolower(Auth::user()->email)) }}?s=160\" class=\"user-image\" alt=\"User Image\">",
+    "replace": "@if (class_exists('\\Pterodactyl\\BlueprintFramework\\Extensions\\techtyl\\Account\\Avatar')){!! \\Pterodactyl\\BlueprintFramework\\Extensions\\techtyl\\Account\\Avatar::html(Auth::user(), 25, 'user-image') !!}@else<img src=\"https://www.gravatar.com/avatar/{{ md5(strtolower(Auth::user()->email)) }}?s=160\" class=\"user-image\" alt=\"User Image\">@endif",
+    "note": "account: admin top bar shows the own profile picture instead of Gravatar"
+  }
+]

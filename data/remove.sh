@@ -8,6 +8,11 @@ cd "${PTERODACTYL_DIRECTORY:-.}" || exit 0
 php .blueprint/extensions/techtyl/private/patch.php restore \
   || echo "techtyl: Originale konnten nicht vollstaendig wiederhergestellt werden (.blueprint/extensions/techtyl/private/.backup)."
 
+# Accounts set to German go back to English first (the panel validates users.language against
+# the folders in resources/lang).
+php artisan tinker --execute="Illuminate\\Support\\Facades\\DB::table('users')->where('language', 'de')->update(['language' => 'en']);" \
+  || echo "techtyl: Sprache der Konten konnte nicht zurueckgesetzt werden."
+
 # Alle Tabellen mit dem Praefix "techtyl_" entfernen (Kern und alle Module) und ihre Eintraege in
 # "migrations" loeschen, damit eine spaetere Neuinstallation sie wieder anlegt. Andere Tabellen
 # werden nicht angefasst. Importierte Eggs bleiben bestehen, Server koennten sie verwenden.

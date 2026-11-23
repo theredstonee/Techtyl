@@ -122,6 +122,26 @@
         </div>
       </div>
       <div class="col-md-4">
+        @php($techtylAccount = \Pterodactyl\BlueprintFramework\Extensions\{identifier}\Account\AccountSettings::get())
+        <div class="box">
+          <div class="box-header with-border"><h3 class="box-title">{{ \Pterodactyl\BlueprintFramework\Extensions\{identifier}\I18n::t('core.account') }}</h3></div>
+          <form method="POST" action="{{ $root }}">
+            {{ csrf_field() }}
+            <input type="hidden" name="action" value="account">
+            <div class="box-body">
+              @foreach (['uploads', 'gravatar', 'names'] as $flag)
+                <div class="form-group">
+                  <input type="hidden" name="{{ $flag }}" value="0">
+                  <label><input type="checkbox" name="{{ $flag }}" value="1" @if ($techtylAccount[$flag]) checked @endif> {{ \Pterodactyl\BlueprintFramework\Extensions\{identifier}\I18n::t('core.account_' . $flag) }}</label>
+                  <p class="text-muted small">{{ \Pterodactyl\BlueprintFramework\Extensions\{identifier}\I18n::t('core.account_' . $flag . '_help') }}</p>
+                </div>
+              @endforeach
+            </div>
+            <div class="box-footer">
+              <button type="submit" class="btn btn-primary pull-right">{{ \Pterodactyl\BlueprintFramework\Extensions\{identifier}\I18n::t('core.save') }}</button>
+            </div>
+          </form>
+        </div>
         <div class="box">
           <div class="box-header with-border"><h3 class="box-title">{{ \Pterodactyl\BlueprintFramework\Extensions\{identifier}\I18n::t('core.language') }}</h3></div>
           <form method="POST" action="{{ $root }}">

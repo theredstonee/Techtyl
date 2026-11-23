@@ -1,0 +1,2444 @@
+/* Account area. Colours come from the --techtyl-* variables (designer, four variants); motion
+   follows html[data-techtyl-motion] (voll / dezent / aus) and prefers-reduced-motion. */
+
+/* The account pages bring their own tabs: hide the panel's sub navigation there. */
+body:has(.techtyl-account) #SubNavigation {
+  display: none;
+}
+
+.techtyl-account {
+  --ta-ok: var(--techtyl-ok, #5fd39a);
+  --ta-warn: var(--techtyl-warn, #f0c24a);
+  --ta-bad: var(--techtyl-bad, #f0685f);
+  --ta-accent: var(--techtyl-accent, #f0a33b);
+  --ta-ink: var(--techtyl-accent-ink, #17130b);
+  --ta-r: var(--techtyl-radius, 10px);
+  --ta-rs: calc(var(--ta-r) * 0.7);
+  --ta-ease: var(--techtyl-ease, cubic-bezier(0.2, 0.7, 0.2, 1));
+  --ta-spring: var(--techtyl-spring, cubic-bezier(0.3, 1.36, 0.5, 1));
+  color: var(--techtyl-text);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.techtyl-account,
+.techtyl-account-overlay {
+  --ta-surface: var(--techtyl-surface, #172a33);
+  --ta-raise: var(--techtyl-raise, #1f3742);
+  --ta-line: var(--techtyl-line, #2c4753);
+  --ta-field: var(--techtyl-field, #12222a);
+  --ta-muted: var(--techtyl-muted, #93a9ac);
+}
+
+.techtyl-account *,
+.techtyl-account *::before,
+.techtyl-account *::after,
+.techtyl-account-overlay *,
+.techtyl-account-overlay *::before,
+.techtyl-account-overlay *::after {
+  box-sizing: border-box;
+}
+
+.techtyl-account :focus-visible,
+.techtyl-account-overlay :focus-visible {
+  outline: 2px solid var(--techtyl-accent);
+  outline-offset: 2px;
+}
+
+.techtyl-account h1,
+.techtyl-account h2,
+.techtyl-account h3,
+.techtyl-account-overlay h2 {
+  font-family: var(--techtyl-display, inherit);
+  letter-spacing: -0.01em;
+  margin: 0;
+  color: var(--techtyl-text);
+}
+
+.techtyl-account p,
+.techtyl-account-overlay p {
+  margin: 0;
+}
+
+.techtyl-account svg,
+.techtyl-account-overlay svg {
+  flex: none;
+}
+
+.techtyl-account .is-mono,
+.techtyl-account code,
+.techtyl-account-overlay code,
+.techtyl-account-overlay .is-mono {
+  font-family: var(--techtyl-mono, ui-monospace, monospace);
+  font-size: 0.88em;
+}
+
+.techtyl-account-sr {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.techtyl-account-small {
+  font-size: 13px;
+  color: var(--techtyl-muted);
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+}
+
+.techtyl-account-small svg {
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+}
+
+.techtyl-account-dot {
+  display: inline-block;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.55;
+  margin: 0 8px;
+  vertical-align: middle;
+}
+
+.techtyl-account-spacer {
+  height: 14px;
+}
+
+/* ---------- motion ---------- */
+
+@keyframes techtyl-account-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.995);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes techtyl-account-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes techtyl-account-pop {
+  0% {
+    opacity: 0;
+    transform: translateY(14px) scale(0.97);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes techtyl-account-shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes techtyl-account-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes techtyl-account-ring {
+  from {
+    stroke-dashoffset: var(--techtyl-ring-from);
+  }
+  to {
+    stroke-dashoffset: var(--techtyl-ring-to);
+  }
+}
+
+@keyframes techtyl-account-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--ta-ok) 55%, transparent);
+  }
+  60% {
+    box-shadow: 0 0 0 6px color-mix(in srgb, var(--ta-ok) 0%, transparent);
+  }
+}
+
+@keyframes techtyl-account-drift {
+  from {
+    background-position: 0 0, 0 0;
+  }
+  to {
+    background-position: 160px 0, -90px 0;
+  }
+}
+
+@keyframes techtyl-account-flash {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--ta-accent) 60%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 14px color-mix(in srgb, var(--ta-accent) 0%, transparent);
+  }
+}
+
+.techtyl-account-rise,
+.techtyl-account-section {
+  animation: techtyl-account-in var(--techtyl-slow, 380ms) var(--ta-ease) both;
+  animation-delay: calc(var(--i, 0) * 55ms);
+}
+
+html[data-techtyl-motion='dezent'] .techtyl-account-rise,
+html[data-techtyl-motion='dezent'] .techtyl-account-section {
+  animation-name: techtyl-account-fade;
+  animation-duration: 200ms;
+  animation-delay: 0ms;
+}
+
+html[data-techtyl-motion='dezent'] .techtyl-account-head-band {
+  animation: none;
+}
+
+/* ---------- profile head ---------- */
+
+.techtyl-account-head {
+  position: relative;
+  background: var(--ta-surface);
+  border: 1px solid var(--ta-line);
+  border-radius: var(--ta-r);
+  backdrop-filter: var(--techtyl-glass, none);
+  overflow: hidden;
+  margin-bottom: 14px;
+  animation: techtyl-account-fade 240ms var(--ta-ease) both;
+}
+
+.techtyl-account-head-band {
+  height: 92px;
+  background:
+    repeating-radial-gradient(circle at 86% 120%, transparent 0 22px, color-mix(in srgb, var(--ta-accent) 24%, transparent) 22px 23px),
+    linear-gradient(115deg, color-mix(in srgb, var(--ta-accent) 34%, var(--techtyl-bg, #0f1c23)) 0%, color-mix(in srgb, var(--ta-accent) 10%, var(--techtyl-bg, #0f1c23)) 55%, var(--techtyl-bg, #0f1c23) 100%);
+  background-size: 1800px 600px, 100% 100%;
+  border-bottom: 1px solid var(--ta-line);
+}
+
+html[data-techtyl-motion='voll'] .techtyl-account-head-band {
+  animation: techtyl-account-drift 18s linear infinite alternate;
+}
+
+.techtyl-account-head-main {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 14px 18px;
+}
+
+.techtyl-account-head--hero .techtyl-account-head-main {
+  align-items: flex-end;
+  padding: 0 24px 20px;
+  margin-top: -40px;
+}
+
+.techtyl-account-head-avatar {
+  position: relative;
+  display: inline-flex;
+  border-radius: 50%;
+  flex: none;
+  text-decoration: none;
+}
+
+.techtyl-account-head-camera {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: color-mix(in srgb, #000 48%, transparent);
+  color: #fff;
+  opacity: 0;
+  transition: opacity var(--techtyl-fast, 120ms) var(--ta-ease);
+}
+
+.techtyl-account-head-camera svg {
+  width: 40%;
+  height: 40%;
+  transform: scale(0.8);
+  transition: transform var(--techtyl-normal, 220ms) var(--ta-spring);
+}
+
+.techtyl-account-head-avatar:hover .techtyl-account-head-camera,
+.techtyl-account-head-avatar:focus-visible .techtyl-account-head-camera {
+  opacity: 1;
+}
+
+.techtyl-account-head-avatar:hover .techtyl-account-head-camera svg {
+  transform: none;
+}
+
+.techtyl-account-head-text {
+  min-width: 0;
+  flex: 1;
+}
+
+/* Only the picture overlaps the band; the text starts below it. */
+.techtyl-account-head--hero .techtyl-account-head-text {
+  padding-top: 54px;
+}
+
+.techtyl-account-eyebrow {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--techtyl-accent-text, var(--ta-accent));
+  margin-bottom: 2px !important;
+}
+
+.techtyl-account-head h1 {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.techtyl-account-head--hero h1 {
+  font-size: clamp(24px, 3.4vw, 32px);
+  font-variation-settings: 'wdth' 88;
+}
+
+.techtyl-account-head-sub {
+  color: var(--techtyl-muted);
+  font-size: 14px;
+  margin-top: 3px !important;
+  overflow-wrap: anywhere;
+}
+
+.techtyl-account-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+}
+
+.techtyl-account-chips li {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 99px;
+  border: 1px solid var(--ta-line);
+  background: var(--ta-raise);
+  font-size: 12.5px;
+  color: var(--techtyl-soft, var(--techtyl-text));
+}
+
+.techtyl-account-chips svg {
+  width: 14px;
+  height: 14px;
+}
+
+.techtyl-account-chips .is-ok svg {
+  color: var(--ta-ok);
+}
+
+.techtyl-account-chips .is-warn {
+  border-color: color-mix(in srgb, var(--ta-warn) 55%, var(--ta-line));
+}
+
+.techtyl-account-chips .is-warn svg {
+  color: var(--ta-warn);
+}
+
+.techtyl-account-chips .is-accent svg {
+  color: var(--ta-accent);
+}
+
+.techtyl-account-head-aside {
+  flex: none;
+  align-self: center;
+  margin-top: 46px;
+}
+
+.techtyl-account-ghost-line {
+  display: inline-block;
+  width: 200px;
+  max-width: 60%;
+  height: 0.9em;
+  border-radius: 6px;
+  background: var(--ta-raise);
+}
+
+/* ---------- avatar ---------- */
+
+.techtyl-account-avatar {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  border-radius: 50%;
+  overflow: hidden;
+  font-family: var(--techtyl-display, inherit);
+  font-weight: 650;
+  line-height: 1;
+  letter-spacing: 0;
+  user-select: none;
+  vertical-align: middle;
+}
+
+.techtyl-account-avatar img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  animation: techtyl-account-fade 260ms var(--ta-ease, ease) both;
+}
+
+.techtyl-account-avatar--ring {
+  box-shadow: 0 0 0 3px var(--techtyl-surface-c, #172a33), 0 0 0 4px var(--techtyl-line, #2c4753);
+}
+
+.techtyl-account-avatar--ghost {
+  background: var(--ta-raise);
+}
+
+/* ---------- tabs ---------- */
+
+.techtyl-account-nav {
+  position: relative;
+  margin-bottom: 18px;
+  background: var(--ta-surface);
+  border: 1px solid var(--ta-line);
+  border-radius: var(--ta-r);
+  backdrop-filter: var(--techtyl-glass, none);
+  overflow: hidden;
+}
+
+.techtyl-account-tabs {
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%);
+}
+
+.techtyl-account-tabs {
+  position: relative;
+  display: flex;
+  gap: 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 0 10px;
+}
+
+.techtyl-account-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.techtyl-account-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 11px 12px 12px;
+  color: var(--techtyl-muted);
+  text-decoration: none;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: var(--ta-rs) var(--ta-rs) 0 0;
+  transition: color var(--techtyl-fast, 120ms) var(--ta-ease), background var(--techtyl-fast, 120ms) var(--ta-ease);
+}
+
+.techtyl-account-tab:hover {
+  color: var(--techtyl-text);
+  background: color-mix(in srgb, var(--ta-raise) 60%, transparent);
+}
+
+.techtyl-account-tab.is-active {
+  color: var(--techtyl-text);
+}
+
+.techtyl-account-tab-icon svg {
+  width: 17px;
+  height: 17px;
+  display: block;
+  transition: transform var(--techtyl-normal, 220ms) var(--ta-spring);
+}
+
+.techtyl-account-tab.is-active .techtyl-account-tab-icon {
+  color: var(--ta-accent);
+}
+
+.techtyl-account-tab:hover .techtyl-account-tab-icon svg {
+  transform: translateY(-1px) scale(1.08);
+}
+
+.techtyl-account-tabs-gap {
+  flex: none;
+  width: 1px;
+  margin: 10px 8px;
+  background: var(--ta-line);
+}
+
+.techtyl-account-tabs-bar {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  border-radius: 3px 3px 0 0;
+  background: var(--ta-accent);
+  box-shadow: 0 0 14px color-mix(in srgb, var(--ta-accent) 55%, transparent);
+  transition: transform var(--techtyl-slow, 380ms) var(--ta-spring), width var(--techtyl-slow, 380ms) var(--ta-spring);
+  pointer-events: none;
+}
+
+html[data-techtyl-motion='dezent'] .techtyl-account-tabs-bar {
+  transition-duration: 160ms;
+  transition-timing-function: ease;
+}
+
+/* ---------- sections and cards ---------- */
+
+.techtyl-account-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.techtyl-account-section {
+  display: grid;
+  grid-template-columns: minmax(200px, 280px) minmax(0, 1fr);
+  gap: 24px;
+  padding: 6px 0 22px;
+  border-bottom: 1px solid color-mix(in srgb, var(--ta-line) 60%, transparent);
+  scroll-margin-top: 90px;
+}
+
+.techtyl-account-section:last-child {
+  border-bottom: 0;
+}
+
+.techtyl-account-section.is-target > .techtyl-account-card {
+  animation: techtyl-account-flash 900ms var(--ta-ease) 2;
+}
+
+.techtyl-account-section-head {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  align-self: start;
+  padding: 12px 14px;
+  border-radius: var(--ta-r);
+  /* stays readable on top of a background picture */
+  background: color-mix(in srgb, var(--techtyl-bg, #0f1c23) 62%, transparent);
+  backdrop-filter: blur(6px);
+}
+
+.techtyl-account-section-head h2 {
+  font-size: 17px;
+  font-weight: 650;
+}
+
+.techtyl-account-section-head p {
+  margin-top: 4px;
+  color: var(--techtyl-muted);
+  font-size: 14px;
+}
+
+.techtyl-account-section-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--ta-rs);
+  background: var(--techtyl-accent-wash, color-mix(in srgb, var(--ta-accent) 14%, transparent));
+  color: var(--ta-accent);
+  flex: none;
+}
+
+.techtyl-account-section-icon svg {
+  width: 19px;
+  height: 19px;
+}
+
+.techtyl-account-card {
+  background: var(--ta-surface);
+  border: 1px solid var(--ta-line);
+  border-radius: var(--ta-r);
+  backdrop-filter: var(--techtyl-glass, none);
+  padding: 20px;
+  min-width: 0;
+  box-shadow: var(--techtyl-shadow, none);
+}
+
+.techtyl-account-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.techtyl-account-card-head h2 {
+  font-size: 17px;
+  font-weight: 650;
+}
+
+.techtyl-account-card-head p {
+  color: var(--techtyl-muted);
+  font-size: 14px;
+  margin-top: 2px;
+}
+
+.techtyl-account-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.techtyl-account-span-2 {
+  grid-column: span 2;
+}
+
+.techtyl-account-span-3 {
+  grid-column: 1 / -1;
+}
+
+/* ---------- protection ring and checks ---------- */
+
+.techtyl-account-ring {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.techtyl-account-ring svg {
+  position: absolute;
+  inset: 0;
+  transform: rotate(-90deg);
+}
+
+.techtyl-account-ring circle {
+  fill: none;
+  stroke-width: 3.2;
+}
+
+.techtyl-account-ring-track {
+  stroke: var(--ta-line);
+}
+
+.techtyl-account-ring-value {
+  stroke-linecap: round;
+  stroke-dashoffset: var(--techtyl-ring-to);
+  animation: techtyl-account-ring 1100ms var(--ta-ease) 200ms both;
+}
+
+.techtyl-account-ring--ok .techtyl-account-ring-value {
+  stroke: var(--ta-ok);
+}
+
+.techtyl-account-ring--warn .techtyl-account-ring-value {
+  stroke: var(--ta-warn);
+}
+
+.techtyl-account-ring--bad .techtyl-account-ring-value {
+  stroke: var(--ta-bad);
+}
+
+.techtyl-account-ring > span {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.05;
+}
+
+.techtyl-account-ring b {
+  font-family: var(--techtyl-display, inherit);
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.techtyl-account-ring small {
+  font-size: 11px;
+  color: var(--techtyl-muted);
+}
+
+.techtyl-account-checks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.techtyl-account-checks li {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 0;
+  border-top: 1px solid color-mix(in srgb, var(--ta-line) 70%, transparent);
+}
+
+.techtyl-account-checks li:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.techtyl-account-checks li > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.techtyl-account-checks strong {
+  font-weight: 600;
+  font-size: 14.5px;
+}
+
+.techtyl-account-checks p {
+  color: var(--techtyl-muted);
+  font-size: 13.5px;
+}
+
+.techtyl-account-check-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px dashed color-mix(in srgb, var(--ta-warn) 70%, var(--ta-line));
+  flex: none;
+}
+
+.techtyl-account-checks .is-done .techtyl-account-check-mark {
+  border: 0;
+  background: var(--ta-ok);
+  color: var(--techtyl-bg, #0f1c23);
+}
+
+.techtyl-account-check-mark svg {
+  width: 15px;
+  height: 15px;
+  stroke-width: 3;
+}
+
+.techtyl-account-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--techtyl-accent-text, var(--ta-accent));
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.techtyl-account-link svg {
+  width: 15px;
+  height: 15px;
+  transition: transform var(--techtyl-normal, 220ms) var(--ta-spring);
+}
+
+.techtyl-account-link:hover svg {
+  transform: translateX(3px);
+}
+
+/* ---------- facts, tiles, shortcuts ---------- */
+
+.techtyl-account-facts {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.techtyl-account-facts dt {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  color: var(--techtyl-muted);
+}
+
+.techtyl-account-facts dt svg {
+  width: 14px;
+  height: 14px;
+}
+
+.techtyl-account-facts dd {
+  margin: 2px 0 0;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+}
+
+.techtyl-account-facts dd a {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--techtyl-accent-text, var(--ta-accent));
+  text-decoration: none;
+}
+
+.techtyl-account-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.techtyl-account-tiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.techtyl-account-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 14px;
+  border-radius: var(--ta-rs);
+  border: 1px solid var(--ta-line);
+  background: var(--ta-raise);
+  color: var(--techtyl-text);
+  text-decoration: none;
+  transition: transform var(--techtyl-normal, 220ms) var(--ta-spring), border-color var(--techtyl-fast, 120ms);
+}
+
+.techtyl-account-tile:hover {
+  border-color: var(--ta-accent);
+  transform: translateY(-2px);
+}
+
+.techtyl-account-tile svg {
+  width: 20px;
+  height: 20px;
+  color: var(--ta-accent);
+}
+
+.techtyl-account-tile b {
+  font-family: var(--techtyl-display, inherit);
+  font-size: 26px;
+  line-height: 1.1;
+  margin-top: 6px;
+}
+
+.techtyl-account-tile span {
+  font-size: 13px;
+  color: var(--techtyl-muted);
+}
+
+.techtyl-account-shortcuts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.techtyl-account-shortcut {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--ta-surface);
+  border: 1px solid var(--ta-line);
+  border-radius: var(--ta-r);
+  color: var(--techtyl-text);
+  text-decoration: none;
+  overflow: hidden;
+  transition: border-color var(--techtyl-fast, 120ms), transform var(--techtyl-normal, 220ms) var(--ta-spring);
+}
+
+.techtyl-account-shortcut::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 0% 50%, color-mix(in srgb, var(--ta-accent) 16%, transparent), transparent 60%);
+  opacity: 0;
+  transition: opacity var(--techtyl-normal, 220ms);
+}
+
+.techtyl-account-shortcut:hover {
+  border-color: var(--ta-accent);
+  transform: translateY(-2px);
+}
+
+.techtyl-account-shortcut:hover::before {
+  opacity: 1;
+}
+
+.techtyl-account-shortcut > span:nth-child(2) {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+  position: relative;
+}
+
+.techtyl-account-shortcut small {
+  color: var(--techtyl-muted);
+  font-size: 13px;
+}
+
+.techtyl-account-shortcut-icon {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--ta-rs);
+  background: var(--techtyl-accent-wash, color-mix(in srgb, var(--ta-accent) 14%, transparent));
+  color: var(--ta-accent);
+}
+
+.techtyl-account-shortcut-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.techtyl-account-shortcut-arrow {
+  position: relative;
+  width: 18px;
+  height: 18px;
+  color: var(--techtyl-muted);
+  transition: transform var(--techtyl-normal, 220ms) var(--ta-spring), color var(--techtyl-fast, 120ms);
+}
+
+.techtyl-account-shortcut:hover .techtyl-account-shortcut-arrow {
+  transform: translateX(4px);
+  color: var(--ta-accent);
+}
+
+/* ---------- buttons ---------- */
+
+.techtyl-account-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 38px;
+  padding: 8px 15px;
+  border-radius: var(--ta-rs, 7px);
+  border: 1px solid var(--techtyl-line);
+  background: var(--techtyl-raise);
+  color: var(--techtyl-text);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 550;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: border-color var(--techtyl-fast, 120ms), background var(--techtyl-fast, 120ms), transform var(--techtyl-fast, 120ms), box-shadow var(--techtyl-fast, 120ms);
+}
+
+.techtyl-account-btn svg {
+  width: 17px;
+  height: 17px;
+}
+
+.techtyl-account-btn:hover:not(:disabled) {
+  border-color: var(--techtyl-accent);
+}
+
+.techtyl-account-btn:active:not(:disabled) {
+  transform: translateY(1px) scale(0.99);
+}
+
+.techtyl-account-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.techtyl-account-btn.is-busy {
+  opacity: 0.85;
+  cursor: progress;
+}
+
+.techtyl-account-btn--primary {
+  background: var(--techtyl-accent);
+  border-color: var(--techtyl-accent);
+  color: var(--techtyl-accent-ink, #17130b);
+  font-weight: 650;
+}
+
+.techtyl-account-btn--primary:hover:not(:disabled) {
+  background: var(--techtyl-accent-hover, var(--techtyl-accent));
+  box-shadow: 0 6px 18px -8px color-mix(in srgb, var(--techtyl-accent) 80%, transparent);
+}
+
+.techtyl-account-btn--danger {
+  background: var(--techtyl-bad-fill, #8a2f2a);
+  border-color: var(--techtyl-bad, #f0685f);
+  color: var(--techtyl-bad-ink, #fff);
+}
+
+.techtyl-account-btn--danger:hover:not(:disabled) {
+  background: var(--techtyl-bad-hover, var(--techtyl-bad-fill));
+  border-color: var(--techtyl-bad, #f0685f);
+}
+
+.techtyl-account-btn--quiet {
+  background: transparent;
+  border-color: transparent;
+  color: var(--techtyl-muted);
+}
+
+.techtyl-account-btn--quiet:hover:not(:disabled) {
+  color: var(--techtyl-text);
+  background: var(--techtyl-raise);
+  border-color: var(--techtyl-line);
+}
+
+.techtyl-account-btn--small {
+  min-height: 32px;
+  padding: 5px 11px;
+  font-size: 13px;
+}
+
+.techtyl-account-spinner {
+  display: inline-block;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  animation: techtyl-account-spin 700ms linear infinite;
+  flex: none;
+}
+
+.techtyl-account-spinner.is-large {
+  width: 34px;
+  height: 34px;
+  border-width: 3px;
+  color: var(--techtyl-accent);
+}
+
+html[data-techtyl-motion='aus'] .techtyl-account-spinner {
+  animation: techtyl-account-spin 700ms linear infinite !important;
+}
+
+.techtyl-account-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ---------- fields ---------- */
+
+.techtyl-account-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.techtyl-account-row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.techtyl-account-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.techtyl-account-field > label {
+  font-size: 13.5px;
+  font-weight: 550;
+  color: var(--techtyl-soft, var(--techtyl-text));
+}
+
+.techtyl-account-input {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.techtyl-account-input input,
+.techtyl-account-input textarea {
+  width: 100%;
+  min-height: 42px;
+  padding: 10px 12px;
+  border-radius: var(--ta-rs, 7px);
+  border: 1px solid var(--techtyl-line);
+  background: var(--techtyl-field, transparent);
+  color: var(--techtyl-text);
+  font: inherit;
+  font-size: 15px;
+  transition: border-color var(--techtyl-fast, 120ms), box-shadow var(--techtyl-fast, 120ms);
+}
+
+.techtyl-account-input textarea {
+  resize: vertical;
+  line-height: 1.45;
+}
+
+.techtyl-account-input .is-mono {
+  font-family: var(--techtyl-mono, monospace);
+  font-size: 14px;
+}
+
+.techtyl-account-input input:focus,
+.techtyl-account-input textarea:focus {
+  outline: none;
+  border-color: var(--techtyl-accent);
+  box-shadow: var(--techtyl-ring, 0 0 0 3px color-mix(in srgb, var(--techtyl-accent) 32%, transparent));
+}
+
+.techtyl-account-input input[readonly] {
+  background: transparent;
+  border-style: dashed;
+  color: var(--techtyl-soft, var(--techtyl-text));
+}
+
+.techtyl-account-input input:has(+ .techtyl-account-input-action),
+.techtyl-account-input input:has(+ .techtyl-account-input-lock) {
+  padding-right: 44px;
+}
+
+.techtyl-account-input-action,
+.techtyl-account-input-lock {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 34px;
+  border: 0;
+  border-radius: var(--ta-rs, 7px);
+  background: transparent;
+  color: var(--techtyl-muted);
+}
+
+.techtyl-account-input-action {
+  cursor: pointer;
+}
+
+.techtyl-account-input-action:hover {
+  color: var(--techtyl-text);
+  background: var(--techtyl-raise);
+}
+
+.techtyl-account-input-action svg,
+.techtyl-account-input-lock svg {
+  width: 18px;
+  height: 18px;
+}
+
+.techtyl-account-field-hint {
+  font-size: 13px;
+  color: var(--techtyl-muted);
+}
+
+.techtyl-account-field-error {
+  font-size: 13px;
+  color: var(--techtyl-bad);
+  font-weight: 500;
+}
+
+.techtyl-account-field.has-error input,
+.techtyl-account-field.has-error textarea {
+  border-color: var(--techtyl-bad);
+}
+
+.techtyl-account-code-field input {
+  font-size: 22px;
+  letter-spacing: 0.35em;
+  text-align: center;
+  max-width: 240px;
+}
+
+.techtyl-account-current {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 10px 12px;
+  border-radius: var(--ta-rs, 7px);
+  background: var(--techtyl-raise);
+  border: 1px solid var(--techtyl-line);
+}
+
+.techtyl-account-current span {
+  font-size: 12.5px;
+  color: var(--techtyl-muted);
+}
+
+.techtyl-account-current strong {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+/* language choice */
+
+.techtyl-account-choice {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 10px;
+}
+
+.techtyl-account-choice button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: var(--ta-r);
+  border: 1px solid var(--techtyl-line);
+  background: var(--techtyl-raise);
+  color: var(--techtyl-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--techtyl-fast, 120ms), box-shadow var(--techtyl-fast, 120ms), transform var(--techtyl-normal, 220ms) var(--ta-spring);
+}
+
+.techtyl-account-choice button:hover:not(:disabled) {
+  border-color: var(--techtyl-accent);
+  transform: translateY(-1px);
+}
+
+.techtyl-account-choice button.is-on {
+  border-color: var(--techtyl-accent);
+  box-shadow: inset 0 0 0 1px var(--techtyl-accent), 0 8px 22px -14px color-mix(in srgb, var(--techtyl-accent) 80%, transparent);
+}
+
+.techtyl-account-choice button > span:nth-child(2) {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.techtyl-account-choice small {
+  color: var(--techtyl-muted);
+  font-size: 12.5px;
+}
+
+.techtyl-account-choice-code {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--techtyl-field, transparent);
+  border: 1px solid var(--techtyl-line);
+  font-family: var(--techtyl-mono, monospace);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.techtyl-account-choice .is-on .techtyl-account-choice-code {
+  background: var(--techtyl-accent);
+  border-color: var(--techtyl-accent);
+  color: var(--techtyl-accent-ink, #17130b);
+}
+
+/* strength */
+
+.techtyl-account-strength {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: -6px;
+}
+
+.techtyl-account-strength p {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  font-size: 13px;
+  color: var(--techtyl-muted);
+}
+
+.techtyl-account-strength b {
+  font-weight: 650;
+}
+
+.techtyl-account-strength .is-ok {
+  color: var(--ta-ok);
+}
+
+.techtyl-account-strength .is-warn {
+  color: var(--ta-warn);
+}
+
+.techtyl-account-strength .is-bad {
+  color: var(--ta-bad);
+}
+
+.techtyl-account-meter {
+  height: 6px;
+  border-radius: 99px;
+  background: var(--techtyl-line);
+  overflow: hidden;
+}
+
+.techtyl-account-meter i {
+  display: block;
+  height: 100%;
+  border-radius: 99px;
+  background: var(--techtyl-accent);
+  transition: width var(--techtyl-slow, 380ms) var(--ta-ease, ease), background var(--techtyl-normal, 220ms);
+}
+
+.techtyl-account-meter--ok i {
+  background: var(--techtyl-ok);
+}
+
+.techtyl-account-meter--warn i {
+  background: var(--techtyl-warn);
+}
+
+.techtyl-account-meter--bad i {
+  background: var(--techtyl-bad);
+}
+
+/* ---------- notices ---------- */
+
+.techtyl-account-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 11px 13px;
+  border-radius: var(--ta-rs, 7px);
+  border: 1px solid var(--techtyl-line);
+  background: var(--techtyl-raise);
+  font-size: 14px;
+  animation: techtyl-account-fade 200ms ease both;
+}
+
+.techtyl-account-notice-icon svg {
+  width: 19px;
+  height: 19px;
+  margin-top: 1px;
+}
+
+.techtyl-account-notice-body {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.techtyl-account-notice-body strong {
+  display: block;
+  font-weight: 650;
+}
+
+.techtyl-account-notice--ok {
+  border-color: color-mix(in srgb, var(--techtyl-ok) 55%, var(--techtyl-line));
+}
+
+.techtyl-account-notice--ok .techtyl-account-notice-icon {
+  color: var(--techtyl-ok);
+}
+
+.techtyl-account-notice--warn {
+  border-color: color-mix(in srgb, var(--techtyl-warn) 60%, var(--techtyl-line));
+  background: color-mix(in srgb, var(--techtyl-warn) 9%, var(--techtyl-raise));
+}
+
+.techtyl-account-notice--warn .techtyl-account-notice-icon {
+  color: var(--techtyl-warn);
+}
+
+.techtyl-account-notice--bad {
+  border-color: color-mix(in srgb, var(--techtyl-bad) 60%, var(--techtyl-line));
+  background: var(--techtyl-bad-soft, color-mix(in srgb, var(--techtyl-bad) 12%, var(--techtyl-raise)));
+}
+
+.techtyl-account-notice--bad .techtyl-account-notice-icon {
+  color: var(--techtyl-bad);
+}
+
+.techtyl-account-notice--info .techtyl-account-notice-icon {
+  color: var(--techtyl-accent);
+}
+
+.techtyl-account-saved {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--techtyl-ok);
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: opacity var(--techtyl-normal, 220ms), transform var(--techtyl-normal, 220ms) var(--ta-spring, ease);
+}
+
+.techtyl-account-saved.is-on {
+  opacity: 1;
+  transform: none;
+}
+
+.techtyl-account-saved svg {
+  width: 17px;
+  height: 17px;
+  stroke-width: 2.6;
+}
+
+/* ---------- skeleton, empty ---------- */
+
+.techtyl-account-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  padding: 4px 0;
+}
+
+.techtyl-account-skeleton i {
+  display: block;
+  height: 13px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--techtyl-raise) 0%, color-mix(in srgb, var(--techtyl-raise) 55%, var(--techtyl-text)) 50%, var(--techtyl-raise) 100%);
+  background-size: 200% 100%;
+  opacity: 0.6;
+  animation: techtyl-account-shimmer 1.4s linear infinite;
+}
+
+.techtyl-account-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 6px;
+  padding: 26px 14px;
+  border: 1px dashed var(--techtyl-line);
+  border-radius: var(--ta-r);
+}
+
+.techtyl-account-empty strong {
+  font-family: var(--techtyl-display, inherit);
+  font-size: 16px;
+}
+
+.techtyl-account-empty p {
+  color: var(--techtyl-muted);
+  font-size: 14px;
+  max-width: 420px;
+  margin-bottom: 6px;
+}
+
+.techtyl-account-empty-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: var(--techtyl-accent-wash, transparent);
+  color: var(--techtyl-accent);
+  margin-bottom: 4px;
+}
+
+.techtyl-account-empty-icon svg {
+  width: 23px;
+  height: 23px;
+}
+
+/* ---------- copy value ---------- */
+
+.techtyl-account-copy {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--techtyl-line);
+  border-radius: var(--ta-rs, 7px);
+  background: var(--techtyl-field, transparent);
+  overflow: hidden;
+}
+
+.techtyl-account-copy code {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+
+.techtyl-account-copy.is-secret code {
+  color: var(--techtyl-accent-text, var(--techtyl-accent));
+}
+
+.techtyl-account-copy button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 14px;
+  border: 0;
+  border-left: 1px solid var(--techtyl-line);
+  background: var(--techtyl-raise);
+  color: var(--techtyl-text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.techtyl-account-copy button:hover {
+  color: var(--techtyl-accent);
+}
+
+.techtyl-account-copy button svg {
+  width: 16px;
+  height: 16px;
+}
+
+.techtyl-account-block-code {
+  display: block;
+  padding: 9px 12px;
+  border-radius: var(--ta-rs, 7px);
+  background: var(--techtyl-field, transparent);
+  border: 1px solid var(--techtyl-line);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+  margin-bottom: 12px;
+}
+
+/* ---------- modal ---------- */
+
+.techtyl-account-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: color-mix(in srgb, var(--techtyl-shade, #000) 62%, transparent);
+  backdrop-filter: blur(3px);
+  color: var(--techtyl-text);
+  font-family: var(--techtyl-body, inherit);
+  font-size: 15px;
+  line-height: 1.5;
+  animation: techtyl-account-fade 180ms ease both;
+  --ta-r: var(--techtyl-radius, 10px);
+  --ta-rs: calc(var(--ta-r) * 0.7);
+  --ta-ease: var(--techtyl-ease, cubic-bezier(0.2, 0.7, 0.2, 1));
+  --ta-spring: var(--techtyl-spring, cubic-bezier(0.3, 1.36, 0.5, 1));
+  --ta-accent: var(--techtyl-accent, #f0a33b);
+  --ta-ok: var(--techtyl-ok, #5fd39a);
+}
+
+.techtyl-account-overlay.is-closing {
+  animation: techtyl-account-fade 180ms ease reverse both;
+}
+
+.techtyl-account-modal {
+  width: 100%;
+  max-width: 480px;
+  max-height: calc(100vh - 32px);
+  display: flex;
+  flex-direction: column;
+  background: var(--techtyl-surface-c, #172a33);
+  border: 1px solid var(--techtyl-line);
+  border-radius: calc(var(--ta-r) * 1.2);
+  box-shadow: var(--techtyl-shadow-pop, 0 24px 60px -20px rgba(0, 0, 0, 0.7));
+  animation: techtyl-account-pop 300ms var(--ta-spring) both;
+}
+
+.techtyl-account-overlay.is-closing .techtyl-account-modal {
+  animation: techtyl-account-pop 180ms ease reverse both;
+}
+
+html[data-techtyl-motion='dezent'] .techtyl-account-modal {
+  animation: techtyl-account-fade 160ms ease both;
+}
+
+.techtyl-account-modal.is-wide {
+  max-width: 620px;
+}
+
+.techtyl-account-modal.is-danger {
+  border-top: 3px solid var(--techtyl-bad);
+}
+
+.techtyl-account-modal > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 20px 20px 4px;
+}
+
+.techtyl-account-modal > header h2 {
+  font-size: 19px;
+  font-weight: 650;
+}
+
+.techtyl-account-modal > header p {
+  color: var(--techtyl-muted);
+  font-size: 14px;
+  margin-top: 4px;
+}
+
+.techtyl-account-modal-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--techtyl-muted);
+  cursor: pointer;
+  flex: none;
+}
+
+.techtyl-account-modal-close:hover:not(:disabled) {
+  background: var(--techtyl-raise);
+  color: var(--techtyl-text);
+}
+
+.techtyl-account-modal-close svg {
+  width: 19px;
+  height: 19px;
+}
+
+.techtyl-account-modal-body {
+  padding: 14px 20px 18px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.techtyl-account-modal-body form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.techtyl-account-modal > footer {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--techtyl-line);
+  background: color-mix(in srgb, var(--techtyl-bg, #0f1c23) 30%, transparent);
+  border-radius: 0 0 calc(var(--ta-r) * 1.2) calc(var(--ta-r) * 1.2);
+}
+
+/* ---------- two-factor ---------- */
+
+.techtyl-account-totp {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.techtyl-account-status {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.techtyl-account-status strong {
+  font-weight: 650;
+}
+
+.techtyl-account-status p {
+  color: var(--techtyl-muted);
+  font-size: 14px;
+  margin-top: 2px;
+}
+
+.techtyl-account-status-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  flex: none;
+}
+
+.techtyl-account-status-icon svg {
+  width: 23px;
+  height: 23px;
+}
+
+.techtyl-account-status.is-ok .techtyl-account-status-icon {
+  background: color-mix(in srgb, var(--ta-ok) 18%, transparent);
+  color: var(--ta-ok);
+}
+
+.techtyl-account-status.is-warn .techtyl-account-status-icon {
+  background: color-mix(in srgb, var(--techtyl-warn) 18%, transparent);
+  color: var(--techtyl-warn);
+}
+
+.techtyl-account-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.techtyl-account-steps > li {
+  display: flex;
+  gap: 14px;
+}
+
+.techtyl-account-steps > li > div {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.techtyl-account-steps p {
+  color: var(--techtyl-muted);
+  font-size: 14px;
+  margin-top: -6px;
+}
+
+.techtyl-account-step-no {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--techtyl-accent);
+  color: var(--techtyl-accent-ink, #17130b);
+  font-weight: 700;
+  font-size: 14px;
+  flex: none;
+}
+
+.techtyl-account-qr {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 188px;
+  height: 188px;
+  padding: 4px;
+  border-radius: var(--ta-r);
+  background: #fff;
+  box-shadow: 0 10px 30px -16px rgba(0, 0, 0, 0.6);
+}
+
+.techtyl-account-qr svg {
+  width: 100%;
+  height: 100%;
+}
+
+.techtyl-account-recovery {
+  list-style: none;
+  margin: 0;
+  padding: 12px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px 14px;
+  border-radius: var(--ta-rs, 7px);
+  background: var(--techtyl-field, transparent);
+  border: 1px solid var(--techtyl-line);
+  counter-reset: code;
+}
+
+.techtyl-account-recovery li {
+  counter-increment: code;
+  display: flex;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.techtyl-account-recovery li::before {
+  content: counter(code) '.';
+  color: var(--techtyl-muted);
+  font-size: 12px;
+  min-width: 20px;
+  text-align: right;
+  padding-top: 2px;
+}
+
+/* ---------- avatar editor ---------- */
+
+.techtyl-account-avatar-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.techtyl-account-drop {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  padding: 16px;
+  border-radius: var(--ta-r);
+  border: 1px dashed var(--techtyl-line);
+  transition: border-color var(--techtyl-fast, 120ms), background var(--techtyl-fast, 120ms);
+}
+
+.techtyl-account-drop.is-over {
+  border-color: var(--techtyl-accent);
+  background: var(--techtyl-accent-wash, transparent);
+}
+
+.techtyl-account-drop.is-over .techtyl-account-avatar {
+  transform: scale(1.05);
+}
+
+.techtyl-account-drop .techtyl-account-avatar {
+  transition: transform var(--techtyl-normal, 220ms) var(--ta-spring);
+}
+
+.techtyl-account-drop-text {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.techtyl-account-drop-text p {
+  color: var(--techtyl-muted);
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+
+.techtyl-account-crop {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  align-items: center;
+}
+
+.techtyl-account-crop-frame {
+  position: relative;
+  width: min(320px, 100%);
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  border-radius: var(--ta-r);
+  background:
+    conic-gradient(var(--techtyl-raise) 25%, var(--techtyl-field, transparent) 0 50%, var(--techtyl-raise) 0 75%, var(--techtyl-field, transparent) 0) 0 0 / 20px 20px;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.techtyl-account-crop-frame:active {
+  cursor: grabbing;
+}
+
+.techtyl-account-crop-frame img {
+  position: absolute;
+  left: 0;
+  top: 0;
+  max-width: none;
+  transform-origin: 0 0;
+  pointer-events: none;
+}
+
+.techtyl-account-crop-mask {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  box-shadow: 0 0 0 999px color-mix(in srgb, #000 55%, transparent);
+  outline: 2px solid color-mix(in srgb, #fff 85%, transparent);
+  outline-offset: -2px;
+  pointer-events: none;
+}
+
+.techtyl-account-crop-tools {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: min(320px, 100%);
+}
+
+.techtyl-account-crop-tools button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid var(--techtyl-line);
+  background: var(--techtyl-raise);
+  color: var(--techtyl-text);
+  cursor: pointer;
+  flex: none;
+}
+
+.techtyl-account-crop-tools button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.techtyl-account-crop-tools svg {
+  width: 17px;
+  height: 17px;
+}
+
+.techtyl-account-crop-tools input[type='range'] {
+  flex: 1;
+  min-width: 0;
+  accent-color: var(--techtyl-accent);
+}
+
+.techtyl-account-crop-percent {
+  font-family: var(--techtyl-mono, monospace);
+  font-size: 12.5px;
+  color: var(--techtyl-muted);
+  min-width: 48px;
+  text-align: right;
+}
+
+/* ---------- sessions ---------- */
+
+.techtyl-account-sessions {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.techtyl-account-subhead {
+  font-size: 13px !important;
+  font-family: var(--techtyl-body, inherit) !important;
+  font-weight: 600;
+  color: var(--techtyl-muted) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-top: 4px !important;
+}
+
+.techtyl-account-devices {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.techtyl-account-device {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.techtyl-account-device.is-current {
+  padding: 12px 14px;
+  border-radius: var(--ta-r);
+  border: 1px solid color-mix(in srgb, var(--ta-ok) 45%, var(--techtyl-line));
+  background: color-mix(in srgb, var(--ta-ok) 7%, var(--techtyl-raise));
+}
+
+.techtyl-account-device strong {
+  font-weight: 600;
+  font-size: 14.5px;
+}
+
+.techtyl-account-device p {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  color: var(--techtyl-muted);
+  font-size: 13px;
+}
+
+.techtyl-account-device-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--ta-rs, 7px);
+  background: var(--techtyl-raise);
+  border: 1px solid var(--techtyl-line);
+  color: var(--techtyl-soft, var(--techtyl-text));
+  flex: none;
+}
+
+.techtyl-account-device-icon svg {
+  width: 19px;
+  height: 19px;
+}
+
+.techtyl-account-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ta-ok);
+  font-weight: 600;
+}
+
+.techtyl-account-live::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ta-ok);
+  animation: techtyl-account-pulse 2.2s ease-in-out infinite;
+}
+
+.techtyl-account-logout {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding-top: 14px;
+  border-top: 1px solid var(--techtyl-line);
+}
+
+.techtyl-account-logout > div:first-child {
+  flex: 1 1 260px;
+}
+
+.techtyl-account-logout strong {
+  font-weight: 600;
+}
+
+.techtyl-account-logout p {
+  color: var(--techtyl-muted);
+  font-size: 13.5px;
+}
+
+/* ---------- keys ---------- */
+
+.techtyl-account-keys {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.techtyl-account-key {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 0;
+  border-top: 1px solid color-mix(in srgb, var(--techtyl-line) 70%, transparent);
+}
+
+.techtyl-account-key:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.techtyl-account-key-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--ta-rs, 7px);
+  background: var(--techtyl-accent-wash, transparent);
+  color: var(--techtyl-accent);
+  flex: none;
+}
+
+.techtyl-account-key-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.techtyl-account-key-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.techtyl-account-key-body strong {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.techtyl-account-key-body p {
+  color: var(--techtyl-muted);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.techtyl-account-ips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 6px;
+}
+
+.techtyl-account-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 8px;
+  border-radius: 99px;
+  border: 1px solid var(--techtyl-line);
+  background: var(--techtyl-raise);
+  font-family: var(--techtyl-mono, monospace);
+  font-size: 12px;
+  color: var(--techtyl-soft, var(--techtyl-text));
+  margin-left: 6px;
+}
+
+.techtyl-account-ips .techtyl-account-badge {
+  margin-left: 0;
+}
+
+.techtyl-account-badge.is-warn {
+  border-color: color-mix(in srgb, var(--techtyl-warn) 60%, var(--techtyl-line));
+  color: var(--techtyl-warn);
+  font-family: var(--techtyl-body, inherit);
+}
+
+/* ---------- activity ---------- */
+
+.techtyl-account-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.techtyl-account-filters button {
+  padding: 6px 13px;
+  border-radius: 99px;
+  border: 1px solid var(--techtyl-line);
+  background: transparent;
+  color: var(--techtyl-muted);
+  font: inherit;
+  font-size: 13.5px;
+  cursor: pointer;
+  transition: all var(--techtyl-fast, 120ms);
+}
+
+.techtyl-account-filters button:hover {
+  color: var(--techtyl-text);
+  border-color: var(--techtyl-edge, var(--techtyl-line));
+}
+
+.techtyl-account-filters button[aria-pressed='true'] {
+  background: var(--techtyl-accent);
+  border-color: var(--techtyl-accent);
+  color: var(--techtyl-accent-ink, #17130b);
+  font-weight: 600;
+}
+
+.techtyl-account-days {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.techtyl-account-day h3 {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 0;
+  font-size: 14px;
+  font-weight: 650;
+  background: var(--techtyl-surface-c, #172a33);
+  border-bottom: 1px solid var(--techtyl-line);
+}
+
+.techtyl-account-day h3 small {
+  font-family: var(--techtyl-body, inherit);
+  font-weight: 400;
+  font-size: 12.5px;
+  color: var(--techtyl-muted);
+}
+
+.techtyl-account-events {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  position: relative;
+}
+
+.techtyl-account-events::before {
+  content: '';
+  position: absolute;
+  left: 17px;
+  top: 14px;
+  bottom: 14px;
+  width: 1px;
+  background: var(--techtyl-line);
+}
+
+.techtyl-account-event {
+  position: relative;
+  display: flex;
+  gap: 14px;
+  padding: 10px 0;
+}
+
+.techtyl-account-event-icon {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  border: 1px solid var(--techtyl-line);
+  background: var(--techtyl-surface-c, #172a33);
+  color: var(--techtyl-muted);
+  flex: none;
+}
+
+.techtyl-account-event-icon svg {
+  width: 17px;
+  height: 17px;
+}
+
+.techtyl-account-event.is-login .techtyl-account-event-icon {
+  color: var(--ta-ok);
+  border-color: color-mix(in srgb, var(--ta-ok) 45%, var(--techtyl-line));
+}
+
+.techtyl-account-event.is-fail .techtyl-account-event-icon {
+  color: var(--techtyl-bad);
+  border-color: color-mix(in srgb, var(--techtyl-bad) 55%, var(--techtyl-line));
+  background: color-mix(in srgb, var(--techtyl-bad) 10%, var(--techtyl-surface-c, #172a33));
+}
+
+.techtyl-account-event.is-security .techtyl-account-event-icon,
+.techtyl-account-event.is-key .techtyl-account-event-icon {
+  color: var(--techtyl-accent);
+  border-color: color-mix(in srgb, var(--techtyl-accent) 45%, var(--techtyl-line));
+}
+
+.techtyl-account-event-body {
+  flex: 1;
+  min-width: 0;
+  padding-top: 6px;
+}
+
+.techtyl-account-event-text {
+  font-weight: 550;
+  overflow-wrap: anywhere;
+}
+
+.techtyl-account-event-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  color: var(--techtyl-muted);
+  font-size: 13px;
+  margin-top: 1px !important;
+}
+
+.techtyl-account-event-device {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.techtyl-account-event-device svg {
+  width: 14px;
+  height: 14px;
+}
+
+.techtyl-account-event-toggle {
+  margin-top: 4px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--techtyl-accent-text, var(--techtyl-accent));
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.techtyl-account-event-details {
+  margin: 8px 0 0;
+  padding: 10px 12px;
+  border-radius: var(--ta-rs, 7px);
+  background: var(--techtyl-field, transparent);
+  border: 1px solid var(--techtyl-line);
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  animation: techtyl-account-fade 160ms ease both;
+}
+
+.techtyl-account-event-details div {
+  display: grid;
+  grid-template-columns: minmax(90px, 160px) 1fr;
+  gap: 10px;
+}
+
+.techtyl-account-event-details dt {
+  color: var(--techtyl-muted);
+  font-family: var(--techtyl-mono, monospace);
+  font-size: 12px;
+}
+
+.techtyl-account-event-details dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.techtyl-account-events.is-compact .techtyl-account-event {
+  padding: 7px 0;
+}
+
+.techtyl-account-more {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 16px;
+  color: var(--techtyl-muted);
+  font-size: 13px;
+}
+
+/* ---------- narrow screens ---------- */
+
+@media (max-width: 1023px) {
+  .techtyl-account-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .techtyl-account-span-2 {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 860px) {
+  .techtyl-account-section {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
+@media (max-width: 640px) {
+  .techtyl-account-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .techtyl-account-head--hero .techtyl-account-head-main {
+    flex-wrap: wrap;
+    align-items: flex-start;
+    padding: 0 16px 16px;
+  }
+
+  .techtyl-account-head-band {
+    height: 70px;
+  }
+
+  .techtyl-account-head--hero .techtyl-account-head-main {
+    position: relative;
+  }
+
+  /* Ring sits beside the picture instead of taking a row of its own. */
+  .techtyl-account-head-aside {
+    position: absolute;
+    top: 50px;
+    right: 16px;
+    margin: 0;
+  }
+
+  .techtyl-account-head-aside .techtyl-account-ring {
+    width: 74px !important;
+    height: 74px !important;
+  }
+
+  .techtyl-account-head-aside .techtyl-account-ring b {
+    font-size: 17px;
+  }
+
+  .techtyl-account-head-aside .techtyl-account-ring small {
+    font-size: 9.5px;
+  }
+
+  .techtyl-account-head-text,
+  .techtyl-account-head--hero .techtyl-account-head-text {
+    flex-basis: 100%;
+    padding-top: 2px;
+  }
+
+  .techtyl-account-head-main {
+    padding: 12px 14px;
+  }
+
+  .techtyl-account-card {
+    padding: 16px;
+  }
+
+  .techtyl-account-row-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .techtyl-account-drop {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .techtyl-account-key {
+    flex-wrap: wrap;
+  }
+
+  .techtyl-account-key .techtyl-account-btn {
+    margin-left: 54px;
+  }
+
+  .techtyl-account-recovery {
+    grid-template-columns: 1fr;
+  }
+
+  .techtyl-account-checks li {
+    flex-wrap: wrap;
+  }
+
+  .techtyl-account-checks .techtyl-account-link {
+    margin-left: 40px;
+  }
+
+  .techtyl-account-modal > footer .techtyl-account-btn {
+    flex: 1 1 auto;
+  }
+
+  .techtyl-account-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .techtyl-account-modal {
+    max-width: none !important;
+    border-radius: calc(var(--ta-r) * 1.4) calc(var(--ta-r) * 1.4) 0 0;
+    max-height: 92vh;
+  }
+
+  .techtyl-account-modal > footer {
+    border-radius: 0;
+    padding-bottom: max(14px, env(safe-area-inset-bottom));
+  }
+
+  .techtyl-account-event-details div {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+}
