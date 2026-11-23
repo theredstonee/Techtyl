@@ -1,0 +1,691 @@
+/* Server list toolbar, card controls, folder menu and dialogs.
+   The menu, dialog and bulk bar are portaled to the document body, so their
+   rules cannot live only under .techtyl-toolbar. */
+
+.techtyl-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  margin: 0;
+  color: var(--techtyl-text);
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.techtyl-toolbar-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.techtyl-toolbar-row,
+.techtyl-toolbar-actions,
+.techtyl-toolbar-bulk-actions,
+form.techtyl-toolbar-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.techtyl-toolbar-grow {
+  flex: 1 1 160px;
+  min-width: 0;
+}
+
+button.techtyl-toolbar-btn,
+button.techtyl-toolbar-chip,
+button.techtyl-toolbar-tab,
+button.techtyl-toolbar-fold,
+button.techtyl-toolbar-grip,
+button.techtyl-toolbar-segment,
+.techtyl-toolbar-menu button,
+.techtyl-toolbar-segment button {
+  font: inherit;
+  cursor: pointer;
+}
+
+button.techtyl-toolbar-btn,
+button.techtyl-toolbar-chip,
+button.techtyl-toolbar-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 34px;
+  margin: 0;
+  padding: 4px 10px;
+  border: 1px solid var(--techtyl-line);
+  border-radius: var(--techtyl-r-s, var(--techtyl-radius));
+  background: var(--techtyl-raise);
+  color: var(--techtyl-text);
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+button.techtyl-toolbar-btn:hover:not(:disabled),
+button.techtyl-toolbar-chip:hover:not(:disabled),
+button.techtyl-toolbar-tab:hover:not(:disabled),
+.techtyl-toolbar-segment button:hover:not(:disabled) {
+  border-color: var(--techtyl-edge, var(--techtyl-line));
+}
+
+button.techtyl-toolbar-chip.is-on,
+button.techtyl-toolbar-tab[aria-selected='true'],
+.techtyl-toolbar-segment button.is-on {
+  background: var(--techtyl-accent-wash, color-mix(in srgb, var(--techtyl-accent) 14%, transparent));
+  border-color: var(--techtyl-accent);
+  color: var(--techtyl-text);
+}
+
+button.techtyl-toolbar-btn.is-on {
+  background: var(--techtyl-accent-wash, color-mix(in srgb, var(--techtyl-accent) 14%, transparent));
+  border-color: var(--techtyl-accent);
+  color: var(--techtyl-text);
+}
+
+button.techtyl-toolbar-square {
+  width: 34px;
+  padding: 4px;
+}
+
+button.techtyl-toolbar-primary {
+  background: var(--techtyl-accent);
+  border-color: transparent;
+  color: var(--techtyl-accent-ink, var(--techtyl-bg));
+}
+
+button.techtyl-toolbar-primary:hover:not(:disabled) {
+  background: var(--techtyl-accent-hover, var(--techtyl-accent));
+  border-color: transparent;
+}
+
+button.techtyl-toolbar-danger {
+  background: var(--techtyl-bad-soft, var(--techtyl-raise));
+  border-color: var(--techtyl-bad, var(--techtyl-line));
+  color: var(--techtyl-text);
+}
+
+button.techtyl-toolbar-btn:disabled,
+button.techtyl-toolbar-chip:disabled,
+button.techtyl-toolbar-tab:disabled,
+button.techtyl-toolbar-fold:disabled,
+button.techtyl-toolbar-grip:disabled,
+.techtyl-toolbar-segment button:disabled,
+.techtyl-toolbar-menu button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.techtyl-toolbar :focus-visible,
+.techtyl-toolbar-menu :focus-visible,
+.techtyl-toolbar-dialog :focus-visible,
+.techtyl-toolbar-bulk :focus-visible,
+button.techtyl-toolbar-fold:focus-visible,
+button.techtyl-toolbar-grip:focus-visible,
+.techtyl-toolbar-check input:focus-visible {
+  outline: 2px solid var(--techtyl-accent);
+  outline-offset: 2px;
+}
+
+.techtyl-toolbar-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  min-height: 40px;
+  padding: 0 10px;
+  border: 1px solid var(--techtyl-line);
+  border-radius: var(--techtyl-radius);
+  background: var(--techtyl-field, var(--techtyl-raise));
+  color: var(--techtyl-muted);
+}
+
+.techtyl-toolbar-search:focus-within {
+  border-color: var(--techtyl-accent);
+  box-shadow: var(--techtyl-ring, 0 0 0 3px color-mix(in srgb, var(--techtyl-accent) 32%, transparent));
+}
+
+#app .techtyl-toolbar-search input,
+.techtyl-toolbar-search input {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 8px 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--techtyl-text);
+  font: inherit;
+  font-size: 16px;
+  line-height: 1.3;
+}
+
+#app .techtyl-toolbar-search input:focus,
+#app .techtyl-toolbar-search input:focus-visible,
+.techtyl-toolbar-search input:focus,
+.techtyl-toolbar-search input:focus-visible {
+  outline: none;
+  border: 0;
+  box-shadow: none;
+}
+
+.techtyl-toolbar-search input::-webkit-search-cancel-button,
+.techtyl-toolbar-search input::-webkit-search-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.techtyl-toolbar-kbd {
+  color: var(--techtyl-muted);
+  font-family: var(--techtyl-mono, ui-monospace, monospace);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+button.techtyl-toolbar-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--techtyl-r-xs, 6px);
+  background: transparent;
+  color: var(--techtyl-muted);
+}
+
+button.techtyl-toolbar-icon:hover:not(:disabled) {
+  color: var(--techtyl-text);
+  background: var(--techtyl-accent-wash, color-mix(in srgb, var(--techtyl-accent) 14%, transparent));
+}
+
+.techtyl-toolbar-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
+
+.techtyl-toolbar-segment {
+  display: inline-flex;
+  overflow: hidden;
+  border: 1px solid var(--techtyl-line);
+  border-radius: var(--techtyl-r-s, var(--techtyl-radius));
+  background: var(--techtyl-raise);
+}
+
+.techtyl-toolbar-segment button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  margin: 0;
+  padding: 4px 10px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--techtyl-text);
+}
+
+.techtyl-toolbar-segment button + button {
+  border-left: 1px solid var(--techtyl-line);
+}
+
+.techtyl-toolbar-segment button:focus-visible {
+  outline-offset: -2px;
+  position: relative;
+  z-index: 1;
+}
+
+.techtyl-toolbar-folders {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.techtyl-toolbar-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
+
+.techtyl-toolbar-folder {
+  display: inline-flex;
+  align-items: stretch;
+  max-width: 100%;
+}
+
+.techtyl-toolbar-folder.is-drop button.techtyl-toolbar-tab {
+  box-shadow: inset 0 0 0 2px var(--techtyl-accent);
+}
+
+button.techtyl-toolbar-grip {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--techtyl-line);
+  border-right: 0;
+  border-radius: var(--techtyl-r-s, var(--techtyl-radius)) 0 0 var(--techtyl-r-s, var(--techtyl-radius));
+  background: var(--techtyl-raise);
+  color: var(--techtyl-muted);
+  cursor: grab;
+}
+
+button.techtyl-toolbar-grip:active {
+  cursor: grabbing;
+}
+
+.techtyl-toolbar-folder button.techtyl-toolbar-tab {
+  border-radius: 0 var(--techtyl-r-s, var(--techtyl-radius)) var(--techtyl-r-s, var(--techtyl-radius)) 0;
+  max-width: 240px;
+}
+
+button.techtyl-toolbar-tab {
+  max-width: 240px;
+}
+
+.techtyl-toolbar-tab-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.techtyl-toolbar-badge {
+  display: inline-block;
+  min-width: 1.25em;
+  margin-left: 2px;
+  padding: 0 6px;
+  border-radius: 99px;
+  background: color-mix(in srgb, var(--techtyl-text) 10%, transparent);
+  color: var(--techtyl-muted);
+  font-size: 12px;
+  line-height: 18px;
+  text-align: center;
+}
+
+input.techtyl-toolbar-field {
+  flex: 1 1 180px;
+  width: 220px;
+  max-width: 100%;
+  min-width: 0;
+  min-height: 34px;
+  margin: 0;
+  padding: 6px 8px;
+  border: 1px solid var(--techtyl-line);
+  border-radius: var(--techtyl-r-s, var(--techtyl-radius));
+  background: var(--techtyl-field, var(--techtyl-raise));
+  color: var(--techtyl-text);
+  font: inherit;
+  font-size: 16px;
+}
+
+p.techtyl-toolbar-meta,
+p.techtyl-toolbar-hint,
+p.techtyl-toolbar-issue {
+  margin: 0;
+  color: var(--techtyl-muted);
+  font-size: 13px;
+}
+
+p.techtyl-toolbar-issue {
+  flex-basis: 100%;
+  color: var(--techtyl-bad, var(--techtyl-text));
+}
+
+.techtyl-toolbar-notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--techtyl-line);
+  border-radius: var(--techtyl-r-s, var(--techtyl-radius));
+  background: var(--techtyl-raise);
+  color: var(--techtyl-text);
+}
+
+.techtyl-toolbar-notice.is-bad {
+  background: var(--techtyl-bad-soft, var(--techtyl-raise));
+  border-color: var(--techtyl-bad, var(--techtyl-line));
+}
+
+.techtyl-toolbar-notice.is-ok {
+  border-color: var(--techtyl-ok, var(--techtyl-line));
+}
+
+.techtyl-toolbar-empty {
+  padding: 16px;
+  border: 1px dashed var(--techtyl-line);
+  border-radius: var(--techtyl-radius);
+  background: var(--techtyl-surface);
+  color: var(--techtyl-text);
+}
+
+.techtyl-toolbar-empty p {
+  margin: 0;
+}
+
+.techtyl-toolbar-empty p + p {
+  margin-top: 4px;
+  color: var(--techtyl-muted);
+}
+
+.techtyl-toolbar-bulk {
+  position: fixed;
+  z-index: 36;
+  left: 50%;
+  bottom: 12px;
+  transform: translateX(-50%);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  width: min(860px, calc(100% - 16px));
+  max-height: min(46vh, 320px);
+  overflow: auto;
+  padding: 10px 12px;
+  border: 1px solid var(--techtyl-line);
+  border-radius: var(--techtyl-radius);
+  background: var(--techtyl-surface);
+  color: var(--techtyl-text);
+  box-shadow: var(--techtyl-shadow, 0 12px 32px rgba(0, 0, 0, 0.28));
+}
+
+p.techtyl-toolbar-bulk-count {
+  flex: 1 1 160px;
+  margin: 0;
+  min-width: 0;
+}
+
+.techtyl-toolbar-results {
+  flex-basis: 100%;
+  min-width: 0;
+}
+
+.techtyl-toolbar-results p {
+  margin: 0 0 6px;
+}
+
+ul.techtyl-toolbar-names {
+  margin: 8px 0;
+  padding: 0;
+  list-style: none;
+  max-height: 160px;
+  overflow: auto;
+}
+
+ul.techtyl-toolbar-names li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--techtyl-line);
+}
+
+ul.techtyl-toolbar-names b {
+  font-weight: 650;
+}
+
+ul.techtyl-toolbar-names span {
+  color: var(--techtyl-muted);
+}
+
+.techtyl-toolbar-backdrop {
+  position: fixed;
+  z-index: 80;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: color-mix(in srgb, var(--techtyl-bg) 62%, transparent);
+}
+
+.techtyl-toolbar-dialog {
+  width: min(440px, 100%);
+  max-height: min(80vh, 640px);
+  overflow: auto;
+  padding: 18px;
+  border: 1px solid var(--techtyl-line);
+  border-radius: var(--techtyl-radius);
+  background: var(--techtyl-surface);
+  color: var(--techtyl-text);
+  box-shadow: var(--techtyl-shadow, 0 18px 40px rgba(0, 0, 0, 0.35));
+}
+
+.techtyl-toolbar-dialog h2 {
+  margin: 0 0 8px;
+  font-size: 20px;
+}
+
+.techtyl-toolbar-dialog p {
+  margin: 0 0 8px;
+  color: var(--techtyl-muted);
+}
+
+.techtyl-toolbar-dialog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.techtyl-toolbar-menu {
+  position: fixed;
+  z-index: 70;
+  min-width: 200px;
+  max-width: min(320px, calc(100vw - 16px));
+  max-height: min(360px, calc(100vh - 16px));
+  overflow: auto;
+  padding: 6px;
+  border: 1px solid var(--techtyl-line);
+  border-radius: var(--techtyl-radius);
+  background: var(--techtyl-surface);
+  color: var(--techtyl-text);
+  box-shadow: var(--techtyl-shadow-pop, var(--techtyl-shadow, 0 16px 40px rgba(0, 0, 0, 0.35)));
+}
+
+.techtyl-toolbar-menu button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 34px;
+  margin: 0;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: var(--techtyl-r-xs, 6px);
+  background: transparent;
+  color: var(--techtyl-text);
+  text-align: left;
+}
+
+.techtyl-toolbar-menu button span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.techtyl-toolbar-menu button i {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 99px;
+  background: var(--techtyl-accent);
+}
+
+.techtyl-toolbar-menu button:hover:not(:disabled),
+.techtyl-toolbar-menu button:focus-visible {
+  background: var(--techtyl-accent-wash, color-mix(in srgb, var(--techtyl-accent) 14%, transparent));
+}
+
+.techtyl-toolbar-menu p {
+  margin: 6px 8px;
+  color: var(--techtyl-muted);
+  font-size: 13px;
+}
+
+#app div[class*='PageContentBlock']:has(.techtyl-toolbar[data-bulk='1']) {
+  padding-bottom: 168px;
+}
+
+#app .techtyl-card[data-techtyl-hidden='1'] {
+  display: none;
+}
+
+.techtyl-toolbar-face {
+  display: contents;
+}
+
+a.techtyl-toolbar-hit {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+  background: transparent;
+  color: transparent;
+}
+
+a.techtyl-toolbar-hit:focus,
+a.techtyl-toolbar-hit:focus-visible {
+  outline: none;
+}
+
+#app .techtyl-card:focus-within {
+  outline: 2px solid var(--techtyl-accent);
+  outline-offset: 2px;
+}
+
+#app .techtyl-card .techtyl-card__head {
+  padding-right: 42px;
+}
+
+#app .techtyl-card[data-techtyl-selecting='1'] .techtyl-card__head {
+  padding-left: 36px;
+}
+
+.techtyl-toolbar-tools {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  pointer-events: none;
+}
+
+#app .techtyl-card[data-techtyl-selecting='1'] .techtyl-toolbar-tools {
+  left: 8px;
+  justify-content: space-between;
+}
+
+.techtyl-toolbar-tools > * {
+  pointer-events: auto;
+}
+
+label.techtyl-toolbar-check {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  margin: 0;
+  border: 1px solid var(--techtyl-line);
+  border-radius: var(--techtyl-r-xs, 6px);
+  background: var(--techtyl-surface);
+  color: var(--techtyl-text);
+}
+
+label.techtyl-toolbar-check input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--techtyl-accent);
+}
+
+button.techtyl-toolbar-fold {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--techtyl-line);
+  border-radius: var(--techtyl-r-xs, 6px);
+  background: var(--techtyl-surface);
+  color: var(--techtyl-text);
+}
+
+button.techtyl-toolbar-fold:hover:not(:disabled),
+label.techtyl-toolbar-check:hover {
+  border-color: var(--techtyl-accent);
+}
+
+button.techtyl-toolbar-fold[aria-expanded='true'] {
+  background: var(--techtyl-accent-wash, color-mix(in srgb, var(--techtyl-accent) 14%, transparent));
+  border-color: var(--techtyl-accent);
+}
+
+@keyframes techtyl-toolbar-in {
+  from {
+    opacity: 0;
+  }
+}
+
+html[data-techtyl-motion='voll'] .techtyl-toolbar-menu,
+html[data-techtyl-motion='voll'] .techtyl-toolbar-dialog {
+  animation: techtyl-toolbar-in 120ms ease;
+}
+
+html[data-techtyl-motion='dezent'] .techtyl-toolbar-menu,
+html[data-techtyl-motion='dezent'] .techtyl-toolbar-dialog,
+html[data-techtyl-motion='aus'] .techtyl-toolbar-menu,
+html[data-techtyl-motion='aus'] .techtyl-toolbar-dialog,
+html[data-techtyl-motion='aus'] .techtyl-toolbar-bulk {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .techtyl-toolbar-menu,
+  .techtyl-toolbar-dialog,
+  .techtyl-toolbar-bulk {
+    animation: none;
+  }
+}
+
+@media (max-width: 520px) {
+  .techtyl-toolbar-kbd {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+
+  .techtyl-toolbar-bulk {
+    width: calc(100% - 12px);
+  }
+}
