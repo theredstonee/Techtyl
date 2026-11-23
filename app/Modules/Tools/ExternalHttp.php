@@ -31,6 +31,10 @@ final class ExternalHttp
         'purpur' => ['Purpur', 'https://api.purpurmc.org', 120],
         'piston' => ['Mojang', 'https://piston-meta.mojang.com', 120],
         'fabric' => ['Fabric', 'https://meta.fabricmc.net', 120],
+        // Profile lookup for player heads. The path is a validated player name, never a free URL.
+        'mojang' => ['Mojang', 'https://api.minecraftservices.com', 50],
+        // Public log paste. The caller masks the text before it is sent.
+        'mclo' => ['mclo.gs', 'https://api.mclo.gs', 30],
     ];
 
     /** Hosts, von denen Dateien geladen werden duerfen (durch Wings per pull oder durch das Panel). */

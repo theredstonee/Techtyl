@@ -61,6 +61,20 @@ class ToolsException extends HttpException
         return self::make(502, 'daemon', []);
     }
 
+    /** Our own limit, with a Retry-After header. $key is a lang key such as share_limited. */
+    public static function limited(string $key, int $seconds): self
+    {
+        $seconds = max(1, min(3600, $seconds));
+
+        return self::make(429, $key, ['seconds' => $seconds], ['Retry-After' => (string) $seconds]);
+    }
+
+    /** Unexpected failure. The message stays generic; details belong in the log. */
+    public static function failed(): self
+    {
+        return self::make(500, 'failed', []);
+    }
+
     private static function make(int $status, string $key, array $params, array $headers = []): self
     {
         $exception = new self($status, I18n::t('tools.' . $key, $params), null, $headers);

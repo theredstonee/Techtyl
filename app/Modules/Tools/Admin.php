@@ -43,6 +43,7 @@ class Admin
             'toolsReady' => $ready,
             'toolsEggs' => $eggs,
             'toolsTypes' => ServerTypes::labels(),
+            'toolsShareLogs' => ToolsSettings::shareLogs(),
             'toolsQueueSync' => config('queue.default') === 'sync',
             'toolsStats' => $ready ? [
                 'installed' => DB::table(Content::TABLE)->count(),
@@ -54,6 +55,9 @@ class Admin
 
     public static function handle(Request $request, string $action): string
     {
+        if ($action === 'settings') {
+            return self::saveSettings($request);
+        }
         if ($action !== 'egg-types') {
             abort(404);
         }
@@ -88,5 +92,15 @@ class Admin
         ServerTypes::flush();
 
         return I18n::t('tools.admin_saved');
+    }
+
+    private static function saveSettings(Request $request): string
+    {
+        $input = $request->validate([
+            'share_logs' => ['required', 'in:0,1'],
+        ]);
+        ToolsSettings::save(['share_logs' => $input['share_logs']]);
+
+        return I18n::t('tools.admin_share_saved');
     }
 }

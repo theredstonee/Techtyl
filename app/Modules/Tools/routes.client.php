@@ -4,10 +4,15 @@ use Illuminate\Support\Facades\Route;
 use Pterodactyl\Http\Middleware\Activity\ServerSubject;
 use Pterodactyl\Http\Middleware\Api\Client\Server\ResourceBelongsToServer;
 use Pterodactyl\Http\Middleware\Api\Client\Server\AuthenticateServerAccess;
+use Pterodactyl\BlueprintFramework\Extensions\{identifier}\Modules\Tools\Logs;
 use Pterodactyl\BlueprintFramework\Extensions\{identifier}\Modules\Tools\Http\ToolAvailable;
 use Pterodactyl\BlueprintFramework\Extensions\{identifier}\Modules\Tools\Http\MetaController;
+use Pterodactyl\BlueprintFramework\Extensions\{identifier}\Modules\Tools\Http\LogsController;
 use Pterodactyl\BlueprintFramework\Extensions\{identifier}\Modules\Tools\Http\ContentController;
+use Pterodactyl\BlueprintFramework\Extensions\{identifier}\Modules\Tools\Http\WorldsController;
+use Pterodactyl\BlueprintFramework\Extensions\{identifier}\Modules\Tools\Http\PlayersController;
 use Pterodactyl\BlueprintFramework\Extensions\{identifier}\Modules\Tools\Http\VersionController;
+use Pterodactyl\BlueprintFramework\Extensions\{identifier}\Modules\Tools\Http\PropertiesController;
 
 /*
 | Client-API der Server-Werkzeuge. Praefix: /api/client/extensions/techtyl/tools
@@ -50,5 +55,35 @@ Route::prefix('/servers/{server}')
             Route::get('/builds', [VersionController::class, 'builds'])->middleware('throttle:60,1,techtyl-tools-read');
             Route::post('/preview', [VersionController::class, 'preview'])->middleware('throttle:30,1,techtyl-tools-preview');
             Route::post('/switch', [VersionController::class, 'switch'])->middleware('throttle:6,1,techtyl-tools-switch');
+        });
+
+        // server.properties
+        Route::prefix('/properties')->middleware(ToolAvailable::class . ':properties')->group(function () {
+            Route::get('/', [PropertiesController::class, 'show']);
+            Route::post('/', [PropertiesController::class, 'save'])->middleware('throttle:30,1,techtyl-tools-props');
+        });
+
+        // Latest log and crash reports. Listing a directory needs file.read; reading needs file.read-content.
+        Route::prefix('/logs')->middleware(ToolAvailable::class . ':logs')->group(function () {
+            Route::get('/', [LogsController::class, 'show']);
+            Route::get('/crashes', [LogsController::class, 'crashes']);
+            Route::get('/crashes/{file}', [LogsController::class, 'crash'])->where('file', Logs::CRASH_ROUTE);
+            // Route cap is only a backstop. Logs::share enforces 5 shares per 10 minutes per user
+            // and returns the translated share_limited message with Retry-After.
+            Route::post('/share', [LogsController::class, 'share'])->middleware('throttle:20,10,techtyl-tools-share-edge');
+        });
+
+        // Whitelist, ops, bans. Console and file edits are separate because each has its own permission.
+        Route::prefix('/players')->middleware(ToolAvailable::class . ':players')->group(function () {
+            Route::get('/', [PlayersController::class, 'show']);
+            Route::post('/command', [PlayersController::class, 'command'])->middleware('throttle:30,1,techtyl-tools-players');
+            Route::post('/files', [PlayersController::class, 'files'])->middleware('throttle:30,1,techtyl-tools-players');
+        });
+
+        // Worlds. Backup is one Wings compress call, not a background task.
+        Route::prefix('/worlds')->middleware(ToolAvailable::class . ':worlds')->group(function () {
+            Route::get('/', [WorldsController::class, 'show']);
+            Route::post('/backup', [WorldsController::class, 'backup'])->middleware('throttle:6,1,techtyl-tools-worlds');
+            Route::post('/delete', [WorldsController::class, 'remove'])->middleware('throttle:6,1,techtyl-tools-worlds');
         });
     });

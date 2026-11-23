@@ -298,3 +298,158 @@ export const switchVersion = (server: string, ver: string, build: string, backup
 /** Server ueber die Panel-API schalten (start, stop, restart). */
 export const sendPower = (server: string, signal: 'start' | 'stop' | 'restart') =>
     http.post(`/api/client/servers/${server}/power`, { signal });
+
+/* ------------------------------------------------------------------ Eigenschaften */
+
+export interface PropertyField {
+    key: string;
+    type: 'bool' | 'int' | 'enum' | 'text' | string;
+    group: string;
+    value: string;
+    default: string;
+    present: boolean;
+    hint: string;
+    min: number | null;
+    max: number | null;
+    options: string[] | null;
+    secret: boolean;
+    custom: boolean;
+}
+
+export interface PropertiesView {
+    exists: boolean;
+    bytes: number;
+    odd: number;
+    fields: PropertyField[];
+}
+
+export interface PropertiesSave {
+    saved: boolean;
+    restart: boolean;
+    changed: number;
+    created: boolean;
+}
+
+export const getProperties = (server: string) => request<PropertiesView>(server, 'get', '/properties');
+
+export const saveProperties = (server: string, changes: Record<string, string>, create: boolean) =>
+    request<PropertiesSave>(server, 'post', '/properties', { changes, create });
+
+/* ------------------------------------------------------------------ Logs */
+
+export interface LogView {
+    file: string;
+    missing: boolean;
+    too_large: boolean;
+    truncated: boolean;
+    bytes: number;
+    text: string;
+    sharing: boolean;
+    name?: string;
+}
+
+export interface CrashReport {
+    name: string;
+    size: number;
+    modified: string;
+}
+
+export interface LogShare {
+    id: string;
+    url: string;
+}
+
+export const getLog = (server: string) => request<LogView>(server, 'get', '/logs');
+
+export const getCrashes = (server: string) => request<{ reports: CrashReport[] }>(server, 'get', '/logs/crashes');
+
+export const getCrash = (server: string, file: string) => request<LogView>(server, 'get', `/logs/crashes/${encodeURIComponent(file)}`);
+
+export const shareLog = (server: string, content: string) => request<LogShare>(server, 'post', '/logs/share', { content });
+
+/* ------------------------------------------------------------------ Spieler */
+
+export interface PlayerRow {
+    name: string;
+    uuid: string | null;
+    reason: string;
+    level: number | null;
+    actionable: boolean;
+}
+
+export interface IpBanRow {
+    ip: string;
+    reason: string;
+}
+
+export interface PlayerList {
+    missing: boolean;
+    broken: boolean;
+    too_large: boolean;
+    entries: PlayerRow[];
+}
+
+export interface IpBanList {
+    missing: boolean;
+    broken: boolean;
+    too_large: boolean;
+    entries: IpBanRow[];
+}
+
+export interface PlayerQuery {
+    status: string;
+    online: number | null;
+    max: number | null;
+    sample: { name: string; uuid: string | null }[];
+}
+
+export interface PlayersView {
+    state: string;
+    online_mode: boolean;
+    query: PlayerQuery;
+    whitelist: PlayerList;
+    ops: PlayerList;
+    bans: PlayerList;
+    ip_bans: IpBanList;
+}
+
+export type PlayerAction = 'whitelist_add' | 'whitelist_remove' | 'op' | 'deop' | 'ban' | 'pardon' | 'kick';
+
+export const getPlayers = (server: string) => request<PlayersView>(server, 'get', '/players');
+
+export const playerCommand = (server: string, action: PlayerAction, player: string, reason: string) =>
+    request<{ ok: boolean; via: string }>(server, 'post', '/players/command', { action, player, reason });
+
+export const playerFile = (server: string, action: PlayerAction, player: string, reason: string) =>
+    request<{ ok: boolean; via: string }>(server, 'post', '/players/files', { action, player, reason });
+
+/* ------------------------------------------------------------------ Welten */
+
+export interface WorldRow {
+    folder: string;
+    role: 'overworld' | 'nether' | 'end' | 'other' | string;
+    primary: boolean;
+    size: number | null;
+    modified: string;
+}
+
+export interface WorldsView {
+    state: string;
+    level_name: string | null;
+    truncated: boolean;
+    worlds: WorldRow[];
+}
+
+export interface WorldBackup {
+    folder: string;
+    archive: string;
+    size: number;
+}
+
+export const getWorlds = (server: string) => request<WorldsView>(server, 'get', '/worlds');
+
+export const backupWorld = (server: string, world: string, confirmRunning: boolean) =>
+    request<WorldBackup>(server, 'post', '/worlds/backup', { world, confirm_running: confirmRunning });
+
+export const deleteWorld = (server: string, world: string, confirm: string, confirmLevel: string) =>
+    request<{ folder: string; deleted: boolean }>(server, 'post', '/worlds/delete', { world, confirm, confirm_level: confirmLevel });

@@ -6,8 +6,10 @@ use Pterodactyl\Models\Server;
 use Illuminate\Support\Facades\Log;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\BadResponseException;
+use GuzzleHttp\Exception\RequestException;
 use Pterodactyl\Repositories\Wings\DaemonFileRepository;
 use Pterodactyl\Repositories\Wings\DaemonPowerRepository;
+use Pterodactyl\Repositories\Wings\DaemonCommandRepository;
 use Pterodactyl\Repositories\Wings\DaemonServerRepository;
 use Pterodactyl\Exceptions\Http\Connection\DaemonConnectionException;
 
@@ -293,6 +295,157 @@ class Wings
         }
     }
 
+    /**
+     * End of a text file. Wings sends the whole file from the start and ignores range
+     * requests, so a file larger than $maxRead is refused instead of being downloaded.
+     * A file that fits is streamed; only the last $keepBytes stay in memory.
+     *
+     * @return array{text: ?string, missing: bool, too_large: bool, truncated: bool, bytes: int}
+     */
+    public function tail(string $path, int $keepBytes, int $maxRead = 33554432): array
+    {
+        $keepBytes = max(1024, $keepBytes);
+        $maxRead = max($keepBytes, $maxRead);
+        $path = self::path($path);
+        $empty = ['text' => null, 'missing' => true, 'too_large' => false, 'truncated' => false, 'bytes' => 0];
+        $slash = strrpos($path, '/');
+        if ($slash === false || $slash === 0) {
+            $directory = '/';
+            $file = $slash === false ? $path : substr($path, 1);
+        } else {
+            $directory = substr($path, 0, $slash);
+            $file = substr($path, $slash + 1);
+        }
+        $stat = $this->stat($directory, $file);
+        if ($stat === null || !$stat['file']) {
+            return $empty;
+        }
+        $size = $stat['size'];
+        if ($size > $maxRead) {
+            return ['text' => null, 'missing' => false, 'too_large' => true, 'truncated' => false, 'bytes' => $size];
+        }
+        if ($size <= $keepBytes) {
+            $text = $this->read($path, $keepBytes);
+
+            return $text === null
+                ? $empty
+                : ['text' => self::utf8($text), 'missing' => false, 'too_large' => false, 'truncated' => false, 'bytes' => $size];
+        }
+
+        try {
+            $response = $this->files()->getHttpClient()->get(
+                sprintf('/api/servers/%s/files/contents', $this->server->uuid),
+                ['query' => ['file' => $path], 'stream' => true, 'timeout' => 120, 'read_timeout' => 30]
+            );
+        } catch (BadResponseException $e) {
+            if ($e->getResponse()->getStatusCode() === 404) {
+                return $empty;
+            }
+            throw $this->failed('Datei lesen', $e);
+        } catch (GuzzleException $e) {
+            throw $this->failed('Datei lesen', $e);
+        }
+
+        $stream = $response->getBody();
+        $buffer = '';
+        $total = 0;
+        while (!$stream->eof()) {
+            $chunk = $stream->read(65536);
+            $total += strlen($chunk);
+            if ($total > $maxRead) {
+                $stream->close();
+
+                return ['text' => null, 'missing' => false, 'too_large' => true, 'truncated' => false, 'bytes' => $size];
+            }
+            $buffer .= $chunk;
+            if (strlen($buffer) > $keepBytes) {
+                $buffer = substr($buffer, -$keepBytes);
+            }
+        }
+        $break = strpos($buffer, "\n");
+        if ($break !== false) {
+            $buffer = substr($buffer, $break + 1);
+        }
+
+        return ['text' => self::utf8($buffer), 'missing' => false, 'too_large' => false, 'truncated' => true, 'bytes' => $size];
+    }
+
+    /**
+     * One console line. The caller builds it; this only refuses control characters so a
+     * value cannot smuggle a second command (Wings writes the string plus a newline to stdin).
+     */
+    public function command(string $command): void
+    {
+        if ($command === '' || strlen($command) > 200 || preg_match('/[\x00-\x1f\x7f]/', $command)) {
+            throw ToolsException::invalid('command_rejected');
+        }
+        try {
+            app(DaemonCommandRepository::class)->setServer($this->server)->send($command);
+        } catch (DaemonConnectionException $e) {
+            if ($e->getStatusCode() === 502) {
+                throw ToolsException::conflict('console_unavailable');
+            }
+            throw $this->failed('Befehl senden', $e);
+        }
+    }
+
+    /**
+     * Archive files into the given directory. Wings names the result archive-….tar.gz and
+     * blocks until it is finished, so this call waits (at most two minutes) and is not a
+     * background task step.
+     *
+     * @param string[] $names
+     * @return array{name: string, size: int}
+     */
+    public function compress(string $directory, array $names): array
+    {
+        $directory = self::path($directory);
+        $names = array_map([self::class, 'filename'], array_values($names));
+        if ($names === []) {
+            throw ToolsException::invalid('world_unknown');
+        }
+        if (function_exists('set_time_limit')) {
+            @set_time_limit(150);
+        }
+        try {
+            $response = $this->files()->getHttpClient()->post(
+                sprintf('/api/servers/%s/files/compress', $this->server->uuid),
+                [
+                    'json' => ['root' => $directory, 'files' => $names],
+                    'timeout' => 120,
+                    'read_timeout' => 120,
+                    'http_errors' => true,
+                ]
+            );
+        } catch (RequestException $e) {
+            $status = $e->getResponse() !== null ? $e->getResponse()->getStatusCode() : 0;
+            if ($status === 409) {
+                throw ToolsException::conflict('world_disk');
+            }
+            Log::warning('techtyl tools: Archiv fehlgeschlagen', [
+                'server' => $this->server->uuid,
+                'status' => $status,
+                'error' => substr($e->getMessage(), 0, 300),
+            ]);
+            throw $status === 0 ? ToolsException::conflict('world_archive_slow') : ToolsException::daemon();
+        } catch (GuzzleException $e) {
+            Log::warning('techtyl tools: Archiv ohne Antwort', [
+                'server' => $this->server->uuid,
+                'error' => substr($e->getMessage(), 0, 300),
+            ]);
+            throw ToolsException::conflict('world_archive_slow');
+        }
+
+        $data = json_decode((string) $response->getBody(), true);
+        $archive = is_array($data) ? ($data['name'] ?? null) : null;
+        if (!is_string($archive) || !preg_match('/^archive-\d{4}-\d{2}-\d{2}T\d{6}(?:Z|[+-]\d{4})(?:-\d{1,3})?\.tar\.gz$/', $archive)) {
+            Log::warning('techtyl tools: Archivname unerwartet', ['server' => $this->server->uuid]);
+            throw ToolsException::daemon();
+        }
+
+        return ['name' => $archive, 'size' => max(0, (int) ($data['size'] ?? 0))];
+    }
+
     /** Zustand laut Wings: offline, starting, running, stopping. */
     public function state(): string
     {
@@ -316,6 +469,13 @@ class Wings
         } catch (DaemonConnectionException $e) {
             throw $this->failed('Server schalten', $e);
         }
+    }
+
+    private static function utf8(string $text): string
+    {
+        $clean = mb_scrub($text, 'UTF-8');
+
+        return str_replace("\0", '', $clean);
     }
 
     private function files(): DaemonFileRepository
