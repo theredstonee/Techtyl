@@ -1,0 +1,8 @@
+[
+  {
+    "file": "resources/views/layouts/admin.blade.php",
+    "search": "<li class=\"header\">MANAGEMENT</li>",
+    "replace": "@includeIf('blueprint.extensions.techtyl.adminnav')<li class=\"header\">MANAGEMENT</li>",
+    "note": "Techtyl-Gruppe in der Admin-Seitenleiste (views/adminnav.blade.php), vor der Gruppe Management"
+  }
+]
