@@ -3,7 +3,7 @@ info:
   identifier: 'techtyl'
   description: 'Theme mit Designer, eigenen Hintergruenden und Server-Bannern fuer Pterodactyl.'
   flags: ''
-  version: '0.1.0'
+  version: '1.0.0'
   target: 'beta-2026-08'
   author: 'theredstonee'
   icon: 'icon.svg'

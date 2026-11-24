@@ -6,7 +6,7 @@
 
 Techtyl is an open-source theme and extension for the [Pterodactyl](https://pterodactyl.io) panel, built on [Blueprint](https://blueprint.zip). It restyles the client area, the admin area and the sign-in pages, and it adds a live designer, custom backgrounds, server banners and built-in tools.
 
-The version in this repository is 0.1.0. There is no packaged release yet. The sections below describe what the code does today.
+The current version is 1.0.0. Download `techtyl.blueprint` from the [latest release](../../releases/latest). The sections below describe what the code does today, including what has and has not been tested against the real services.
 
 ## What Techtyl does
 
@@ -160,13 +160,19 @@ Installing another theme that also replaces the panel navigation files will conf
 
 ## Installation
 
-There is no packaged release. On a panel with Blueprint in developer mode, copy this repository into the panel's `.blueprint/dev` directory and build it:
+Download `techtyl.blueprint` from the [latest release](../../releases/latest), put it in the panel directory (next to `artisan`) and install it with Blueprint:
+
+```sh
+blueprint -install techtyl
+```
+
+To work on the code instead, put Blueprint in developer mode, copy this repository into the panel's `.blueprint/dev` directory and build it:
 
 ```sh
 blueprint -build
 ```
 
-Try this on a test panel first. The extension replaces pieces of the panel, and it is not ready for a panel that other people depend on.
+Try Techtyl on a test panel first. It replaces pieces of the panel, and Stripe, Discord, Google, Turnstile and the AI providers have only been tested against stand-ins, not against the real services.
 
 After a successful build:
 
@@ -226,6 +232,6 @@ The eggs in `data/eggs/` are MIT-licensed copies from the pelican-eggs collectio
 
 ## License
 
-License: not yet chosen.
+Techtyl is released under the MIT License. See `LICENSE`.
 
-The font licences and the egg licence above apply only to those files. They are not a licence for the rest of this repository.
+The font licences and the egg licence above apply to those files and keep their own terms.
