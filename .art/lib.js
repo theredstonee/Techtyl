@@ -137,6 +137,36 @@
     }
     ctx.putImageData(im, 0, 0);
   };
+
+  // 8×8-Bayer. Zusammen mit feinem Korn bricht es stufige Verläufe, ohne Foto-Rauschen.
+  A.BAYER8 = new Uint8Array([
+    0, 32, 8, 40, 2, 34, 10, 42,
+    48, 16, 56, 24, 50, 18, 58, 26,
+    12, 44, 4, 36, 14, 46, 6, 38,
+    60, 28, 52, 20, 62, 30, 54, 22,
+    3, 35, 11, 43, 1, 33, 9, 41,
+    51, 19, 59, 27, 49, 17, 57, 25,
+    15, 47, 7, 39, 13, 45, 5, 37,
+    63, 31, 55, 23, 61, 29, 53, 21
+  ]);
+  A.dither = function (ctx, W, H, o) {
+    o = o || {};
+    const amp = o.amp == null ? 8 : o.amp;
+    const grain = o.grain == null ? 2.2 : o.grain;
+    const r = A.rng(o.seed || 11);
+    const B = A.BAYER8;
+    const im = ctx.getImageData(0, 0, W, H), d = im.data;
+    for (let y = 0; y < H; y++) {
+      const br = (y & 7) << 3;
+      const row = y * W;
+      for (let x = 0; x < W; x++) {
+        const n = (B[br + (x & 7)] - 31.5) * (amp / 63) + (r() + r() - 1) * grain;
+        const i = (row + x) << 2;
+        d[i] += n; d[i + 1] += n; d[i + 2] += n;
+      }
+    }
+    ctx.putImageData(im, 0, 0);
+  };
   A.vignette = function (ctx, W, H, color, strength) {
     const g = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.35, W / 2, H / 2, Math.hypot(W, H) * 0.56);
     g.addColorStop(0, A.rgba(color, 0)); g.addColorStop(1, A.rgba(color, strength));

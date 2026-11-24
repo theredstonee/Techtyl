@@ -7,7 +7,7 @@ Aufruf (im Ordner .art):
     python render.py --png DIR ...   zusaetzlich die PNG-Zwischenstaende nach DIR legen
 
 bn-<name>  -> public/defaults/banners/<name>.webp      (1600x520, Ziel < 120 KB)
-bg-<name>  -> public/defaults/backgrounds/<name>.webp  (2560x1440, Ziel < 350 KB)
+bg-<name>  -> public/defaults/backgrounds/<name>.webp  (2560x1440, Ziel < 450 KB)
 
 Chrome laeuft als eigene Headless-Instanz mit eigenem Profil; der normale Browser bleibt unberuehrt.
 """
@@ -24,8 +24,8 @@ from PIL import Image
 HERE = Path(__file__).resolve().parent
 OUT = HERE.parent / "public" / "defaults"
 CHROME = os.environ.get("CHROME", r"C:\Program Files\Google\Chrome\Application\chrome.exe")
-PROFILE = Path(tempfile.gettempdir()) / "techtyl-art-profile"
-LIMIT = dict(bn=125_000, bg=380_000)
+PROFILE = Path(tempfile.gettempdir()) / "techtyl-art-grok-art3"
+LIMIT = dict(bn=125_000, bg=450 * 1024)
 START_Q = dict(bn=86, bg=90)
 # Zeichenfolgen, die Blueprint beim Bauen ersetzt - duerfen in keiner Datei stehen
 WORDS = "identifier name author version root webroot fs mode target engine random timestamp viewcontext appcontext".split()
@@ -49,7 +49,7 @@ def shoot(key, png):
     url = (HERE / "art.html").as_uri() + "?s=" + key
     cmd = [CHROME, "--headless=new", "--disable-gpu", "--hide-scrollbars", "--force-device-scale-factor=1",
            "--window-size=%d,%d" % (w, h), "--user-data-dir=" + str(PROFILE), "--no-first-run",
-           "--virtual-time-budget=20000", "--screenshot=" + str(png), url]
+           "--virtual-time-budget=40000", "--screenshot=" + str(png), url]
     subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=180)
 
 
