@@ -18,7 +18,10 @@
       { "key": "kiefer", "file": "kiefer.webp", "label": "Nebelwald", "tone": "dark", "variant": "kiefer" },
       { "key": "daemmerung", "file": "daemmerung.webp", "label": "Dämmerung", "tone": "dark", "variant": null },
       { "key": "polarlicht", "file": "polarlicht.webp", "label": "Polarlicht", "tone": "dark", "variant": null },
-      { "key": "sternenzelt", "file": "sternenzelt.webp", "label": "Sternenzelt", "tone": "dark", "variant": null }
+      { "key": "sternenzelt", "file": "sternenzelt.webp", "label": "Sternenzelt", "tone": "dark", "variant": null },
+      { "key": "megalith", "file": "megalith.webp", "label": "Megalithen", "tone": "dark", "variant": null },
+      { "key": "skyline", "file": "skyline.webp", "label": "Nachthorizont", "tone": "dark", "variant": null },
+      { "key": "tidepool", "file": "tidepool.webp", "label": "Gezeitentümpel", "tone": "dark", "variant": null }
     ]
   },
   "banners": {

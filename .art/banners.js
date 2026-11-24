@@ -86,6 +86,8 @@
         ctx.quadraticCurveTo(630, yb(630) - 40, 698, yb(700) - 52); ctx.stroke();
       }
     });
+    A.band(ctx, W, 248, 64, '#f0c090', 0.1);
+    A.volumetric(ctx, 1128, 176, '#ffb262', { r: 340, a: 0.18, shafts: 3, a0: Math.PI * 0.2, a1: Math.PI * 0.72 });
     finish(ctx, W, H, '#1a0a14', 9, 31);
   });
 })();

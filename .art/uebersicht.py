@@ -39,7 +39,7 @@ figure>a>img{display:block;width:100%;height:auto}
 .c1{width:330px}.c1 .ban{height:96px}.c2{flex:1 1 600px;max-width:1200px}.c2 .ban{height:160px}
 </style></head><body>
 <h1>Techtyl – mitgelieferte Bilder</h1>
-<p>Alle Motive sind prozedural gezeichnet (Canvas), ohne fremde Grafiken. Quellen und Render-Skript: <code>E:/Claude/blueprint/Techtyl/.art/</code>. Klick auf ein Bild öffnet es in voller Größe.</p>
+<p>Alle Motive sind prozedural gezeichnet (Canvas), ohne fremde Grafiken. Quellen und Render-Skript liegen in <code>.art/</code>. Klick auf ein Bild öffnet es in voller Größe.</p>
 <h2>Hintergründe (2560×1440)</h2>
 <p>Links das Bild, rechts dieselbe Datei mit 45 % Abdunklung und aufgelegten Flächen – so wie es im Panel wirkt. Die ersten vier gehören fest zu den Farbvarianten, die übrigen sind frei wählbar.</p>
 <div class="grid bgs">''']

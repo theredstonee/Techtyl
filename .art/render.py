@@ -25,8 +25,8 @@ HERE = Path(__file__).resolve().parent
 OUT = HERE.parent / "public" / "defaults"
 CHROME = os.environ.get("CHROME", r"C:\Program Files\Google\Chrome\Application\chrome.exe")
 PROFILE = Path(tempfile.gettempdir()) / "techtyl-art-profile"
-LIMIT = dict(bn=120_000, bg=350_000)
-START_Q = dict(bn=84, bg=88)
+LIMIT = dict(bn=125_000, bg=380_000)
+START_Q = dict(bn=86, bg=90)
 # Zeichenfolgen, die Blueprint beim Bauen ersetzt - duerfen in keiner Datei stehen
 WORDS = "identifier name author version root webroot fs mode target engine random timestamp viewcontext appcontext".split()
 TOKENS = [("\x7b" + w + "\x7d").encode() for w in WORDS]
@@ -60,6 +60,7 @@ def encode(key, png):
     im = Image.open(png).convert("RGB")
     assert im.size == size_of(key), "falsche Groesse %s fuer %s" % (im.size, key)
     q = START_Q[kind]
+    hit = []
     while True:
         im.save(dest, "WEBP", quality=q, method=6)
         data = dest.read_bytes()
@@ -67,7 +68,7 @@ def encode(key, png):
         if (len(data) <= LIMIT[kind] and not hit) or q <= 40:
             break
         q -= 1 if hit and len(data) <= LIMIT[kind] else 3
-    return dest, len(data), q
+    return dest, len(data), q, hit
 
 
 def main(argv):
@@ -83,8 +84,9 @@ def main(argv):
         if png.exists():
             png.unlink()
         shoot(key, png)
-        dest, n, q = encode(key, png)
-        print("%-28s %4d KB  q%d  %s" % (key, round(n / 1024), q, dest.name))
+        dest, n, q, hit = encode(key, png)
+        flag = "CLEAN" if not hit else "HIT " + ",".join(t.decode() for t in hit)
+        print("%-28s %4d KB  q%d  %s  %s" % (key, round(n / 1024), q, dest.name, flag))
         if not keep:
             png.unlink()
 

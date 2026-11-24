@@ -37,7 +37,7 @@
       }
       if (pts.length < 3) return;
       const col = bright ? o.hi : o.line;
-      ctx.strokeStyle = A.rgba(col, bright ? 0.95 : 0.4 + r() * 0.4); ctx.lineWidth = bright ? 2.6 : 2; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+      ctx.strokeStyle = A.rgba(col, bright ? 0.95 : 0.35 + r() * 0.35); ctx.lineWidth = bright ? 4.2 : 2.6; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
       ctx.beginPath(); pts.forEach(function (p, k) { if (k) ctx.lineTo(p[0] * g, p[1] * g); else ctx.moveTo(p[0] * g, p[1] * g); }); ctx.stroke();
       const e = pts[pts.length - 1];
       if (bright && r() < 0.6) { ctx.fillStyle = col; A.rrect(ctx, e[0] * g - 6, e[1] * g - 6, 12, 12, 3); ctx.fill(); }
@@ -50,12 +50,25 @@
       walk(cx + k, cy + 3, 2, 6 + (r() * 14 | 0), r() < 0.35);
       walk(cx + k, cy - 3, 6, 2 + (r() * 4 | 0), r() < 0.35);
     }
-    for (let k = 0; k < 150; k++) walk((r() * nx) | 0, (r() * ny) | 0, (r() * 8) | 0, 6 + (r() * 30 | 0), r() < 0.12);
+    for (let k = 0; k < 70; k++) walk((r() * nx) | 0, (r() * ny) | 0, (r() * 8) | 0, 6 + (r() * 24 | 0), r() < 0.14);
+    function bus(pts, w, col, al) {
+      ctx.strokeStyle = A.rgba(col, al); ctx.lineWidth = w; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+      ctx.beginPath(); pts.forEach(function (p, i) { if (i) ctx.lineTo(p[0], p[1]); else ctx.moveTo(p[0], p[1]); }); ctx.stroke();
+    }
+    // Ferne, dicke Bahn – liest sich auch in der kleinen Karte
+    bus([[hx - 90, hy - 16], [hx - 300, hy - 16], [hx - 300, hy - 110], [60, hy - 110]], 13, o.hi, 0.92);
+    bus([[hx + 90, hy + 8], [hx + 240, hy + 8], [hx + 240, hy + 86], [W - 30, hy + 86]], 13, o.hi, 0.8);
+    bus([[hx - 8, hy + 90], [hx - 8, hy + 150], [hx - 200, hy + 150]], 15, o.line, 0.75);
+    // Vordergrund: eine nahe, dunkle Bahn mit Lichtkante
+    bus([[-30, 268], [160, 236], [160, 150]], 34, A.shade(o.bg[0], 0.55), 1);
+    bus([[-30, 250], [154, 220], [154, 142]], 2.4, o.hi, 0.8);
+    A.band(ctx, W, hy, 90, o.hi, 0.06);
     // Knoten
-    ctx.fillStyle = o.chip; A.rrect(ctx, hx - 60, hy - 60, 120, 120, 16); ctx.fill();
-    ctx.strokeStyle = A.rgba(o.hi, 0.7); ctx.lineWidth = 2; A.rrect(ctx, hx - 60, hy - 60, 120, 120, 16); ctx.stroke();
-    ctx.strokeStyle = A.rgba(o.hi, 0.25); A.rrect(ctx, hx - 46, hy - 46, 92, 92, 10); ctx.stroke();
-    A.punkt(ctx, hx, hy, 44, o.punkt, o.hi, 230);
+    ctx.fillStyle = o.chip; A.rrect(ctx, hx - 74, hy - 74, 148, 148, 18); ctx.fill();
+    ctx.strokeStyle = A.rgba(o.hi, 0.75); ctx.lineWidth = 2.5; A.rrect(ctx, hx - 74, hy - 74, 148, 148, 18); ctx.stroke();
+    ctx.strokeStyle = A.rgba(o.hi, 0.28); A.rrect(ctx, hx - 54, hy - 54, 108, 108, 12); ctx.stroke();
+    A.volumetric(ctx, hx, hy, o.hi, { r: 260, a: 0.16, shafts: 3 });
+    A.punkt(ctx, hx, hy, 48, o.punkt, o.hi, 210);
     A.finish(ctx, W, H, '#020403', 8, o.seed);
   }
 
@@ -66,29 +79,27 @@
     circuit(ctx, W, H, { seed: 129, bg: ['#1b1d1a', '#121411'], line: '#7c8a44', hi: '#e2e56a', chip: '#24261c', punkt: '#f6f7b0', rings: true });
   });
 
-  // Python: ineinander laufende Schlangenlinien
+  // Python: drei Ebenen von Bändern. Oben Dunst, in der Mitte das Licht, unten ruhige Silhouette.
   A.scene('bn-python', BW, BH, function (ctx, W, H) {
     const r = A.rng(131);
-    A.vgrad(ctx, 0, 0, W, H, [[0, '#172644'], [1, '#0e182c']]);
-    A.radial(ctx, 1150, 176, 520, 'rgba(255,220,120,.2)', 'rgba(255,220,120,0)', 'screen');
-    const cols = ['#2f5f9c', '#f0c64a', '#4a86c8', '#e7b23a', '#3a6fb0', '#f3d064', '#2f5f9c'];
-    cols.forEach(function (col, k) {
-      const y0 = 10 + k * 76, amp = 50, wl = 380 + k * 14, ph = k * 2.1, bw = 46;
-      const path = function (dy) { ctx.beginPath(); for (let x = -40; x <= W + 40; x += 8) ctx.lineTo(x, y0 + dy + Math.sin(x / wl * 6.283 + ph) * amp); };
-      ctx.lineCap = 'butt'; ctx.lineJoin = 'round';
-      ctx.strokeStyle = 'rgba(6,10,24,.45)'; ctx.lineWidth = bw + 6; path(9); ctx.stroke();
+    function ribbon(y0, amp, wl, ph, bw, col, shadeA, hiA) {
+      const path = function (dy) { ctx.beginPath(); for (let x = -40; x <= W + 40; x += 6) ctx.lineTo(x, y0 + dy + Math.sin(x / wl * 6.283 + ph) * amp); };
+      ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      ctx.strokeStyle = 'rgba(6,10,22,' + shadeA + ')'; ctx.lineWidth = bw + 8; path(8); ctx.stroke();
       ctx.strokeStyle = col; ctx.lineWidth = bw; path(0); ctx.stroke();
-      ctx.strokeStyle = A.rgba(A.shade(col, 0.55), 0.7); ctx.lineWidth = 9; path(bw / 2 - 5); ctx.stroke();
-      ctx.strokeStyle = A.rgba(A.mix(col, '#ffffff', 0.6), 0.6); ctx.lineWidth = 3; path(-bw / 2 + 6); ctx.stroke();
-      // Schuppenzeichnung
-      ctx.fillStyle = A.rgba(A.shade(col, 0.6), 0.55);
-      for (let x = -20 + (k % 2) * 17; x < W + 20; x += 34) {
-        const y = y0 + Math.sin(x / wl * 6.283 + ph) * amp, sl = Math.cos(x / wl * 6.283 + ph) * amp * 6.283 / wl;
-        ctx.save(); ctx.translate(x, y - 2); ctx.rotate(Math.atan(sl)); ctx.beginPath(); ctx.moveTo(-9, 0); ctx.lineTo(0, -8); ctx.lineTo(9, 0); ctx.lineTo(0, 8); ctx.closePath(); ctx.fill(); ctx.restore();
-      }
-    });
-    A.stipple(ctx, 0, 0, W, H, 40000, 'rgba(8,12,28,.5)', function (x, y) { return A.clamp((y / H) * 0.5 + (1 - x / W) * 0.25, 0, 1); }, r, 1.4);
-    A.punkt(ctx, 1150, 176, 44, '#fff3c4', '#ffe08a', 200);
+      if (hiA) { ctx.strokeStyle = 'rgba(255,244,214,' + hiA + ')'; ctx.lineWidth = Math.max(2, bw * 0.08); path(-bw * 0.32); ctx.stroke(); }
+    }
+    A.vgrad(ctx, 0, 0, W, H, [[0, '#10182c'], [0.45, '#172744'], [1, '#0c1424']]);
+    ribbon(78, 22, 560, 0.6, 16, '#243656', 0.2, 0);
+    ribbon(118, 26, 640, 2.4, 14, '#1c3050', 0.15, 0);
+    A.band(ctx, W, 150, 70, '#8aa4c8', 0.1);
+    ribbon(214, 46, 460, 1.15, 58, '#e2b43e', 0.45, 0.7);
+    ribbon(268, 40, 500, 2.7, 52, '#3d74b8', 0.4, 0.35);
+    A.stipple(ctx, 0, 160, W, 220, 18000, 'rgba(8,14,28,.45)', function (x, y) { return A.clamp((y - 180) / 200, 0, 1) * 0.4; }, r, 1.4);
+    A.volumetric(ctx, 1188, 148, '#ffe08a', { r: 300, a: 0.28, shafts: 3, a0: Math.PI * 0.4, a1: Math.PI * 0.85 });
+    A.punkt(ctx, 1188, 148, 40, '#fff3c4', '#ffe08a', 180);
+    ribbon(400, 32, 520, 0.4, 64, '#15243c', 0.25, 0);
+    ribbon(468, 24, 440, 2.1, 70, '#10192e', 0.2, 0);
     A.finish(ctx, W, H, '#050914', 9, 131);
   });
 
@@ -109,24 +120,34 @@
     A.finish(ctx, W, H, '#05080c', 8, 142);
   });
 
-  // TeamSpeak: Pegelbalken mit Spiegelung
+  // TeamSpeak: wenige massive Pegel als Skyline. Muss bei 96 px Höhe noch als Rhythmus lesbar sein.
   A.scene('bn-teamspeak', BW, BH, function (ctx, W, H) {
-    const n = A.makeNoise(153), ax = 274;
-    A.vgrad(ctx, 0, 0, W, H, [[0, '#0d1a38'], [0.525, '#17336a'], [0.53, '#0f2248'], [1, '#0a1630']]);
-    A.radial(ctx, 1150, ax, 620, 'rgba(120,180,255,.3)', 'rgba(120,180,255,0)', 'screen', 1.3, 0.7);
-    let best = [0, 0];
-    for (let x = 10; x < W; x += 18) {
-      const env = 0.42 + 0.58 * Math.exp(-Math.pow((x - 1150) / 460, 2));
-      const h = 14 + 122 * env * A.clamp(0.22 + 1.5 * Math.abs(n(x / 46, 2.2) * 1.5 + n(x / 13, 7) * 0.6), 0, 1);
-      if (h > best[1] && Math.abs(x - 1150) < 260) best = [x, h];
-      const g = ctx.createLinearGradient(0, ax - h, 0, ax); g.addColorStop(0, '#b6dcff'); g.addColorStop(1, '#3d7fe6');
-      ctx.fillStyle = g; A.rrect(ctx, x, ax - h, 10, h, 5); ctx.fill();
-      const g2 = ctx.createLinearGradient(0, ax + 4, 0, ax + 4 + h * 0.8); g2.addColorStop(0, 'rgba(90,150,240,.4)'); g2.addColorStop(1, 'rgba(90,150,240,0)');
-      ctx.fillStyle = g2; A.rrect(ctx, x, ax + 4, 10, h * 0.8, 5); ctx.fill();
-    }
-    ctx.fillStyle = 'rgba(190,225,255,.5)'; ctx.fillRect(0, ax + 1, W, 1.5);
-    A.punkt(ctx, best[0] + 5, ax - best[1] - 26, 28, '#ffffff', '#bfe0ff', 150);
-    A.finish(ctx, W, H, '#030714', 8, 153);
+    const ax = 300;
+    const bars = [[250, 0.32], [360, 0.48], [470, 0.26], [600, 0.58], [730, 0.4], [860, 0.7], [990, 0.84], [1120, 1], [1250, 0.55], [1380, 0.36]];
+    A.vgrad(ctx, 0, 0, W, H, [[0, '#070d1c'], [0.42, '#122848'], [0.55, '#17325a'], [1, '#060b16']]);
+    // Ferne Bögen, dick und kontrastarm
+    ctx.strokeStyle = 'rgba(150,190,240,.16)'; ctx.lineWidth = 10; ctx.lineCap = 'round';
+    [220, 340, 480].forEach(function (rad) { ctx.beginPath(); ctx.arc(1160, 150, rad, Math.PI * 1.05, Math.PI * 1.85); ctx.stroke(); });
+    A.band(ctx, W, 168, 90, '#8eb4e8', 0.1);
+    const bw = 46;
+    bars.forEach(function (b) {
+      const h = 28 + 112 * b[1], x = b[0], top = ax - h;
+      const g = ctx.createLinearGradient(x, 0, x + bw, 0);
+      g.addColorStop(0, '#1d4e92'); g.addColorStop(0.72, '#5b96e0'); g.addColorStop(1, b[1] > 0.9 ? '#f4fbff' : '#d5ebff');
+      ctx.fillStyle = g; A.rrect(ctx, x, top, bw, h, 8); ctx.fill();
+      // Spiegelung als eine weiche Fläche, nicht als Kamm
+      const g2 = ctx.createLinearGradient(0, ax + 8, 0, ax + 8 + h * 0.55);
+      g2.addColorStop(0, 'rgba(120,170,240,.38)'); g2.addColorStop(1, 'rgba(120,170,240,0)');
+      ctx.fillStyle = g2; A.rrect(ctx, x, ax + 8, bw, h * 0.5, 8); ctx.fill();
+    });
+    ctx.fillStyle = 'rgba(214,232,255,.55)'; ctx.fillRect(0, ax, W, 2);
+    A.volumetric(ctx, 1143, 114, '#b9d8ff', { r: 300, a: 0.28, shafts: 3, a0: Math.PI * 0.45, a1: Math.PI * 0.85 });
+    A.punkt(ctx, 1143, 114, 40, '#f7fbff', '#d5e8ff', 180);
+    // Vordergrund: zwei dunkle Hörner, Spitzen noch im Kartenausschnitt
+    ctx.fillStyle = '#050914';
+    ctx.beginPath(); ctx.moveTo(-30, 520); ctx.lineTo(-30, 400); ctx.quadraticCurveTo(180, 300, 460, 520); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(1630, 520); ctx.lineTo(1630, 380); ctx.quadraticCurveTo(1400, 310, 1120, 520); ctx.fill();
+    A.finish(ctx, W, H, '#03060e', 8, 153);
   });
 
   // Counter-Strike: Taktikplan von oben, zwei Zielzonen, Laufwege
@@ -145,7 +166,7 @@
       if (r() < 0.5) { const bx = x + u * 0.5 + ((r() * (w / u - 1)) | 0) * u, by = y + h - 28; ctx.lineWidth = 1.5; ctx.strokeStyle = '#8fa6cc'; ctx.strokeRect(bx, by, 20, 20); ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx + 20, by + 20); ctx.moveTo(bx + 20, by); ctx.lineTo(bx, by + 20); ctx.stroke(); }
     }
     function route(pts, col) {
-      ctx.strokeStyle = col; ctx.lineWidth = 3.5; ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.setLineDash([14, 11]);
+      ctx.strokeStyle = col; ctx.lineWidth = 6; ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.setLineDash([16, 12]);
       ctx.beginPath(); pts.forEach(function (p, k) { if (k) ctx.lineTo(p[0], p[1]); else ctx.moveTo(p[0], p[1]); }); ctx.stroke(); ctx.setLineDash([]);
       const a = pts[pts.length - 2], b = pts[pts.length - 1], an = Math.atan2(b[1] - a[1], b[0] - a[0]);
       ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(b[0] + Math.cos(an) * 16, b[1] + Math.sin(an) * 16); ctx.lineTo(b[0] + Math.cos(an + 2.4) * 13, b[1] + Math.sin(an + 2.4) * 13); ctx.lineTo(b[0] + Math.cos(an - 2.4) * 13, b[1] + Math.sin(an - 2.4) * 13); ctx.fill();
@@ -160,7 +181,10 @@
       ctx.fillStyle = 'rgba(255,160,50,.1)'; A.rrect(ctx, c[0] - 66, c[1] - 66, 132, 132, 20); ctx.fill();
       if (k) { ctx.strokeStyle = '#ffb45a'; A.rrect(ctx, c[0] - 16, c[1] - 16, 32, 32, 6); ctx.stroke(); }
     });
-    A.punkt(ctx, 1150, 160, 44, '#ffb043', '#ff9f31', 220);
+    A.vgrad(ctx, 0, 0, W, H * 0.42, [[0, 'rgba(90,50,40,0.18)'], [1, 'rgba(90,50,40,0)']]);
+    A.volumetric(ctx, 1150, 160, '#ff9f31', { r: 260, a: 0.18, shafts: 3 });
+    A.punkt(ctx, 1150, 160, 44, '#ffb043', '#ff9f31', 200);
+    A.vgrad(ctx, 0, H * 0.62, W, H * 0.4, [[0, 'rgba(3,6,12,0)'], [1, 'rgba(3,6,12,.55)']]);
     A.finish(ctx, W, H, '#03060c', 8, 164);
   });
 
@@ -188,7 +212,9 @@
     }
     ctx.restore();
     A.radial(ctx, W * 0.74, H * 0.2, 760, 'rgba(255,240,200,.5)', 'rgba(255,240,200,0)', 'soft-light');
-    A.vgrad(ctx, 0, 0, W, H, [[0, 'rgba(30,18,10,0)'], [1, 'rgba(30,18,10,.45)']]);
+    A.volumetric(ctx, 1160, 168, '#ffb06a', { r: 240, a: 0.2, shafts: 3, a0: Math.PI * 0.15, a1: Math.PI * 0.55 });
+    A.punkt(ctx, 1160, 168, 42, '#e07a32', '#ffc48a', 170);
+    A.vgrad(ctx, 0, 0, W, H, [[0, 'rgba(30,18,10,0)'], [1, 'rgba(30,18,10,.5)']]);
     A.vignette(ctx, W, H, '#140c08', 0.6);
     A.grain(ctx, W, H, 5, 175);
   });

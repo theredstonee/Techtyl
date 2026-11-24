@@ -79,9 +79,23 @@
         for (let k = 1; k <= 3; k++) { const q = cell(i, j - k); if (!q.skip && q.eh - c.h >= k) { shadowed = true; break; } }
       }
       if (shadowed) top = A.mix(top, o.shadow || '#101820', o.shadowAmt || 0.36);
+      // Ferne (oben im Bild) ins Himmelslicht ziehen, Vordergrund bleibt satt
+      if (o.atmo && c.kind !== 'glow') {
+        const span = (o.atmo.horizon || H * 0.42) - (o.atmo.farY == null ? -80 : o.atmo.farY);
+        const f = A.clamp(((o.atmo.horizon || H * 0.42) - Y) / span, 0, 1);
+        top = A.mix(top, o.atmo.color, f * (o.atmo.amt == null ? 0.45 : o.atmo.amt));
+      }
+      if (o.rim && !shadowed && c.kind !== 'water' && c.kind !== 'glow') {
+        const f = A.clamp((X - W * 0.42) / (W * 0.5), 0, 1);
+        top = A.mix(top, o.rim, f * (o.rimAmt == null ? 0.16 : o.rimAmt));
+      }
       const side = c.side || c.top;
-      const cL = A.mix(A.shade(side, sL), o.sideTint || '#000000', o.sideTintAmt || 0);
-      const cR = A.mix(A.shade(side, sR), o.sideTint || '#000000', (o.sideTintAmt || 0) * 0.5);
+      let cL = A.mix(A.shade(side, sL), o.sideTint || '#000000', o.sideTintAmt || 0);
+      let cR = A.mix(A.shade(side, sR), o.sideTint || '#000000', (o.sideTintAmt || 0) * 0.5);
+      if (o.rim && c.kind !== 'water' && c.kind !== 'glow') {
+        const f = A.clamp((X - W * 0.38) / (W * 0.55), 0, 1);
+        cR = A.mix(cR, o.rim, (shadowed ? 0.08 : 0.28) * f);
+      }
       const d = c.depth !== undefined ? c.depth * bh : depth;
       A.cube(ctx, X, Y, tw, th, d, top, cL, cR, c.kind === 'water' ? null : 'rgba(255,255,255,' + (o.edge === undefined ? 0.16 : o.edge) + ')');
       if (c.deco) c.deco(ctx, X, Y, tw, th, shadowed, i, j);
@@ -104,9 +118,16 @@
     if (o.after) o.after(ctx, n, { sx: sx, sy: sy, cell: cell, tw: tw, th: th, bh: bh });
     if (o.fog) A.vgrad(ctx, 0, 0, W, H * o.fog[2], [[0, A.rgba(o.fog[0], o.fog[1])], [1, A.rgba(o.fog[0], 0)]]);
     if (o.light) A.radial(ctx, W * 0.86, -H * 0.1, W * 0.62, A.rgba(o.light[0], o.light[1]), A.rgba(o.light[0], 0), o.light[2] || 'soft-light');
-    if (acc && acc.length > 2 && o.accent.halo) {
+    if (acc && acc.length > 2 && o.accent.halo && !o.sun) {
       A.radial(ctx, acc[2], acc[3], o.accent.haloR || 150, A.rgba(o.accent.halo, 0.38), A.rgba(o.accent.halo, 0), 'screen');
       A.radial(ctx, acc[2], acc[3], (o.accent.haloR || 150) * 0.35, A.rgba(o.accent.halo, 0.4), A.rgba(o.accent.halo, 0), 'screen');
+    }
+    if (o.mist) A.band(ctx, W, o.mist[0], o.mist[1], o.mist[2], o.mist[3]);
+    if (o.floor) A.vgrad(ctx, 0, H * (o.floorY == null ? 0.62 : o.floorY), W, H, [[0, A.rgba(o.floor, 0)], [1, A.rgba(o.floor, o.floorA == null ? 0.5 : o.floorA)]]);
+    if (o.sun && acc && acc.length > 2) {
+      const sx0 = acc[2] + (o.sun.dx || 36), sy0 = Math.max(28, acc[3] + (o.sun.dy || -50));
+      A.volumetric(ctx, sx0, sy0, o.sun.halo, { r: o.sun.r || 280, a: o.sun.va == null ? 0.34 : o.sun.va, shafts: o.sun.shafts == null ? 4 : o.sun.shafts, sy: 0.7 });
+      A.punkt(ctx, sx0, sy0, o.sun.s || 34, o.sun.color, o.sun.halo, o.sun.hr || 190);
     }
     if (o.vig) A.vignette(ctx, W, H, o.vig[0], o.vig[1]);
     A.grain(ctx, W, H, o.grain === undefined ? 9 : o.grain, o.seed);

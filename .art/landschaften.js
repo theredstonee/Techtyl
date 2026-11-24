@@ -55,7 +55,18 @@
     [[-20, 250, 420, 236], [420, 236, 900, 262], [900, 262, 1640, 232]].forEach(function (q) {
       ctx.beginPath(); ctx.moveTo(q[0], q[1]); ctx.quadraticCurveTo((q[0] + q[2]) / 2, Math.max(q[1], q[3]) + 26, q[2], q[3]); ctx.stroke();
     });
-    A.stipple(ctx, 0, 0, W, H, 60000, 'rgba(255,236,200,.2)', function (x, y) { return A.clamp(1 - Math.abs(y - 250) / 150, 0, 1) * 0.6; }, r, 1.4);
+    // Minarett als lesbare Silhouette, rechte Kante im Licht
+    (function () {
+      const x = 430, top = 150, b = 352;
+      ctx.fillStyle = '#2a2228';
+      ctx.fillRect(x, top, 28, b - top);
+      ctx.beginPath(); ctx.moveTo(x - 8, top + 10); ctx.lineTo(x + 14, top - 36); ctx.lineTo(x + 36, top + 10); ctx.fill();
+      ctx.strokeStyle = 'rgba(255,236,210,.65)'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(x + 28, top); ctx.lineTo(x + 28, b - 40); ctx.stroke();
+    })();
+    A.band(ctx, W, 250, 70, '#e6d2b4', 0.1);
+    A.volumetric(ctx, 1150, 166, '#ffe2aa', { r: 300, a: 0.16, shafts: 3 });
+    A.stipple(ctx, 0, 0, W, H, 30000, 'rgba(255,236,200,.16)', function (x, y) { return A.clamp(1 - Math.abs(y - 250) / 150, 0, 1) * 0.55; }, r, 1.4);
     A.finish(ctx, W, H, '#1c1418', 9, 41);
   });
 
@@ -84,6 +95,8 @@
     stack(1130, 22, 150); stack(1330, 26, 176); stack(1372, 20, 128); tower(1470, 0.9);
     A.mast(ctx, 880, gy(880), 96, 15, '#3a2a36');
     ctx.strokeStyle = '#3a2a36'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(488, gy(470) - 112); ctx.quadraticCurveTo(690, gy(690) - 60, 880, gy(880) - 96); ctx.quadraticCurveTo(990, gy(990) - 70, 1092, gy(1150) - 70); ctx.stroke();
+    A.band(ctx, W, 250, 60, '#f6e0c0', 0.1);
+    A.volumetric(ctx, 1010, 160, '#fff0c0', { r: 280, a: 0.14, shafts: 3 });
     A.finish(ctx, W, H, '#2a1420', 9, 52);
   });
 
@@ -139,142 +152,200 @@
     }
     frond(-30, 330, -0.5, 420, -70, '#0b3033'); frond(-40, 210, -0.2, 330, -50, '#0f3a3a'); frond(-20, 60, 0.35, 300, -40, '#0b3033');
     frond(1640, 300, Math.PI + 0.45, 400, 70, '#0b3033'); frond(1640, 120, Math.PI - 0.25, 300, 40, '#0f3a3a'); frond(1500, -30, Math.PI * 0.62, 260, 30, '#0b3033');
+    A.band(ctx, W, 240, 70, '#e7f0c8', 0.1);
+    A.volumetric(ctx, 1136, 170, '#fff2b8', { r: 300, a: 0.14, shafts: 3 });
     A.finish(ctx, W, H, '#062022', 9, 63);
   });
 
-  // Garry's Mod: Baukasten – schwebende Grundkörper über weiter Wiese
+  // Garry's Mod: monumentaler Baukasten in der Dämmerung. Eine Steinmasse, ein Glutkörper,
+  // der Punkt als Sonne. Keine bunten Spielzeugkörper.
   A.scene('bn-garrys-mod', BW, BH, function (ctx, W, H) {
-    const r = A.rng(74), hz = 262;
-    A.vgrad(ctx, 0, 0, W, hz, [[0, '#4f93d8'], [1, '#c9e6f6']]);
-    A.vgrad(ctx, 0, hz, W, H - hz, [[0, '#8cc65c'], [0.35, '#5a9c45'], [1, '#2f6a33']]);
-    for (let k = 0; k < 9; k++) {
-      const x = r() * W, y = 30 + r() * 150, s = 0.6 + r();
-      ctx.fillStyle = 'rgba(255,255,255,.78)';
-      A.rrect(ctx, x, y, 150 * s, 22 * s, 11 * s); ctx.fill(); A.rrect(ctx, x + 34 * s, y - 14 * s, 80 * s, 24 * s, 12 * s); ctx.fill();
-    }
-    A.punkt(ctx, 1196, 178, 50, '#fffdf0', '#fff6c8', 260);
-    ctx.strokeStyle = 'rgba(255,255,255,.1)'; ctx.lineWidth = 1; ctx.beginPath();
-    for (let k = -30; k <= 30; k++) { ctx.moveTo(W * 0.5, hz); ctx.lineTo(W * 0.5 + k * 190, H); }
-    for (let z = 1; z < 18; z++) { const y = hz + 270 / z; ctx.moveTo(0, y); ctx.lineTo(W, y); }
+    const r = A.rng(74);
+    const sky = '#12151e', haze = '#8d7568', stone = '#6e655c', lit = '#f0e2d0', ember = '#e08a40';
+    A.vgrad(ctx, 0, 0, W, H, [[0, sky], [0.28, '#222838'], [0.48, '#5c463c'], [0.62, '#c49a74'], [1, '#8a5a40']]);
+    A.radial(ctx, 1210, 128, 700, 'rgba(255,186,120,.2)', 'rgba(255,186,120,0)', 'screen', 1.3, 0.7);
+    // Ferne Blockskyline, fast nur Silhouette
+    ctx.fillStyle = '#5c514a';
+    [[40, 78], [150, 46], [230, 96], [340, 58], [430, 120], [560, 40], [1280, 70], [1390, 110], [1510, 52]].forEach(function (q) {
+      ctx.fillRect(q[0], 236 - q[1], 70 + (q[0] % 50), q[1]);
+    });
+    A.band(ctx, W, 214, 70, '#e4cbb4', 0.22);
+    // Boden, nach unten ruhig
+    A.vgrad(ctx, 0, 248, W, H - 248, [[0, '#3a332c'], [0.35, '#241e1a'], [1, '#100e0c']]);
+    ctx.strokeStyle = 'rgba(255,220,180,.07)'; ctx.lineWidth = 1; ctx.beginPath();
+    for (let k = -6; k <= 8; k++) { ctx.moveTo(860, 250); ctx.lineTo(200 + k * 160, 470); }
     ctx.stroke();
-    function shadow(x, y, w) { ctx.fillStyle = 'rgba(20,60,30,.3)'; ctx.beginPath(); ctx.ellipse(x - 26, y, w, w * 0.2, 0, 0, 7); ctx.fill(); }
-    function ball(x, y, rad, col) {
-      shadow(x, 318 + rad * 0.3, rad * 1.1);
-      const g = ctx.createRadialGradient(x + rad * 0.4, y - rad * 0.45, rad * 0.1, x, y, rad);
-      g.addColorStop(0, A.mix(col, '#ffffff', 0.45)); g.addColorStop(0.55, col); g.addColorStop(1, A.shade(col, 0.6));
-      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, rad, 0, 7); ctx.fill();
-      ctx.save(); ctx.beginPath(); ctx.arc(x, y, rad, 0, 7); ctx.clip();
-      A.stipple(ctx, x - rad, y - rad, rad * 2, rad * 2, rad * rad * 1.6, A.rgba(A.shade(col, 0.4), 0.7), function (px, py) { return A.clamp(((x - px) + (py - y)) / rad * 0.5, 0, 1); }, r, 1.4);
-      ctx.restore();
-    }
-    function box(x, y, tw, col) { shadow(x, 322 + tw * 0.2, tw * 1.25); A.cube(ctx, x, y, tw, tw / 2, tw * 1.05, A.mix(col, '#ffffff', 0.18), A.shade(col, 0.62), A.shade(col, 0.84), 'rgba(255,255,255,.45)'); }
-    function cyl(x, y, w, h, col) {
-      shadow(x, 320, w * 1.2);
-      const g = ctx.createLinearGradient(x - w, 0, x + w, 0); g.addColorStop(0, A.shade(col, 0.6)); g.addColorStop(0.7, col); g.addColorStop(1, A.mix(col, '#ffffff', 0.25));
-      ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(x, y + h, w, w * 0.32, 0, 0, Math.PI); ctx.lineTo(x - w, y); ctx.lineTo(x + w, y); ctx.fill();
-      ctx.fillStyle = A.mix(col, '#ffffff', 0.3); ctx.beginPath(); ctx.ellipse(x, y, w, w * 0.32, 0, 0, 7); ctx.fill();
-    }
-    function cone(x, y, w, h, col) {
-      shadow(x, 316, w * 1.2);
-      const g = ctx.createLinearGradient(x - w, 0, x + w, 0); g.addColorStop(0, A.shade(col, 0.62)); g.addColorStop(0.7, col); g.addColorStop(1, A.mix(col, '#ffffff', 0.3));
-      ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + w, y + h); ctx.ellipse(x, y + h, w, w * 0.3, 0, 0, Math.PI); ctx.lineTo(x, y); ctx.fill();
-    }
-    cone(170, 96, 44, 104, '#f2c230'); box(430, 70, 58, '#f0863a'); ball(690, 150, 50, '#3f7fd6'); cyl(905, 72, 38, 100, '#d9534f');
-    box(1085, 150, 30, '#8a5cc9'); ball(1290, 110, 34, '#35b08a'); box(1470, 60, 46, '#e8e4da'); ball(300, 220, 20, '#e8e4da'); box(800, 40, 20, '#f2c230');
-    A.finish(ctx, W, H, '#10301c', 8, 74);
+    // Ferner Quader, ins Himmelslicht gemischt
+    A.cube(ctx, 390, 188, 40, 20, 36, A.mix(haze, '#d8c4b0', 0.45), A.mix(haze, '#4a4038', 0.5), A.mix(haze, lit, 0.35));
+    // Held: großer Steinquader, rechte Fläche im Licht
+    const hx = 760, hy = 146, tw = 88, th = 44, d = 82;
+    A.cube(ctx, hx, hy, tw, th, d, '#cfc2b2', '#3a342e', lit, 'rgba(255,244,230,.45)');
+    A.cube(ctx, hx - 8, hy - 62, 46, 23, 52, '#e4d8c8', '#4a433c', '#f7ecde', 'rgba(255,244,230,.5)');
+    // Zylinder als Druckfläche, nicht als Glanzkörper
+    (function () {
+      const x = 470, y = 196, w = 34, h = 78;
+      const g = ctx.createLinearGradient(x - w, 0, x + w, 0);
+      g.addColorStop(0, '#3a342e'); g.addColorStop(0.55, stone); g.addColorStop(1, A.mix(stone, lit, 0.55));
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.ellipse(x, y + h, w, w * 0.34, 0, 0, Math.PI); ctx.lineTo(x - w, y); ctx.lineTo(x + w, y); ctx.fill();
+      ctx.fillStyle = A.mix(stone, '#e7d8c4', 0.4);
+      ctx.beginPath(); ctx.ellipse(x, y, w, w * 0.34, 0, 0, 7); ctx.fill();
+    })();
+    // Einziger gesättigter Körper: die Glut, direkt im Lichtkegel
+    A.cube(ctx, 1048, 196, 34, 17, 40, '#ffd7a8', '#a85a28', '#ffb368', 'rgba(255,244,220,.7)');
+    A.radial(ctx, 1066, 214, 90, 'rgba(255,170,80,.35)', 'rgba(255,170,80,0)', 'screen');
+    // Linke Fläche des Helden als Punktraster
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(hx - tw, hy + th); ctx.lineTo(hx, hy + 2 * th); ctx.lineTo(hx, hy + 2 * th + d); ctx.lineTo(hx - tw, hy + th + d);
+    ctx.closePath(); ctx.clip();
+    A.stipple(ctx, hx - tw, hy, tw, th * 2 + d, 7000, 'rgba(28,20,14,.4)', function (x, y) {
+      return A.clamp((hx - x) / tw * 0.45 + (y - hy) / 260, 0, 0.8);
+    }, r, 1.4);
+    ctx.restore();
+    A.band(ctx, W, 236, 64, '#f0d8c0', 0.16);
+    A.volumetric(ctx, 1210, 128, '#ffb36a', { r: 460, a: 0.3, shafts: 4, sy: 0.78 });
+    A.punkt(ctx, 1210, 128, 52, '#fff3dd', '#ffc48a', 280);
+    // Vordergrund-Silhouette: schwere Quader, die den Helden rahmen
+    A.cube(ctx, 130, 292, 128, 64, 110, '#161310', '#0c0b09', '#241e18');
+    A.cube(ctx, 1560, 276, 108, 54, 100, '#161310', '#0c0b09', '#3a2c24');
+    A.finish(ctx, W, H, '#0a090c', 9, 74);
   });
 
-  // Custom Source Engine Game: nüchterner Testraum mit Messraster
+  // Custom Source Engine Game: Testraum als Portal. Vordergrundrahmen, Monolith im Licht, Dunst.
   A.scene('bn-source', BW, BH, function (ctx, W, H) {
-    const hz = 224, vx = W * 0.64, r = A.rng(85);
-    A.vgrad(ctx, 0, 0, W, hz, [[0, '#14171c'], [1, '#39414c']]);
-    A.vgrad(ctx, 0, hz, W, H - hz, [[0, '#3a424d'], [0.25, '#272c34'], [1, '#121418']]);
-    // Rückwand-Paneele
-    ctx.strokeStyle = 'rgba(255,255,255,.07)'; ctx.lineWidth = 1; ctx.beginPath();
-    for (let x = vx % 96; x < W; x += 96) { ctx.moveTo(x + 0.5, 0); ctx.lineTo(x + 0.5, hz); }
-    for (let y = hz - 48; y > 0; y -= 48) { ctx.moveTo(0, y + 0.5); ctx.lineTo(W, y + 0.5); }
+    const r = A.rng(85);
+    const openL = 214, openR = 1386, openT = 86, hz = 246;
+    A.vgrad(ctx, 0, 0, W, H, [[0, '#141822'], [0.28, '#2a303c'], [0.46, '#6a5344'], [0.58, '#e0b48a'], [1, '#1a140f']]);
+    A.vgrad(ctx, 0, hz, W, H - hz, [[0, 'rgba(28,32,40,0)'], [0.25, 'rgba(18,20,26,.55)'], [1, '#0c0e14']]);
+    // Bodenraster, nur in der Öffnung und nach unten auslaufend
+    ctx.save();
+    ctx.beginPath(); ctx.rect(openL, openT, openR - openL, H); ctx.clip();
+    ctx.strokeStyle = 'rgba(210,196,176,.16)'; ctx.lineWidth = 1.2; ctx.beginPath();
+    for (let k = -7; k <= 7; k++) { ctx.moveTo(980 + k * 28, hz); ctx.lineTo(openL + (k + 7) * ((openR - openL) / 14), 500); }
+    for (let i = 0; i < 5; i++) { const y = hz + 16 + i * i * 9; ctx.moveTo(openL, y); ctx.lineTo(openR, y); }
     ctx.stroke();
-    ctx.fillStyle = 'rgba(255,255,255,.035)';
-    for (let x = vx % 96 - 96, k = 0; x < W; x += 96, k++) for (let y = hz - 48, j = 0; y > -48; y -= 48, j++) if ((k + j) & 1) ctx.fillRect(x, y, 96, 48);
-    const X = function (kx, y) { return vx + kx * 150 * (y - hz) / 296; };
-    const Y = function (z) { return hz + 296 / z; };
-    for (let z = 1; z < 26; z++) for (let kx = -40; kx < 40; kx++) {
-      const y0 = Y(z + 1), y1 = Y(z), h = A.hash(kx, z, 8);
-      let col = null;
-      if ((kx + z) & 1) col = 'rgba(255,255,255,.045)';
-      if (h < 0.07 && z > 2) col = 'rgba(240,138,36,' + A.clamp(0.9 - z * 0.03, 0.3, 0.9) + ')';
-      if (!col) continue;
-      ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(X(kx, y0), y0); ctx.lineTo(X(kx + 1, y0), y0); ctx.lineTo(X(kx + 1, y1), y1); ctx.lineTo(X(kx, y1), y1); ctx.fill();
-    }
-    ctx.strokeStyle = 'rgba(190,205,225,.2)'; ctx.beginPath();
-    for (let kx = -60; kx <= 60; kx++) { ctx.moveTo(vx, hz); ctx.lineTo(X(kx, H), H); }
-    for (let z = 1; z < 40; z++) { ctx.moveTo(0, Y(z)); ctx.lineTo(W, Y(z)); }
+    ctx.restore();
+    A.band(ctx, W, hz - 6, 70, '#f0d2b4', 0.2);
+    // Ferner Block, kontrastarm
+    A.cube(ctx, 900, 196, 36, 18, 34, '#5c656e', '#323840', '#8d7b6c', 'rgba(255,236,220,.2)');
+    // Held-Monolith, rechte Fläche voll im Licht des Punktes
+    const hx = 610, hy = 156, tw = 74, th = 37, d = 86;
+    A.cube(ctx, hx, hy, tw, th, d, '#8b93a0', '#2c333c', '#f0d2b0', 'rgba(255,236,214,.55)');
+    A.cube(ctx, hx + 10, hy - 58, 36, 18, 40, '#c5ccd4', '#3a424c', '#ffe6c8', 'rgba(255,244,230,.6)');
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(hx - tw, hy + th); ctx.lineTo(hx, hy + 2 * th); ctx.lineTo(hx, hy + 2 * th + d); ctx.lineTo(hx - tw, hy + th + d);
+    ctx.closePath(); ctx.clip();
+    A.stipple(ctx, hx - tw, hy, tw, th * 2 + d, 6000, 'rgba(12,16,22,.38)', function (x) { return A.clamp((hx - x) / tw * 0.7, 0, 0.75); }, r, 1.4);
+    ctx.restore();
+    A.volumetric(ctx, 1124, 142, '#ffb15a', { r: 420, a: 0.34, shafts: 4, sy: 0.7 });
+    A.punkt(ctx, 1124, 142, 48, '#ffd7a4', '#ffb15a', 260);
+    // Vordergrund: der Rahmen schneidet das Licht ab
+    ctx.fillStyle = '#0e1218';
+    ctx.fillRect(0, 0, W, openT);
+    ctx.fillRect(0, 0, openL, H);
+    ctx.fillRect(openR, 0, W - openR, H);
+    ctx.fillStyle = '#1a140f';
+    ctx.fillRect(openL, 430, openR - openL, H - 430);
+    // Kante, die das Licht fängt
+    ctx.strokeStyle = 'rgba(255,196,140,.75)'; ctx.lineWidth = 3; ctx.beginPath();
+    ctx.moveTo(openL, openT); ctx.lineTo(openL, 360);
+    ctx.moveTo(openR, openT); ctx.lineTo(openR, 340);
+    ctx.moveTo(openL, openT); ctx.lineTo(openR, openT);
     ctx.stroke();
-    ctx.fillStyle = '#4a535f'; ctx.fillRect(0, hz - 1, W, 2);
-    // Maßmarken und Lichtquelle
-    ctx.fillStyle = 'rgba(240,138,36,.8)';
-    for (let x = vx % 96; x < W; x += 96) ctx.fillRect(x - 1, hz - 14, 3, 10);
-    A.radial(ctx, vx, hz + 50, 420, 'rgba(240,150,60,.3)', 'rgba(240,150,60,0)', 'screen', 1.6, 0.4);
-    A.punkt(ctx, vx, 158, 46, '#f6a03c', '#f6a03c', 260);
-    // zwei Messkörper
-    A.cube(ctx, 380, 150, 62, 31, 70, '#59626e', '#2c323a', '#414952', 'rgba(255,255,255,.3)');
-    A.cube(ctx, 470, 215, 34, 17, 38, '#f08a24', '#8f4f12', '#c26d1a', 'rgba(255,255,255,.4)');
-    A.finish(ctx, W, H, '#050608', 8, 85);
+    A.finish(ctx, W, H, '#05060a', 8, 85);
   });
 
   // Deno: Regennacht über Hügeln
   A.scene('bn-deno', BW, BH, function (ctx, W, H) {
     const n = A.makeNoise(96), r = A.rng(96);
     A.vgrad(ctx, 0, 0, W, H, [[0, '#0c1219'], [0.3, '#182431'], [0.52, '#33475a'], [1, '#33475a']]);
-    A.punkt(ctx, 1140, 172, 48, '#f1f6f8', '#a9cbe0', 300);
+    A.punkt(ctx, 1140, 168, 46, '#f4f8fb', '#c5dff0', 280);
+    A.volumetric(ctx, 1140, 168, '#c5dff0', { r: 320, a: 0.18, shafts: 3, a0: Math.PI * 0.35, a1: Math.PI * 0.85 });
     for (let k = 0; k < 12; k++) { const w = 500 + r() * 900, x = r() * W - w / 2, y = -24 + k * 6 + r() * 8; ctx.fillStyle = 'rgba(6,10,15,.3)'; A.rrect(ctx, x, y, w, 30 + r() * 26, 28); ctx.fill(); }
     [['#2b3e50', 262, 44, 380], ['#1c2b3a', 306, 50, 300], ['#111c27', 366, 44, 420]].forEach(function (q, k) {
       const ys = A.ridge(W, q[1], q[2], q[3], n, k * 4 + 1, 3);
       A.fillRidge(ctx, ys, H, q[0]);
       A.crest(ctx, ys, 'rgba(190,220,240,' + (0.3 - k * 0.07) + ')', 1.4);
-      A.shadeRidge(ctx, ys, H, 'rgba(5,10,16,.6)', r, 70000, 0.6, 120);
+      A.shadeRidge(ctx, ys, H, 'rgba(5,10,16,.6)', r, 40000, 0.45, 120);
     });
+    // Mast auf dem mittleren Kamm, rechte Kante im Mondlicht
+    (function () {
+      const x = 640, yb = 300, h = 168;
+      ctx.fillStyle = '#0c141c';
+      ctx.beginPath(); ctx.moveTo(x - 16, yb); ctx.lineTo(x - 5, yb - h); ctx.lineTo(x + 6, yb - h); ctx.lineTo(x + 16, yb); ctx.fill();
+      ctx.fillRect(x - 26, yb - h * 0.62, 52, 5);
+      ctx.strokeStyle = 'rgba(230,242,250,.7)'; ctx.lineWidth = 2; ctx.beginPath();
+      ctx.moveTo(x + 6, yb - h); ctx.lineTo(x + 16, yb); ctx.stroke();
+    })();
+    A.band(ctx, W, 250, 70, '#9eb6c8', 0.1);
     ctx.lineCap = 'round';
-    for (let k = 0; k < 1300; k++) {
-      const x = r() * (W + 200), y = r() * (H + 40) - 40, L = 12 + r() * r() * 70;
-      ctx.strokeStyle = 'rgba(214,232,244,' + (0.06 + r() * r() * 0.5) + ')'; ctx.lineWidth = 0.8 + r() * 1.2;
-      ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x - L * 0.3, y + L); ctx.stroke();
+    for (let k = 0; k < 520; k++) {
+      const x = r() * (W + 200), y = r() * H * 0.78 - 20, L = 16 + r() * r() * 80;
+      if (y > H * 0.72) continue;
+      ctx.strokeStyle = 'rgba(214,232,244,' + (0.08 + r() * r() * 0.45) + ')'; ctx.lineWidth = 1.3 + r() * 1.5;
+      ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x - L * 0.28, y + L); ctx.stroke();
     }
     A.finish(ctx, W, H, '#04070b', 9, 96);
   });
 
-  // Bun: warme, runde Teighügel mit Körnern
+  // Bun: gebrannte Tonhügel im Gegenlicht. Rund, aber als Landschaft, nicht als Gebäck.
   A.scene('bn-bun', BW, BH, function (ctx, W, H) {
-    const r = A.rng(107);
-    A.vgrad(ctx, 0, 0, W, H, [[0, '#fbe6cc'], [0.5, '#f9d3ae'], [1, '#f3bd94']]);
-    A.radial(ctx, 1150, 148, 360, 'rgba(255,255,255,.75)', 'rgba(255,255,255,0)');
-    A.punkt(ctx, 1150, 148, 48, '#f5906a');
-    function dome(x, base, rx, ry, col, seeds) {
-      const path = function () { ctx.beginPath(); ctx.ellipse(x, base, rx, ry, 0, Math.PI, 0); ctx.lineTo(x + rx, H + 10); ctx.lineTo(x - rx, H + 10); ctx.closePath(); };
-      const g = ctx.createLinearGradient(0, base - ry, 0, base + 60); g.addColorStop(0, A.mix(col, '#fff3dc', 0.3)); g.addColorStop(0.5, col); g.addColorStop(1, A.shade(col, 0.82));
-      path(); ctx.fillStyle = g; ctx.fill();
-      ctx.save(); path(); ctx.clip();
-      A.stipple(ctx, x - rx, base - ry, rx * 2, ry + 80, rx * ry * 0.5, A.rgba(A.shade(col, 0.55), 0.7), function (px, py) {
-        const u = (x - px) / rx, v = (py - (base - ry)) / ry; return A.clamp(u * 0.7 + v * 0.45 - 0.25, 0, 1) * 0.7;
-      }, r, 1.4);
-      ctx.strokeStyle = 'rgba(255,246,226,.75)'; ctx.lineWidth = 3; ctx.lineCap = 'round';
-      ctx.beginPath(); ctx.ellipse(x, base, rx - 14, ry - 12, 0, -Math.PI * 0.42, -Math.PI * 0.14); ctx.stroke();
-      if (seeds) for (let k = 0; k < seeds; k++) {
-        const a = -Math.PI * (0.12 + r() * 0.76), d = 0.3 + r() * 0.62;
-        ctx.save(); ctx.translate(x + Math.cos(a) * rx * d, base + Math.sin(a) * ry * d); ctx.rotate(r() * 3);
-        ctx.fillStyle = 'rgba(120,60,30,.25)'; ctx.beginPath(); ctx.ellipse(1, 2, 7, 3.4, 0, 0, 7); ctx.fill();
-        ctx.fillStyle = '#fff1d6'; ctx.beginPath(); ctx.ellipse(0, 0, 7, 3.4, 0, 0, 7); ctx.fill(); ctx.restore();
+    const n = A.makeNoise(107), r = A.rng(107);
+    function dome(base, amp, cx, width, wobble) {
+      const ys = new Float32Array(W + 1);
+      for (let x = 0; x <= W; x++) {
+        const u = (x - cx) / width;
+        const bell = Math.exp(-u * u * 1.7);
+        const w = wobble * n.fbm(x / 380 + cx * 0.01, wobble, 3);
+        ys[x] = base - amp * A.clamp(bell + w * (0.25 + bell), 0, 1.15);
       }
-      ctx.restore();
+      return ys;
     }
-    dome(250, 300, 300, 130, '#f2c9a2'); dome(900, 310, 380, 150, '#f0c298'); dome(1480, 300, 260, 120, '#f2c9a2');
-    dome(560, 340, 280, 140, '#e9aa7c', 0); dome(1240, 350, 320, 130, '#e7a577', 0);
-    dome(120, 400, 300, 170, '#d88a5e', 26); dome(760, 420, 340, 160, '#d4845a', 34); dome(1420, 420, 330, 180, '#d88a5e', 30);
-    // Dampf
-    ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.lineWidth = 5; ctx.lineCap = 'round';
-    [[520, 190], [575, 176], [1230, 204], [1290, 190]].forEach(function (q) {
-      ctx.beginPath(); ctx.moveTo(q[0], q[1]); ctx.bezierCurveTo(q[0] - 26, q[1] - 34, q[0] + 26, q[1] - 62, q[0], q[1] - 100); ctx.stroke();
-    });
-    A.finish(ctx, W, H, '#6a2f20', 8, 107);
+    A.vgrad(ctx, 0, 0, W, H, [[0, '#f6e6d4'], [0.3, '#e7c3a2'], [0.5, '#d39a72'], [1, '#5c2c20']]);
+    A.radial(ctx, 1200, 142, 520, 'rgba(255,210,170,.4)', 'rgba(255,210,170,0)');
+    const farA = dome(248, 78, 380, 520, 0.35);
+    const farB = dome(256, 64, 1280, 460, 0.3);
+    A.fillRidge(ctx, farA, H, '#edd6c2');
+    A.fillRidge(ctx, farB, H, '#e8d0ba');
+    A.crest(ctx, farA, 'rgba(255,248,238,.35)', 1.2);
+    A.band(ctx, W, 230, 80, '#f8ecdf', 0.28);
+    const mid = dome(318, 132, 1040, 460, 0.22);
+    A.fillRidge(ctx, mid, H, '#d4926a');
+    A.shadeRidge(ctx, mid, H, 'rgba(90,40,24,.7)', r, 42000, 0.45, 150);
+    // Grat nur auf der lichtzugewandten Schulter
+    ctx.strokeStyle = 'rgba(255,236,214,.85)'; ctx.lineWidth = 2.4; ctx.beginPath();
+    for (let x = 980; x < 1320; x++) ctx.lineTo(x, mid[x] + 0.5);
+    ctx.stroke();
+    A.volumetric(ctx, 1204, 146, '#ff8a55', { r: 340, a: 0.26, shafts: 3, a0: Math.PI * 0.5, a1: Math.PI * 0.95, sy: 0.55 });
+    A.punkt(ctx, 1204, 146, 48, '#e25b32', '#ffb088', 220);
+    const nearL = dome(400, 108, 260, 420, 0.2);
+    const nearR = dome(424, 96, 1180, 560, 0.16);
+    A.fillRidge(ctx, nearL, H, '#a85a38');
+    A.shadeRidge(ctx, nearL, H, 'rgba(70,28,16,.75)', r, 28000, 0.4, 120);
+    A.fillRidge(ctx, nearR, H, '#7a3a28');
+    A.shadeRidge(ctx, nearR, H, 'rgba(50,20,12,.8)', r, 28000, 0.4, 130);
+    A.crest(ctx, nearR, 'rgba(255,214,180,.28)', 1.3);
+    // Vordergrund als fast schwarze Tonmasse, unten ruhig
+    const front = dome(492, 78, 760, 700, 0.1);
+    A.fillRidge(ctx, front, H, '#4e261c');
+    // Brennofen als Vordergrund-Silhouette links, Öffnung dunkel, rechte Kante im Licht
+    (function () {
+      const x = 120, y = 210, w = 280, h = 250;
+      ctx.fillStyle = '#4a2418';
+      ctx.beginPath();
+      ctx.moveTo(x, H + 4); ctx.lineTo(x, y + h * 0.42);
+      ctx.quadraticCurveTo(x + w * 0.5, y, x + w, y + h * 0.42);
+      ctx.lineTo(x + w, H + 4); ctx.fill();
+      ctx.fillStyle = '#24110c';
+      ctx.beginPath();
+      ctx.moveTo(x + w * 0.28, H + 4); ctx.lineTo(x + w * 0.28, y + h * 0.58);
+      ctx.quadraticCurveTo(x + w * 0.5, y + h * 0.34, x + w * 0.72, y + h * 0.58);
+      ctx.lineTo(x + w * 0.72, H + 4); ctx.fill();
+      ctx.strokeStyle = 'rgba(255,214,180,.75)'; ctx.lineWidth = 2.5; ctx.beginPath();
+      ctx.moveTo(x + w, y + h * 0.42); ctx.lineTo(x + w, y + h); ctx.stroke();
+    })();
+    A.finish(ctx, W, H, '#3a1c14', 8, 107);
   });
 })();

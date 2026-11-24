@@ -255,4 +255,113 @@
     A.vignette(ctx, W, H, '#020308', 0.5);
     A.grain(ctx, W, H, 4, 256);
   });
+
+  // Megalith: Steinsetzungen im Dunst, der Punkt als tiefe Sonne. Mitte bleibt frei.
+  A.scene('bg-megalith', GW, GH, function (ctx, W, H) {
+    const r = A.rng(301);
+    A.vgrad(ctx, 0, 0, W, H, [[0, '#161410'], [0.4, '#2e2a24'], [0.58, '#4a4036'], [0.74, '#6e5e4e'], [1, '#241e18']]);
+    A.radial(ctx, W * 0.5, H * 0.62, 980, 'rgba(74,64,54,.4)', 'rgba(74,64,54,0)', null, 1.5, 0.75);
+    function stone(x, y, w, h, col, lit) {
+      const lean = ((x / 80) % 2) ? 0.08 : -0.05;
+      ctx.fillStyle = col;
+      ctx.beginPath();
+      ctx.moveTo(x, y + h);
+      ctx.lineTo(x + w * (0.08 + lean), y + h * 0.04);
+      ctx.lineTo(x + w * (0.62 + lean), y);
+      ctx.lineTo(x + w * 0.96, y + h * 0.1);
+      ctx.lineTo(x + w, y + h);
+      ctx.closePath();
+      ctx.fill();
+      if (lit) {
+        ctx.strokeStyle = 'rgba(236,214,180,.4)'; ctx.lineWidth = 3; ctx.beginPath();
+        ctx.moveTo(x + w * 0.96, y + h * 0.1); ctx.lineTo(x + w, y + h * 0.92); ctx.stroke();
+      }
+    }
+    [[380, 860, 64, 150, '#5c5348'], [620, 900, 46, 110, '#675e52'], [1760, 880, 54, 130, '#5a5146'], [1980, 840, 70, 170, '#655c50']].forEach(function (s) {
+      stone(s[0], s[1], s[2], s[3], s[4], false);
+    });
+    A.band(ctx, W, H * 0.64, 200, '#cbb89a', 0.14);
+    stone(-30, 700, 120, 580, '#1c1814', false);
+    stone(150, 760, 96, 500, '#2a241e', true);
+    stone(300, 860, 72, 380, '#322c26', false);
+    stone(2140, 660, 230, 680, '#1e1a16', true);
+    stone(2340, 760, 170, 520, '#2a241e', false);
+    stone(2060, 900, 90, 280, '#3a322a', true);
+    A.volumetric(ctx, W * 0.8, H * 0.32, '#e4c49a', { r: 640, a: 0.1, shafts: 0, sy: 0.46 });
+    A.punkt(ctx, W * 0.8, H * 0.32, 48, '#f0e0c8', '#e4c49a', 240);
+    A.stipple(ctx, 0, H * 0.5, W, H * 0.5, 80000, 'rgba(20,16,12,.35)', function (x, y) {
+      const e = Math.abs(x / W - 0.5);
+      return A.clamp(e * 1.4, 0, 1) * 0.45;
+    }, r, 1.6);
+    A.vignette(ctx, W, H, '#0c0a08', 0.45);
+    A.grain(ctx, W, H, 4, 301);
+  });
+
+  // Nachthorizont: zurückhaltende Skyline, im Himmel ein schwaches Gitter, Mitte dunkel und ruhig.
+  A.scene('bg-skyline', GW, GH, function (ctx, W, H) {
+    const r = A.rng(312);
+    A.vgrad(ctx, 0, 0, W, H, [[0, '#0c1016'], [0.45, '#141c28'], [0.72, '#1c2c3a'], [1, '#101820']]);
+    const L = A.layer(W, H);
+    L.strokeStyle = 'rgba(154,176,196,.07)'; L.lineWidth = 1; L.beginPath();
+    for (let x = 40; x < W; x += 96) { L.moveTo(x, 0); L.lineTo(x, H * 0.78); }
+    for (let y = 40; y < H * 0.78; y += 96) { L.moveTo(0, y); L.lineTo(W, y); }
+    L.stroke();
+    L.globalCompositeOperation = 'destination-out';
+    A.radial(L, W * 0.48, H * 0.42, H * 0.55, 'rgba(0,0,0,.85)', 'rgba(0,0,0,0)', null, 1.35, 1);
+    ctx.drawImage(L.canvas, 0, 0);
+    const base = H * 0.78;
+    function block(x, w, h, win) {
+      ctx.fillStyle = '#121820'; ctx.fillRect(x, base - h, w, h + H);
+      if (!win) return;
+      ctx.fillStyle = 'rgba(168,188,204,.28)';
+      for (let yy = base - h + 18; yy < base - 16; yy += 28) for (let xx = x + 12; xx < x + w - 12; xx += 22) {
+        if (r() < 0.55) ctx.fillRect(xx, yy, 8, 11);
+      }
+    }
+    [[40, 160, 340], [210, 120, 220], [340, 90, 160], [2140, 150, 300], [2300, 130, 420], [2440, 100, 180]].forEach(function (b) { block(b[0], b[1], b[2], true); });
+    // Mitte nur niedrige Riegel, damit Flächen darüber lesbar bleiben
+    let x = 560;
+    while (x < 1960) {
+      const w = 70 + r() * 90, h = 36 + r() * 70;
+      block(x, w, h, r() < 0.4);
+      x += w + 8 + r() * 24;
+    }
+    ctx.fillStyle = '#0e141c'; ctx.fillRect(0, base - 2, W, H);
+    A.band(ctx, W, base - 10, 80, '#8aa0b4', 0.08);
+    A.volumetric(ctx, W * 0.84, H * 0.2, '#c5d0dc', { r: 420, a: 0.08, shafts: 0, sy: 0.6 });
+    A.punkt(ctx, W * 0.84, H * 0.2, 32, '#e6e4dc', '#c5d0dc', 160);
+    A.vignette(ctx, W, H, '#06080c', 0.4);
+    A.grain(ctx, W, H, 4, 312);
+  });
+
+  // Gezeitentümpel: ruhige organische Formen, wie eine Nahaufnahme nassen Steins. Mitte fast glatt.
+  A.scene('bg-tidepool', GW, GH, function (ctx, W, H) {
+    const r = A.rng(323);
+    A.vgrad(ctx, 0, 0, W, H, [[0, '#1a2e30'], [0.5, '#243c3e'], [1, '#1a3032']]);
+    function lobe(x, y, rx, ry, rot, col) {
+      ctx.save(); ctx.translate(x, y); ctx.rotate(rot); ctx.fillStyle = col;
+      ctx.beginPath(); ctx.ellipse(0, 0, rx, ry, 0, 0, 7); ctx.fill(); ctx.restore();
+    }
+    lobe(-80, 200, 520, 280, 0.4, '#1a2c2c');
+    lobe(W + 60, 160, 480, 300, -0.3, '#18302e');
+    lobe(180, H + 40, 640, 300, 0.2, '#142624');
+    lobe(W - 80, H - 40, 560, 280, -0.4, '#16302c');
+    lobe(80, H * 0.5, 300, 180, 0.6, '#2c4846');
+    lobe(W - 120, H * 0.55, 340, 200, -0.5, '#314e4a');
+    // Der Tümpel selbst: glatt, wenig Kontrast
+    ctx.fillStyle = '#1c3436';
+    ctx.beginPath(); ctx.ellipse(W * 0.5, H * 0.52, 700, 360, -0.15, 0, 7); ctx.fill();
+    ctx.fillStyle = '#234246';
+    ctx.beginPath(); ctx.ellipse(W * 0.48, H * 0.5, 460, 230, -0.15, 0, 7); ctx.fill();
+    ctx.strokeStyle = 'rgba(140,176,168,.16)'; ctx.lineWidth = 2; ctx.beginPath();
+    ctx.ellipse(W * 0.5, H * 0.52, 700, 360, -0.15, 0.15, 1.15); ctx.stroke();
+    A.stipple(ctx, 0, 0, W, H, 90000, 'rgba(8,16,16,.4)', function (x, y) {
+      const d = Math.hypot((x - W * 0.5) / 780, (y - H * 0.52) / 400);
+      return A.clamp(d - 0.85, 0, 1);
+    }, r, 1.5);
+    A.volumetric(ctx, W * 0.86, H * 0.24, '#c9ddd4', { r: 420, a: 0.08, shafts: 0, sy: 0.5 });
+    A.punkt(ctx, W * 0.86, H * 0.24, 28, '#e4f0ea', '#c9ddd4', 140);
+    A.vignette(ctx, W, H, '#0c1616', 0.4);
+    A.grain(ctx, W, H, 4, 323);
+  });
 })();

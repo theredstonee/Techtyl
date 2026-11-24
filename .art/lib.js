@@ -178,4 +178,35 @@
     const c = document.createElement('canvas'); c.width = W; c.height = H;
     return c.getContext('2d');
   };
+
+  // Weiches Dunstband (atmosphärische Ebene zwischen den Motiven)
+  A.band = function (ctx, W, y, h, color, alpha) {
+    A.vgrad(ctx, 0, y - h * 0.5, W, h, [[0, A.rgba(color, 0)], [0.45, A.rgba(color, alpha)], [1, A.rgba(color, 0)]]);
+  };
+
+  // Volumenlicht aus dem Techtyl-Punkt: weicher Hof und wenige Strahlen, keine Strahlenkranz-Grafik
+  A.volumetric = function (ctx, x, y, color, o) {
+    o = o || {};
+    const R = o.r || 420;
+    A.radial(ctx, x, y, R, A.rgba(color, o.a == null ? 0.32 : o.a), A.rgba(color, 0), 'screen', o.sx || 1.2, o.sy || 0.72);
+    ctx.save();
+    ctx.globalCompositeOperation = 'screen';
+    ctx.translate(x, y);
+    const n = o.shafts == null ? 4 : o.shafts;
+    const a0 = o.a0 == null ? Math.PI * 0.42 : o.a0;
+    const a1 = o.a1 == null ? Math.PI * 0.82 : o.a1;
+    for (let i = 0; i < n; i++) {
+      const a = n === 1 ? (a0 + a1) / 2 : a0 + (a1 - a0) * (i / (n - 1));
+      const spread = 0.045 + (i % 2) * 0.03;
+      const len = R * (0.85 + (i % 3) * 0.22);
+      ctx.fillStyle = A.rgba(color, 0.028 + (i === 1 ? 0.02 : 0));
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(Math.cos(a - spread) * len, Math.sin(a - spread) * len);
+      ctx.lineTo(Math.cos(a + spread) * len, Math.sin(a + spread) * len);
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.restore();
+  };
 })();
