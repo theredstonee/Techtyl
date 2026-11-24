@@ -23,6 +23,7 @@ use Pterodactyl\BlueprintFramework\Extensions\{identifier}\Designer\Links;
 use Pterodactyl\BlueprintFramework\Extensions\{identifier}\Designer\Motifs;
 use Pterodactyl\BlueprintFramework\Extensions\{identifier}\Designer\DefaultBanners;
 use Pterodactyl\BlueprintFramework\Extensions\{identifier}\Designer\Announcement;
+use Pterodactyl\BlueprintFramework\Extensions\{identifier}\Integration\Registry;
 
 /**
  * Client-API von Techtyl unter /api/client/extensions/techtyl.
@@ -60,6 +61,10 @@ class ClientController extends Controller
                 'motifs' => Motifs::publicList(),
                 // Empfohlene Bildposition fuer Banner (aus dem Manifest, z. B. "50% 30%").
                 'banner_position' => DefaultBanners::position(),
+                // Other extensions: icon, label, group and order from their techtyl.json,
+                // plus the pages an administrator hid from the navigation.
+                'integrations' => Registry::forClient(),
+                'nav_hidden' => Registry::hidden(),
             ],
         ]);
     }

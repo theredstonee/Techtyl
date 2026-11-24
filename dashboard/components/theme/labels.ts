@@ -17,7 +17,6 @@ import {
     faRobot,
     faSlidersH,
     faTerminal,
-    faThLarge,
     faTicketAlt,
     faUserCircle,
     faUserFriends,
@@ -25,14 +24,20 @@ import {
     faWrench,
     faLock,
 } from '@fortawesome/free-solid-svg-icons';
+import { fallbackIcon } from './icons';
+
+export type ServerGroup = 'overview' | 'manage' | 'configure' | 'tools' | 'extensions';
 
 export interface PageInfo {
     icon: IconDefinition;
-    group: 'overview' | 'manage' | 'configure' | 'tools';
+    group: ServerGroup;
 }
 
-// Pages of a server: icon and group. Unknown pages (other extensions) end up under "tools"
-// with their own name. Labels live in i18n/theme.ts.
+export { fallbackIcon };
+
+// Pages Techtyl itself ships: icon and group. Routes of other extensions are
+// placed by integrate.ts (Extensions, unless their techtyl.json names a group).
+// Labels for these paths live in i18n/theme.ts.
 export const serverPages: Record<string, PageInfo> = {
     '/': { icon: faTerminal, group: 'overview' },
     '/activity': { icon: faHistory, group: 'overview' },
@@ -57,6 +62,7 @@ export const serverGroups: { key: PageInfo['group'] }[] = [
     { key: 'manage' },
     { key: 'configure' },
     { key: 'tools' },
+    { key: 'extensions' },
 ];
 
 export const accountPages: Record<string, { icon: IconDefinition }> = {
@@ -69,8 +75,6 @@ export const accountPages: Record<string, { icon: IconDefinition }> = {
     '/billing': { icon: faCreditCard },
     '/assistant': { icon: faRobot },
 };
-
-export const fallbackIcon = faThLarge;
 
 type Translate = (key: string, replace?: Record<string, string | number>) => string;
 

@@ -115,6 +115,49 @@ During installation, `data/patch.php` applies `data/patches.json` and every file
 
 If a panel or Blueprint update changes one of the searched lines, that replacement is skipped and the panel keeps its normal component at that spot. A file that was changed from outside after Techtyl patched it is not overwritten with an older backup.
 
+## For extension authors
+
+Techtyl replaces the panel navigation. Pages that another Blueprint extension adds through its own `Components.yml` still show up. They are listed in a group called Extensions: in the server navigation that group sits after Tools, and on the account it sits below the account pages. The command palette lists them too, and a search matches the route name. The group is left out when it has no pages. Permission checks and the egg filter Blueprint applies per extension stay as they are. The Blueprint insertion points stay where they are.
+
+An extension may ship a file named `techtyl.json` in its Blueprint data directory. The file is optional. Without it, a foreign page uses the Extensions group, the default icon, and the route's own name. After a build, the file is at `.blueprint/extensions/<identifier>/private/techtyl.json`.
+
+Every field is optional. Unknown keys are ignored. The file has to be valid JSON, smaller than 32 KB, with at most 40 entries across server and account together. A path is the route path from that extension's `Components.yml`, written exactly and relative, for example `/players`. It must be a leading slash plus up to 64 of these characters: letters, digits, slash, underscore, hyphen. `group` is only for server pages and is one of `manage`, `configure`, `tools` or `extensions`. The default is `extensions`. `icon` is a Font Awesome solid icon name from the allow-list in `dashboard/components/theme/icons.ts`, in kebab-case, for example `puzzle-piece`. Any other name uses the default icon. `label` maps `en` and `de` to plain text of at most 40 characters. Techtyl shows the active language, then English, then the route's own name. `order` is a number that sorts the page inside its group. The default is 100.
+
+A file that breaks these rules is ignored. The panel log gets a notice. Users do not see an error.
+
+```json
+{
+  "version": 1,
+  "server": {
+    "/players": {
+      "group": "extensions",
+      "icon": "puzzle-piece",
+      "label": {
+        "en": "Player manager",
+        "de": "Spielerverwaltung"
+      },
+      "order": 20
+    }
+  },
+  "account": {
+    "/profiles": {
+      "icon": "id-card",
+      "label": {
+        "en": "Profiles",
+        "de": "Profile"
+      },
+      "order": 10
+    }
+  }
+}
+```
+
+The paths above are examples. Use the paths from your own `Components.yml`. If two extensions declare the same path, the extension whose identifier comes first in alphabetical order is the one kept for that path. Its icon, label, group and order apply only to the route from that same extension. The other extension's page keeps the Extensions group and its own route name.
+
+An administrator can hide a page from the Techtyl navigation on the Modules tab at `/admin/extensions/techtyl`, in the box "Other extensions". The page stays registered. Opening its URL still works.
+
+Installing another theme that also replaces the panel navigation files will conflict with Techtyl. Techtyl then falls back to the panel's normal component where its search text no longer matches.
+
 ## Installation
 
 There is no packaged release. On a panel with Blueprint in developer mode, copy this repository into the panel's `.blueprint/dev` directory and build it:
@@ -148,7 +191,7 @@ After a successful build:
 |---|---|
 | `conf.yml` | Blueprint manifest: name, identifier `techtyl`, version, target, admin and dashboard entry points |
 | `admin/` | Settings page, controller, admin stylesheet, wrapper injected on admin pages |
-| `app/` | Design, designer, limits, images, account, overview, egg import, languages, HTTP |
+| `app/` | Design, designer, limits, images, account, overview, egg import, languages, HTTP, and `app/Integration` for pages from other extensions |
 | `app/Modules/` | Tickets, Billing, Auth, Tools, Assistant. Each can bring admin handling and client or web routes |
 | `app/lang/` | English and German strings for the PHP side, one file per area |
 | `console/` | Scheduled jobs and `Console.yml` |

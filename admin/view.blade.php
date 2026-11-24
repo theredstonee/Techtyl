@@ -13,7 +13,9 @@
   </ul>
 
   @if ($tab === 'design')
-  @php($dt = fn (string $key, array $replace = []) => \Pterodactyl\BlueprintFramework\Extensions\{identifier}\I18n::t('designer.' . $key, $replace))
+  @php
+    $dt = fn (string $key, array $replace = []) => \Pterodactyl\BlueprintFramework\Extensions\{identifier}\I18n::t('designer.' . $key, $replace);
+  @endphp
   <div class="box techtyl-designer-entry">
     <div class="box-body">
       <div class="row">
@@ -126,7 +128,9 @@
         </div>
       </div>
       <div class="col-md-4">
-        @php($techtylAccount = \Pterodactyl\BlueprintFramework\Extensions\{identifier}\Account\AccountSettings::get())
+        @php
+          $techtylAccount = \Pterodactyl\BlueprintFramework\Extensions\{identifier}\Account\AccountSettings::get();
+        @endphp
         <div class="box">
           <div class="box-header with-border"><h3 class="box-title">{{ \Pterodactyl\BlueprintFramework\Extensions\{identifier}\I18n::t('core.account') }}</h3></div>
           <form method="POST" action="{{ $root }}">
@@ -165,6 +169,83 @@
               <button type="submit" class="btn btn-primary pull-right">{{ \Pterodactyl\BlueprintFramework\Extensions\{identifier}\I18n::t('core.save') }}</button>
             </div>
           </form>
+        </div>
+      </div>
+    </div>
+    @php
+      $techtylNav = \Pterodactyl\BlueprintFramework\Extensions\{identifier}\Integration\Registry::catalog();
+      $techtylNavHidden = $techtylNav['ok']
+        ? \Pterodactyl\BlueprintFramework\Extensions\{identifier}\Integration\Registry::hidden()
+        : ['extensions' => [], 'pages' => []];
+    @endphp
+    <div class="row">
+      <div class="col-md-12">
+        <div class="box">
+          <div class="box-header with-border"><h3 class="box-title">{{ $t('nav_ext_title') }}</h3></div>
+          @if (!$techtylNav['ok'])
+            <div class="box-body">
+              <p class="text-muted">{{ $t('nav_ext_unavailable') }}</p>
+            </div>
+          @elseif (count($techtylNav['rows']) === 0)
+            <div class="box-body">
+              <p class="text-muted">{{ $t('nav_ext_hint') }}</p>
+              <p class="text-muted">{{ $t('nav_ext_empty') }}</p>
+            </div>
+          @else
+            <form method="POST" action="{{ $root }}">
+              {{ csrf_field() }}
+              <input type="hidden" name="action" value="extensions">
+              <div class="box-body">
+                <p class="text-muted">{{ $t('nav_ext_hint') }}</p>
+                @if (count($techtylNav['rows']) > 300)
+                  <p class="text-muted">{{ $t('nav_ext_truncated') }}</p>
+                @endif
+                <div class="table-responsive">
+                  <table class="table table-hover">
+                    <thead>
+                      <tr>
+                        <th>{{ $t('nav_ext_identifier') }}</th>
+                        <th>{{ $t('nav_ext_name') }}</th>
+                        <th>{{ $t('nav_ext_path') }}</th>
+                        <th>{{ $t('nav_ext_show') }}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @foreach (array_slice($techtylNav['rows'], 0, 300) as $techtylNavRow)
+                        @php
+                          $techtylShown = !in_array($techtylNavRow['identifier'], $techtylNavHidden['extensions'], true)
+                            && ($techtylNavRow['path'] === '' || !in_array($techtylNavRow['key'], $techtylNavHidden['pages'], true));
+                        @endphp
+                        <tr>
+                          <td><code>{{ $techtylNavRow['identifier'] }}</code></td>
+                          <td>
+                            @if ($techtylNavRow['name'] !== '')
+                              {{ $techtylNavRow['name'] }}
+                            @else
+                              {{ $t('nav_ext_fileless') }}
+                            @endif
+                          </td>
+                          <td>
+                            @if ($techtylNavRow['path'] !== '')
+                              {{ $t($techtylNavRow['side'] === 'account' ? 'nav_ext_account' : 'nav_ext_server') }}
+                              <code>{{ $techtylNavRow['path'] }}</code>
+                            @endif
+                          </td>
+                          <td>
+                            <input type="hidden" name="present[]" value="{{ $techtylNavRow['key'] }}">
+                            <input type="checkbox" name="visible[]" value="{{ $techtylNavRow['key'] }}" @if ($techtylShown) checked @endif title="{{ $t('nav_ext_show') }}" aria-label="{{ $t('nav_ext_show') }}">
+                          </td>
+                        </tr>
+                      @endforeach
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div class="box-footer">
+                <button type="submit" class="btn btn-primary pull-right">{{ $t('nav_ext_save') }}</button>
+              </div>
+            </form>
+          @endif
         </div>
       </div>
     </div>

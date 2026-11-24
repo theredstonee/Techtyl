@@ -20,25 +20,37 @@ import getServers from '@/api/getServers';
 import { Server } from '@/api/server/getServer';
 import routes from '@/routers/routes';
 import blueprintRoutes from '@blueprint/extends/routers/routes';
-import { accountPages, fallbackIcon, joinPath, NamedRoute, pageLabel, serverPages } from './labels';
+import { useShellBootstrap } from './bootstrap';
+import { joinPath, NamedRoute } from './labels';
+import { decorateAccount, decorateServer, isForeign, isHidden } from './integrate';
 import texts from '@blueprint/extensions/techtyl/i18n/theme';
-import { useT } from '@blueprint/extensions/techtyl/i18n';
+import { useLocale, useT } from '@blueprint/extensions/techtyl/i18n';
 
 interface Command {
     key: string;
     section: string;
     label: string;
     hint?: string;
+    keywords?: string;
     icon: IconDefinition;
     run: () => void;
 }
 
 const matches = (command: Command, words: string[]) => {
-    const text = (command.label + ' ' + (command.hint || '')).toLowerCase();
+    const text = (command.label + ' ' + (command.hint || '') + ' ' + (command.keywords || '')).toLowerCase();
     return words.every((word) => text.indexOf(word) >= 0);
 };
 
 const sectionOrder = ['this', 'servers', 'pages'];
+
+// Same order as the server navigation. `order` from an integration file sorts inside a group.
+const groupRank: Record<string, number> = {
+    overview: 0,
+    manage: 1,
+    configure: 2,
+    tools: 3,
+    extensions: 4,
+};
 
 // Strg+K: Seiten, Server und Aktionen suchen und mit der Tastatur ausloesen.
 export default ({ onClose, onSignOut }: { onClose: () => void; onSignOut: () => void }) => {
@@ -46,6 +58,8 @@ export default ({ onClose, onSignOut }: { onClose: () => void; onSignOut: () => 
     const location = useLocation();
     const rootAdmin = useStoreState((state: ApplicationStore) => state.user.data!.rootAdmin);
     const t = useT(texts);
+    const locale = useLocale();
+    const shell = useShellBootstrap();
     const [query, setQuery] = useState('');
     const [servers, setServers] = useState<Server[] | null>(null);
     const [selected, setSelected] = useState(0);
@@ -105,31 +119,35 @@ export default ({ onClose, onSignOut }: { onClose: () => void; onSignOut: () => 
                 { key: 'p-stop', section: 'this', label: t('palette.stop'), hint: t('palette.action'), icon: faPowerOff, run: power('stop', t('palette.stopped')) }
             );
             [...(routes.server as NamedRoute[]), ...(blueprintRoutes.server as NamedRoute[])]
-                .filter((route) => !!route.name && (!route.adminOnly || rootAdmin))
-                .forEach((route) => {
-                    const info = serverPages[route.path];
+                .filter((route) => !!route.name && (!route.adminOnly || rootAdmin) && !isHidden('server', route, shell.navHidden))
+                .map((route, index) => ({ route, index, view: decorateServer(route, shell.integrations, locale, t) }))
+                .sort((a, b) => groupRank[a.view.group] - groupRank[b.view.group] || a.view.order - b.view.order || a.index - b.index)
+                .forEach((item) => {
                     list.push({
-                        key: 's' + route.path,
+                        key: 's' + (item.route.identifier || 'core') + item.route.path,
                         section: 'this',
-                        label: pageLabel(t, 's', route),
+                        label: item.view.label,
                         hint: t('palette.page'),
-                        icon: info ? info.icon : fallbackIcon,
-                        run: go(joinPath(base, route.path)),
+                        keywords: item.view.keywords,
+                        icon: item.view.icon,
+                        run: go(joinPath(base, item.route.path)),
                     });
                 });
         }
         list.push({ key: 'home', section: 'pages', label: t('nav.servers'), hint: t('palette.overview'), icon: faLayerGroup, run: go('/') });
         [...(routes.account as NamedRoute[]), ...(blueprintRoutes.account as NamedRoute[])]
-            .filter((route) => !!route.name && (!route.adminOnly || rootAdmin))
-            .forEach((route) => {
-                const info = accountPages[route.path];
+            .filter((route) => !!route.name && (!route.adminOnly || rootAdmin) && !isHidden('account', route, shell.navHidden))
+            .map((route, index) => ({ route, index, view: decorateAccount(route, shell.integrations, locale, t) }))
+            .sort((a, b) => Number(isForeign(a.route)) - Number(isForeign(b.route)) || a.view.order - b.view.order || a.index - b.index)
+            .forEach((item) => {
                 list.push({
-                    key: 'a' + route.path,
+                    key: 'a' + (item.route.identifier || 'core') + item.route.path,
                     section: 'pages',
-                    label: pageLabel(t, 'a', route),
+                    label: item.view.label,
                     hint: t('nav.account'),
-                    icon: info ? info.icon : fallbackIcon,
-                    run: go(joinPath('/account', route.path)),
+                    keywords: item.view.keywords,
+                    icon: item.view.icon,
+                    run: go(joinPath('/account', item.route.path)),
                 });
             });
         if (rootAdmin) {
@@ -160,7 +178,7 @@ export default ({ onClose, onSignOut }: { onClose: () => void; onSignOut: () => 
         return list
             .filter((command) => command.section === 'servers' || matches(command, words))
             .sort((a, b) => sectionOrder.indexOf(a.section) - sectionOrder.indexOf(b.section));
-    }, [query, servers, serverKey, rootAdmin]);
+    }, [query, servers, serverKey, rootAdmin, shell, locale]);
 
     useEffect(() => setSelected(0), [query, servers]);
 

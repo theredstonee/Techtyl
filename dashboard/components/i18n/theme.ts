@@ -1,5 +1,5 @@
 // Texts of the Techtyl shell: navigation, server cards, command palette.
-// Unknown pages of other extensions keep their own name.
+// Pages of other extensions use their route name, or the label from techtyl.json.
 export default {
     en: {
         'nav.search': 'Search',
@@ -19,6 +19,7 @@ export default {
         'group.manage': 'Management',
         'group.configure': 'Configuration',
         'group.tools': 'Tools',
+        'group.extensions': 'Extensions',
         's:/': 'Console',
         's:/activity': 'Activity',
         's:/files': 'Files',
@@ -100,6 +101,7 @@ export default {
         'group.manage': 'Verwaltung',
         'group.configure': 'Konfiguration',
         'group.tools': 'Werkzeuge',
+        'group.extensions': 'Erweiterungen',
         's:/': 'Konsole',
         's:/activity': 'Aktivität',
         's:/files': 'Dateien',

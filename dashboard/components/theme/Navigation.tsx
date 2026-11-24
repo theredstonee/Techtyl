@@ -19,10 +19,13 @@ import blueprintRoutes from '@blueprint/extends/routers/routes';
 import BeforeNavigation from '@blueprint/components/Navigation/NavigationBar/BeforeNavigation';
 import AdditionalItems from '@blueprint/components/Navigation/NavigationBar/AdditionalItems';
 import AfterNavigation from '@blueprint/components/Navigation/NavigationBar/AfterNavigation';
+import './integration.css';
 import CommandPalette from './CommandPalette';
-import { accountPages, fallbackIcon, joinPath, NamedRoute, pageLabel } from './labels';
+import { useShellBootstrap } from './bootstrap';
+import { joinPath, NamedRoute } from './labels';
+import { decorateAccount, isForeign, isHidden } from './integrate';
 import texts from '@blueprint/extensions/techtyl/i18n/theme';
-import { useT } from '@blueprint/extensions/techtyl/i18n';
+import { useLocale, useT } from '@blueprint/extensions/techtyl/i18n';
 
 // Ersetzt die Kopfleiste des Panels. Je nach data-techtyl-nav ordnet das Stylesheet dieselben
 // Elemente als Seitenleiste, Symbol-Leiste oder Leiste oben an; schmal wird daraus ein Menue.
@@ -31,6 +34,8 @@ export default () => {
     const user = useStoreState((state: ApplicationStore) => state.user.data!);
     const location = useLocation();
     const t = useT(texts);
+    const locale = useLocale();
+    const shell = useShellBootstrap();
     const [palette, setPalette] = useState(false);
     const [drawer, setDrawer] = useState(false);
     const [menu, setMenu] = useState(false);
@@ -73,7 +78,29 @@ export default () => {
     const accountRoutes: NamedRoute[] = [
         ...(routes.account as NamedRoute[]),
         ...(blueprintRoutes.account as NamedRoute[]).filter((route) => !route.adminOnly || user.rootAdmin),
-    ].filter((route) => !!route.name);
+    ].filter((route) => !!route.name && !isHidden('account', route, shell.navHidden));
+
+    const ownAccount = accountRoutes.filter((route) => !isForeign(route));
+    const foreignAccount = accountRoutes
+        .map((route, index) => ({ route, index, view: decorateAccount(route, shell.integrations, locale, t) }))
+        .filter((item) => isForeign(item.route))
+        .sort((a, b) => a.view.order - b.view.order || a.index - b.index);
+
+    const accountLink = (route: NamedRoute) => {
+        const view = decorateAccount(route, shell.integrations, locale, t);
+        return (
+            <NavLink
+                key={(route.identifier || 'core') + route.path}
+                to={joinPath('/account', route.path)}
+                exact={route.path === '/' || route.exact}
+                className={'techtyl-nav__link'}
+                title={view.label}
+            >
+                <FontAwesomeIcon icon={view.icon} fixedWidth />
+                <span>{view.label}</span>
+            </NavLink>
+        );
+    };
 
     // Initials until account/Avatar.tsx builds on its own (it still imports a missing dictionary)
     const initials = (user.username || '?').slice(0, 2);
@@ -138,22 +165,13 @@ export default () => {
                         <span>{t('nav.servers')}</span>
                     </NavLink>
                     <p className={'techtyl-nav__heading'}>{t('nav.account')}</p>
-                    {accountRoutes.map((route) => {
-                        const info = accountPages[route.path];
-                        const label = pageLabel(t, 'a', route);
-                        return (
-                            <NavLink
-                                key={route.path}
-                                to={joinPath('/account', route.path)}
-                                exact={route.path === '/' || route.exact}
-                                className={'techtyl-nav__link'}
-                                title={label}
-                            >
-                                <FontAwesomeIcon icon={info ? info.icon : fallbackIcon} fixedWidth />
-                                <span>{label}</span>
-                            </NavLink>
-                        );
-                    })}
+                    {ownAccount.map((route) => accountLink(route))}
+                    {foreignAccount.length > 0 && (
+                        <div className={'techtyl-nav__extensions'}>
+                            <p className={'techtyl-nav__heading'}>{t('group.extensions')}</p>
+                            {foreignAccount.map((item) => accountLink(item.route))}
+                        </div>
+                    )}
                     <div className={'techtyl-nav__extra'}>
                         <AdditionalItems />
                     </div>

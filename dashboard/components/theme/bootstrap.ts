@@ -1,4 +1,6 @@
+import { useEffect, useState } from 'react';
 import http from '@/api/http';
+import { cleanHidden, cleanIntegrations, EMPTY_HIDDEN, EMPTY_INTEGRATIONS, Integrations, NavHidden } from './integrate';
 
 export interface BannerInfo {
     identifier: string;
@@ -9,11 +11,19 @@ export interface BannerInfo {
 
 export interface Bootstrap {
     banners: Record<string, BannerInfo>;
+    integrations: Integrations;
+    navHidden: NavHidden;
 }
+
+const emptyBootstrap = (): Bootstrap => ({
+    banners: {},
+    integrations: EMPTY_INTEGRATIONS,
+    navHidden: EMPTY_HIDDEN,
+});
 
 let pending: Promise<Bootstrap> | null = null;
 
-// Eine Abfrage fuer alle Karten; schlaegt sie fehl, gibt es eben keine Banner.
+// Eine Abfrage fuer Karten, fremde Erweiterungsseiten und ausgeblendete Eintraege.
 export const loadBootstrap = (): Promise<Bootstrap> => {
     if (!pending) {
         pending = http
@@ -21,14 +31,36 @@ export const loadBootstrap = (): Promise<Bootstrap> => {
             .then((response) => {
                 const attributes = (response.data && response.data.attributes) || {};
                 const banners = attributes.banners && typeof attributes.banners === 'object' ? attributes.banners : {};
-                return { banners } as Bootstrap;
+                return {
+                    banners,
+                    integrations: cleanIntegrations(attributes.integrations),
+                    navHidden: cleanHidden(attributes.nav_hidden),
+                };
             })
             .catch(() => {
                 pending = null;
-                return { banners: {} } as Bootstrap;
+                return emptyBootstrap();
             });
     }
     return pending;
+};
+
+// Shared by the navigation, the account column and the command palette.
+export const useShellBootstrap = (): Bootstrap => {
+    const [data, setData] = useState<Bootstrap>(emptyBootstrap);
+
+    useEffect(() => {
+        let active = true;
+        loadBootstrap().then((loaded) => {
+            if (active) setData(loaded);
+        });
+
+        return () => {
+            active = false;
+        };
+    }, []);
+
+    return data;
 };
 
 // Nur Pfade auf dem eigenen Panel oder https-Adressen, ohne Zeichen, die aus url("...") ausbrechen.

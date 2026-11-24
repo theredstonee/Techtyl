@@ -1,0 +1,13 @@
+/* Foreign extension links in the main navigation sit in this wrapper.
+   display: contents keeps each link in the parent flex row or column,
+   so the icon rail and the top bar lay them out like the built-in links.
+   A wrapper whose anchors were all removed (none today, permission checks
+   later) disappears together with its heading. */
+
+.techtyl-nav__extensions {
+  display: contents;
+}
+
+.techtyl-nav__extensions:not(:has(a)) {
+  display: none;
+}

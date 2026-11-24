@@ -10,8 +10,10 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\View\Factory as ViewFactory;
 use Pterodactyl\Http\Controllers\Controller;
+use Illuminate\Validation\ValidationException;
 use Pterodactyl\Http\Requests\Admin\AdminFormRequest;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Pterodactyl\BlueprintFramework\Extensions\{identifier}\Integration\Registry;
 use Pterodactyl\BlueprintFramework\Extensions\{identifier}\I18n;
 use Pterodactyl\BlueprintFramework\Extensions\{identifier}\Media;
 use Pterodactyl\BlueprintFramework\Extensions\{identifier}\Design;
@@ -135,6 +137,24 @@ class {identifier}ExtensionController extends Controller
             \Pterodactyl\BlueprintFramework\Extensions\{identifier}\Account\AccountSettings::save($request->only(['uploads', 'gravatar', 'names']));
 
             return $this->backTo('modules', I18n::t('core.saved'));
+        }
+
+        // Which pages from other Blueprint extensions appear in the Techtyl navigation.
+        if ($action === 'extensions') {
+            $present = $request->input('present', []);
+            $visible = $request->input('visible', []);
+            if (!is_array($present) || !is_array($visible)) {
+                throw ValidationException::withMessages(['visible' => [I18n::t('admin.v_action')]]);
+            }
+            $result = Registry::saveVisible($present, $visible);
+            if ($result === 'invalid') {
+                throw ValidationException::withMessages(['visible' => [I18n::t('admin.v_action')]]);
+            }
+            if ($result !== 'saved') {
+                throw ValidationException::withMessages(['visible' => [I18n::t('admin.nav_ext_unavailable')]]);
+            }
+
+            return $this->backTo('modules', I18n::t('admin.nav_ext_saved'));
         }
 
         // Standardsprache fuer Gaeste und Konten ohne eigene Sprachwahl.

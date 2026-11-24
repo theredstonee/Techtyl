@@ -10,15 +10,19 @@ import blueprintRoutes from '@blueprint/extends/routers/routes';
 import BeforeSubNavigation from '@blueprint/components/Navigation/SubNavigation/BeforeSubNavigation';
 import AdditionalServerItems from '@blueprint/components/Navigation/SubNavigation/AdditionalServerItems';
 import AfterSubNavigation from '@blueprint/components/Navigation/SubNavigation/AfterSubNavigation';
-import { bannerValue, loadBootstrap } from './bootstrap';
-import { fallbackIcon, joinPath, NamedRoute, PageInfo, pageLabel, serverGroups, serverPages } from './labels';
+import './integration.css';
+import { bannerValue, loadBootstrap, useShellBootstrap } from './bootstrap';
+import { joinPath, NamedRoute, PageInfo, serverGroups } from './labels';
+import { decorateServer, isHidden } from './integrate';
 import texts from '@blueprint/extensions/techtyl/i18n/theme';
-import { useT } from '@blueprint/extensions/techtyl/i18n';
+import { useLocale, useT } from '@blueprint/extensions/techtyl/i18n';
 
 interface Entry {
     route: NamedRoute;
     info: PageInfo;
     label: string;
+    order: number;
+    index: number;
 }
 
 const extensionIds = Array.from(new Set((blueprintRoutes.server as NamedRoute[]).map((route) => route.identifier || '')));
@@ -64,6 +68,8 @@ export default ({ className }: { id?: string; className?: string; children?: Rea
     const eggs = useExtensionEggs();
     const [open, setOpen] = useState(false);
     const t = useT(texts);
+    const locale = useLocale();
+    const shell = useShellBootstrap();
 
     useEffect(() => setOpen(false), [location.pathname]);
 
@@ -93,12 +99,18 @@ export default ({ className }: { id?: string; className?: string; children?: Rea
                 return allowed.indexOf('-1') >= 0 || (eggId !== undefined && allowed.indexOf(String(eggId)) >= 0);
             }),
     ]
-        .filter((route) => !!route.name)
-        .map((route) => ({
-            route,
-            info: serverPages[route.path] || { icon: fallbackIcon, group: 'tools' as const },
-            label: pageLabel(t, 's', route),
-        }));
+        .filter((route) => !!route.name && !isHidden('server', route, shell.navHidden))
+        .map((route, index) => {
+            const view = decorateServer(route, shell.integrations, locale, t);
+            return {
+                route,
+                info: { icon: view.icon, group: view.group },
+                label: view.label,
+                order: view.order,
+                index,
+            };
+        })
+        .sort((a, b) => a.order - b.order || a.index - b.index);
 
     const rest = location.pathname.slice(match.url.length).replace(/\/+$/, '') || '/';
     const current = entries.filter((entry) => (entry.route.path === '/' ? rest === '/' : rest.indexOf(entry.route.path) === 0)).pop();
@@ -142,23 +154,25 @@ export default ({ className }: { id?: string; className?: string; children?: Rea
                 <FontAwesomeIcon icon={faChevronDown} className={'techtyl-subnav__chevron'} />
             </button>
             <nav id={'techtyl-subnav-body'} className={'techtyl-subnav__body'} aria-label={t('nav.serverPages')} data-techtyl-track={''}>
-                {serverGroups.map((group) => (
-                    <div key={group.key} className={'techtyl-subnav__group'}>
-                        <p className={'techtyl-nav__heading'}>{t('group.' + group.key)}</p>
-                        {entries
-                            .filter((entry) => entry.info.group === group.key)
-                            .map((entry) =>
+                {serverGroups.map((group) => {
+                    const inGroup = entries.filter((entry) => entry.info.group === group.key);
+                    if (group.key === 'extensions' && inGroup.length === 0) return null;
+                    return (
+                        <div key={group.key} className={'techtyl-subnav__group'} data-techtyl-group={group.key}>
+                            <p className={'techtyl-nav__heading'}>{t('group.' + group.key)}</p>
+                            {inGroup.map((entry) =>
                                 entry.route.permission ? (
-                                    <Can key={entry.route.path} action={entry.route.permission} matchAny>
+                                    <Can key={(entry.route.identifier || 'core') + entry.route.path} action={entry.route.permission} matchAny>
                                         {link(entry)}
                                     </Can>
                                 ) : (
-                                    <React.Fragment key={entry.route.path}>{link(entry)}</React.Fragment>
+                                    <React.Fragment key={(entry.route.identifier || 'core') + entry.route.path}>{link(entry)}</React.Fragment>
                                 )
                             )}
-                        {group.key === 'tools' && <AdditionalServerItems />}
-                    </div>
-                ))}
+                            {group.key === 'tools' && <AdditionalServerItems />}
+                        </div>
+                    );
+                })}
                 {rootAdmin && (
                     <a
                         href={'/admin/servers/view/' + serverId}
