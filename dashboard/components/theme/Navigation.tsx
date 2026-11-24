@@ -84,8 +84,13 @@ export default () => {
             <BeforeNavigation />
             <div className={'techtyl-nav__bar'}>
                 <div id={'logo'} className={'techtyl-nav__brand'}>
-                    <Link to={'/'} title={siteName}>
+                    <Link to={'/'} title={siteName} aria-label={siteName}>
                         <span>{siteName}</span>
+                        {/* Mark for the narrow icon rail: the T and the Techtyl dot. Hidden in the other layouts. */}
+                        <svg className={'techtyl-nav__mark'} viewBox={'0 0 256 256'} aria-hidden={'true'} focusable={'false'}>
+                            <path className={'techtyl-nav__mark-t'} d={'M56 70h98v34h-32v88H88v-88H56z'} />
+                            <rect className={'techtyl-nav__mark-dot'} x={166} y={70} width={34} height={34} rx={7} />
+                        </svg>
                     </Link>
                 </div>
                 <button

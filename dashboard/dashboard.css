@@ -407,6 +407,26 @@ html[data-techtyl-motion='aus'] *::after {
   transform: rotate(90deg) scale(1.15);
 }
 
+/* The T mark is only used by the narrow icon rail. */
+.techtyl-nav__mark {
+  display: none;
+}
+
+.techtyl-nav__mark-t {
+  fill: var(--techtyl-text);
+}
+
+.techtyl-nav__mark-dot {
+  fill: var(--techtyl-accent);
+  transition: transform var(--techtyl-slow) var(--techtyl-spring);
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.techtyl-nav__brand a:hover .techtyl-nav__mark-dot {
+  transform: rotate(90deg) scale(1.12);
+}
+
 .techtyl-nav__icon {
   display: grid;
   place-items: center;
@@ -1028,20 +1048,24 @@ html[data-techtyl-motion='voll'] .techtyl-dot:is([data-state='starting'], [data-
     font-size: 24px;
   }
 
+  /* Icon rail: the name is replaced by the T mark with the Techtyl dot (the name stays for screen readers). */
   html[data-techtyl-nav='icons'] .techtyl-nav__brand a span {
-    width: 0.6em;
+    position: absolute;
+    width: 1px;
+    height: 1px;
     overflow: hidden;
-    text-overflow: clip;
-    text-align: left;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 
   html[data-techtyl-nav='icons'] .techtyl-nav__brand a::after {
-    position: absolute;
-    right: 5px;
-    bottom: 7px;
-    width: 6px;
-    height: 6px;
-    margin: 0;
+    display: none;
+  }
+
+  html[data-techtyl-nav='icons'] .techtyl-nav__mark {
+    display: block;
+    width: 28px;
+    height: 28px;
   }
 
   html[data-techtyl-nav='icons'] .techtyl-nav__panel {
