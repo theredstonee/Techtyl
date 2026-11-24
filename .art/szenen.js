@@ -492,223 +492,367 @@
     A.dither(ctx, W, H, { amp: 12, grain: 2.4, seed: 212 });
   });
 
-  // —— Kiefer ——
+  // Geschlossene Silhouette. Breit in der unteren Mitte, am Boden schmaler, damit kein Schnitt entsteht.
+  function pineTree(ctx, x, base, h, col, r, opt) {
+    opt = opt || {};
+    const spread = opt.spread != null ? opt.spread : 0.64 + r() * 0.34;
+    const lean = opt.lean != null ? opt.lean : (r() - 0.5) * 0.035;
+    let tiers = h > 420 ? 8 : h > 180 ? 7 : h > 80 ? 6 : 5;
+    if (r() < 0.35) tiers += 1;
+    ctx.fillStyle = col;
+    const top = base - h;
+    for (let t = 0; t < tiers; t++) {
+      const u = t / Math.max(1, tiers - 1);
+      const yTip = top + u * h * 0.58;
+      const tierH = h * (0.38 + u * 0.12);
+      const yBot = Math.min(base + 1, yTip + tierH);
+      const belly = 0.22 + 0.78 * Math.sin(Math.min(0.84, u) * Math.PI);
+      const hw = h * spread * (0.018 + belly * 0.2);
+      const wl = hw * (0.84 + r() * 0.26);
+      const wr = hw * (0.84 + r() * 0.26);
+      const xTip = x + (yTip - top) * lean;
+      const xBot = x + (yBot - top) * lean * 0.5;
+      ctx.beginPath();
+      ctx.moveTo(xTip, yTip);
+      ctx.lineTo(xBot + wr, yBot);
+      ctx.lineTo(xBot - wl, yBot);
+      ctx.closePath();
+      ctx.fill();
+    }
+  }
+
+  function crestFrom(W, pts, n, jag) {
+    const ys = new Float32Array(W + 1);
+    let i = 0;
+    for (let x = 0; x <= W; x++) {
+      while (i < pts.length - 2 && x >= pts[i + 1][0]) i++;
+      const a = pts[i], b = pts[i + 1];
+      let t = (x - a[0]) / Math.max(1, b[0] - a[0]);
+      if (t < 0) t = 0;
+      if (t > 1) t = 1;
+      const s = t * t * (3 - 2 * t);
+      let y = a[1] + (b[1] - a[1]) * s;
+      y += n.fbm(x / 260 + jag, 1.4 + jag * 0.17, 3) * 12;
+      y += n(x / 78 + jag, 3.1) * 5;
+      ys[x] = y;
+    }
+    return ys;
+  }
+
+  // Bäume auf einer Kammlinie. Horste und Lücken, kürzere zuerst.
+  function stand(ctx, ys, col, r, o) {
+    const W = ys.length - 1;
+    const items = [];
+    let x = o.from == null ? -30 : o.from;
+    const to = o.to == null ? W + 30 : o.to;
+    let guard = 0;
+    while (x < to && guard++ < 900) {
+      const edge = Math.abs(x / Math.max(1, W) - 0.5) * 2;
+      const q = o.quiet || 0;
+      const atten = q <= 0 || edge >= q ? 1 : edge / q;
+      if (o.skip && r() < (1 - atten) * o.skip) {
+        x += 48 + r() * 110;
+        continue;
+      }
+      const wave = 0.5 + 0.5 * Math.sin(x * 0.02 + (o.phase || 1.7));
+      let hh = o.min + (o.max - o.min) * (0.22 + 0.78 * Math.pow(r(), 0.62)) * (0.5 + 0.5 * wave);
+      const roll = r();
+      if (roll < 0.16) hh = o.max * (1.12 + r() * 0.38);
+      else if (roll < 0.26) hh = o.min * (0.5 + r() * 0.35);
+      if (o.fade) hh *= 0.28 + 0.72 * Math.pow(Math.max(0.04, atten), 0.75);
+      if (hh < 20) { x += 26; continue; }
+      const xi = Math.max(0, Math.min(W, Math.round(Math.max(0, x))));
+      const tone = r() < 0.38 ? A.shade(col, 0.86 + r() * 0.16) : col;
+      items.push([x + (r() - 0.5) * 8, ys[xi] + (o.drop || 0), hh, tone]);
+      const sp = o.space || 1;
+      const open = r() < 0.14;
+      const step = open ? hh * (0.9 + r() * 0.45) : hh * (0.34 + r() * 0.22);
+      x += Math.max(o.gap || 18, step * sp);
+    }
+    items.sort(function (a, b) { return a[2] - b[2]; });
+    for (let i = 0; i < items.length; i++) pineTree(ctx, items[i][0], items[i][1], items[i][2], items[i][3], r);
+  }
+
+  // Weicher Dunst ohne harte Kontur. Liegt zwischen den Kämmen, dicker zur Talmitte.
+  function mistWash(ctx, W, y, h, color, alpha) {
+    const c = A.layer(W, GH);
+    A.vgrad(c, 0, y, W, h, [
+      [0, A.rgba(color, 0)],
+      [0.4, A.rgba(color, alpha)],
+      [0.68, A.rgba(color, alpha * 0.4)],
+      [1, A.rgba(color, 0)]
+    ]);
+    c.globalCompositeOperation = 'destination-in';
+    const hg = c.createLinearGradient(0, 0, W, 0);
+    hg.addColorStop(0, 'rgba(0,0,0,0.2)');
+    hg.addColorStop(0.16, 'rgba(0,0,0,0.7)');
+    hg.addColorStop(0.5, 'rgba(0,0,0,1)');
+    hg.addColorStop(0.84, 'rgba(0,0,0,0.7)');
+    hg.addColorStop(1, 'rgba(0,0,0,0.2)');
+    c.fillStyle = hg;
+    c.fillRect(0, 0, W, GH);
+    ctx.drawImage(c.canvas, 0, 0);
+  }
+
+  function crestLight(ctx, ys, x0, x1) {
+    ctx.save();
+    ctx.strokeStyle = 'rgba(244,236,214,0.38)';
+    ctx.lineWidth = 1.6;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    for (let x = x0; x <= x1; x += 2) {
+      if (x === x0) ctx.moveTo(x, ys[x] - 0.5);
+      else ctx.lineTo(x, ys[x] - 0.5);
+    }
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function skirt(ctx, ys, depth, color) {
+    const W = ys.length - 1;
+    ctx.beginPath();
+    ctx.moveTo(0, ys[0]);
+    for (let x = 1; x <= W; x++) ctx.lineTo(x, ys[x]);
+    for (let x = W; x >= 0; x--) ctx.lineTo(x, ys[x] + depth);
+    ctx.closePath();
+    ctx.fillStyle = color;
+    ctx.fill();
+  }
+
+  function moonFace(ctx, ys, mx, my, radius, alpha) {
+    ctx.save();
+    A.fillRidge(ctx, ys, GH + 8, null);
+    ctx.clip();
+    A.radial(ctx, mx, my, radius, 'rgba(236,228,206,' + alpha + ')', 'rgba(236,228,206,0)', 'screen', 1.05, 0.7);
+    ctx.restore();
+  }
+
+  // —— Kiefer: Nebelwald. Seitliche Kämme, offenes Tal, dunkler Vordergrund. ——
   A.scene('bg-kiefer', GW, GH, function (ctx, W, H) {
     const n = A.makeNoise(223), r = A.rng(223);
-    const mx = 1620, my = 240;
-    bands(ctx, W, [[0, '#0c1410', 220], [220, '#163028', 520], [520, '#3e5c4c', 780], [780, '#8aa090', H]]);
-    soften(ctx, W, 280, 70, '#1a2c24', 24000, r);
-    soften(ctx, W, 520, 80, '#3d5a48', 28000, r);
-    A.radial(ctx, mx, my, 680, 'rgba(236,230,206,.22)', 'rgba(236,230,206,0)', 'screen');
-    cloudBank(ctx, W, 20, 140, '#0e1814', 0.45, 27);
-    // Zwei Gipfel, der Mond sitzt in der Lücke
-    (function () {
-      const ys = new Float32Array(W + 1);
-      for (let x = 0; x <= W; x++) {
-        const u = x / W;
-        const left = Math.exp(-Math.pow((u - 0.14) / 0.15, 2));
-        const midp = Math.exp(-Math.pow((u - 0.46) / 0.07, 2));
-        const right = Math.exp(-Math.pow((u - 0.8) / 0.12, 2));
-        const jag = Math.abs(n.fbm(x / 220, 2, 3));
-        ys[x] = 640 - 360 * left - 150 * midp - 420 * right - 36 * jag * (left + right);
-      }
-      forest(ctx, ys, W, '#6d8478', r, { min: 18, max: 46, skip: 0.34 });
-      A.fillRidge(ctx, ys, H, '#5a7268');
-    })();
-    const far = valley(W, H * 0.7, 180, 80, 780, n, 1.1);
-    const mid = valley(W, H * 0.8, 240, 90, 560, n, 4.6);
-    const near = valley(W, H * 0.9, 300, 60, 640, n, 8.2);
-    forest(ctx, far, W, '#5d7a68', r, { min: 28, max: 70, skip: 0.18 });
-    A.fillRidge(ctx, far, H, '#4a6758');
-    mist(ctx, far, 'rgba(168,184,164,.28)', 8, 70);
-    forest(ctx, mid, W, '#24382e', r, { min: 70, max: 170, skip: 0.28, edge: true });
-    A.fillRidge(ctx, mid, H, '#1c3028');
-    mist(ctx, mid, 'rgba(198,206,186,.22)', 4, 90);
-    forest(ctx, near, W, '#122018', r, { min: 120, max: 280, skip: 0.42, edge: true });
-    A.fillRidge(ctx, near, H, '#0c1612');
-    // Monumente am Rand
-    pine(ctx, -10, 1180, 760, '#070d0a', r, 'rgba(236,230,206,.55)');
-    pine(ctx, 150, 1240, 520, '#0a120e', r, 'rgba(236,230,206,.35)');
-    pine(ctx, 2460, 1160, 820, '#070d0a', r, 'rgba(236,230,206,.35)');
-    pine(ctx, 2280, 1220, 480, '#0a120e', r, null);
-    A.volumetric(ctx, mx, my, '#e6e0cc', { r: 780, a: 0.18, shafts: 0, sy: 0.85, sx: 1.15 });
-    A.punkt(ctx, mx, my, 36, '#f4efe0', '#e6e0cc', 240);
-    A.vignette(ctx, W, H, '#060c09', 0.4);
-    A.dither(ctx, W, H, { amp: 12, grain: 2.4, seed: 223 });
+    const mx = 1500, my = 188;
+    bands(ctx, W, [
+      [0, '#101814'],
+      [160, '#1a2c24'],
+      [380, '#3a5648'],
+      [640, '#7d9a8a'],
+      [920, '#c5d4c2'],
+      [1180, '#a8bba8'],
+      [H, '#31483e', H]
+    ]);
+    A.radial(ctx, mx, my, 460, 'rgba(236,230,206,0.16)', 'rgba(236,230,206,0)', 'screen', 1.15, 0.62);
+    const peak = crestFrom(W, [
+      [0, 640], [200, 520], [480, 440], [760, 510], [1040, 660],
+      [1280, 780], [1520, 820], [1800, 660], [2060, 440],
+      [2340, 520], [2560, 640]
+    ], n, 1.15);
+    const canopy = A.layer(W, H);
+    stand(canopy, peak, '#1a2c24', r, { to: 920, min: 240, max: 580, space: 0.74, phase: 0.4 });
+    stand(canopy, peak, '#20342a', r, { from: 1660, min: 250, max: 600, space: 0.72, phase: 2.2 });
+    stand(canopy, peak, '#3a5246', r, { from: 680, to: 960, min: 180, max: 360, space: 1.35, gap: 50, phase: 0.8 });
+    stand(canopy, peak, '#3a5246', r, { from: 1620, to: 1920, min: 180, max: 380, space: 1.35, gap: 50, phase: 1.9 });
+    canopy.globalCompositeOperation = 'destination-in';
+    const sink = canopy.createLinearGradient(0, 280, 0, 560);
+    sink.addColorStop(0, 'rgba(0,0,0,1)');
+    sink.addColorStop(0.22, 'rgba(0,0,0,1)');
+    sink.addColorStop(1, 'rgba(0,0,0,0)');
+    canopy.fillStyle = sink;
+    canopy.fillRect(0, 0, W, H);
+    ctx.drawImage(canopy.canvas, 0, 0);
+    mistWash(ctx, W, 400, 360, '#d7e6d4', 0.32);
+    const far = crestFrom(W, [
+      [0, 820], [320, 880], [700, 950], [1080, 1000], [1480, 990],
+      [1900, 940], [2240, 870], [2560, 810]
+    ], n, 6.2);
+    A.fillRidge(ctx, far, H, '#7c968a');
+    mistWash(ctx, W, 760, 300, '#d5e3d2', 0.28);
+    stand(ctx, far, '#2a4036', r, { min: 48, max: 190, quiet: 0.48, skip: 0.62, fade: true, space: 0.78, phase: 0.6 });
+    mistWash(ctx, W, 980, 220, '#c9d8c6', 0.14);
+    const near = crestFrom(W, [
+      [0, 1080], [300, 1180], [640, 1280], [1000, 1360],
+      [1560, 1360], [1940, 1260], [2260, 1140], [2560, 1040]
+    ], n, 3.2);
+    A.fillRidge(ctx, near, H, '#101814');
+    stand(ctx, near, '#0c1410', r, { to: 700, min: 120, max: 360, space: 0.72, phase: 1.4 });
+    stand(ctx, near, '#0c1410', r, { from: 1880, min: 120, max: 380, space: 0.7, phase: 2.5 });
+    pineTree(ctx, -60, 1680, 980, '#070c09', r, { spread: 0.86 });
+    pineTree(ctx, 150, 1560, 560, '#0a120e', r, { spread: 0.74 });
+    pineTree(ctx, 2620, 1700, 1040, '#070c09', r, { spread: 0.88 });
+    pineTree(ctx, 2360, 1560, 520, '#0a120e', r, { spread: 0.72 });
+    A.punkt(ctx, mx, my, 34, '#f4efe2', '#e7e0cc', 160);
+    A.vignette(ctx, W, H, '#070c09', 0.34);
+    A.dither(ctx, W, H, { amp: 11, grain: 2.2, seed: 223 });
   });
 
-  // —— Dämmerung: Dünen vor einem langen Horizont ——
-  A.scene('bg-daemmerung', GW, GH, function (ctx, W, H) {
-    const n = A.makeNoise(234), r = A.rng(234);
-    const sx = 1680, sy = 800;
-    bands(ctx, W, [[0, '#12101c', 240], [240, '#2a2044', 480], [480, '#6a3058', 680], [680, '#c46868', 820], [820, '#e8b070', H]]);
-    stars(ctx, W, H, r, 180, 360);
-    cloudBank(ctx, W, 10, 130, '#1a1430', 0.45, 41);
-    A.radial(ctx, sx, sy, 1280, 'rgba(255,196,140,.34)', 'rgba(255,196,140,0)', 'screen', 2.6, 0.2);
-    A.punkt(ctx, sx, sy, 40, '#ffe6c8', '#ffb070', 240);
-    function dune(base, amp, scale, off, peaks) {
-      const ys = new Float32Array(W + 1);
-      for (let x = 0; x <= W; x++) {
-        const u = x / W;
-        const e = Math.pow(Math.abs(u - 0.5) * 2, 1.2);
-        const w = n.fbm(x / scale + off, off, 3) * 0.5 + 0.5;
-        let y = base - amp * (0.55 * e + 0.45 * w);
-        for (let i = 0; i < peaks.length; i++) {
-          const p = peaks[i];
-          y -= p[1] * Math.exp(-Math.pow((x - p[0]) / p[2], 2));
-        }
-        ys[x] = y;
-      }
-      return ys;
+  function starfield(ctx, W, yMax, r, count, mx, my) {
+    for (let i = 0; i < count; i++) {
+      const x = r() * W;
+      const y = r() * yMax;
+      if (Math.hypot(x - mx, y - my) < 110) continue;
+      const mag = r();
+      const s = mag > 0.986 ? 2.15 : mag > 0.9 ? 1.45 : 1;
+      const a = mag > 0.986 ? 0.82 : 0.16 + mag * 0.38;
+      ctx.fillStyle = 'rgba(224,230,240,' + a.toFixed(3) + ')';
+      ctx.fillRect(x, y, s, s);
     }
-    const d1 = dune(880, 50, 640, 1.4, [[240, 100, 220], [1680, 78, 340], [2420, 120, 250]]);
-    const d2 = dune(1090, 64, 520, 5.2, [[60, 90, 190], [1040, 36, 280], [2140, 130, 300]]);
-    const d3 = dune(1340, 86, 700, 9.1, [[180, 170, 280], [760, 48, 210], [2380, 190, 320]]);
-    A.fillRidge(ctx, d1, H, '#8a4d5c');
-    A.shadeRidge(ctx, d1, H, 'rgba(40,16,32,.45)', r, 50000, 0.55, 140);
-    A.crest(ctx, d1, 'rgba(255,214,180,.45)', 1.6);
-    A.fillRidge(ctx, d2, H, '#4a2840');
-    A.shadeRidge(ctx, d2, H, 'rgba(20,8,20,.5)', r, 60000, 0.6, 160);
-    A.crest(ctx, d2, 'rgba(255,196,160,.28)', 1.5);
-    A.fillRidge(ctx, d3, H, '#1a1020');
-    A.shadeRidge(ctx, d3, H, 'rgba(0,0,0,.45)', r, 70000, 0.65, 180);
-    ctx.strokeStyle = 'rgba(255,220,190,.35)';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    for (let x = 0; x < 520; x++) ctx.lineTo(x, d3[x]);
-    ctx.stroke();
-    ctx.beginPath();
-    for (let x = 2000; x <= W; x++) ctx.lineTo(x, d3[x]);
-    ctx.stroke();
-    ctx.fillStyle = '#120c18';
-    ctx.beginPath();
-    ctx.moveTo(0, 1260);
-    ctx.quadraticCurveTo(240, 1160, 420, H + 8);
-    ctx.lineTo(0, H + 8);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.moveTo(W, 1200);
-    ctx.quadraticCurveTo(2280, 1100, 2060, H + 8);
-    ctx.lineTo(W, H + 8);
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(255,214,180,.4)';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(2140, 1240);
-    ctx.quadraticCurveTo(2280, 1120, W, 1200);
-    ctx.stroke();
-    const sunY = d1[sx] - 8;
-    ctx.fillStyle = '#ffe6c8';
-    A.rrect(ctx, sx - 18, sunY - 18, 36, 36, 8);
-    ctx.fill();
-    A.vignette(ctx, W, H, '#100818', 0.38);
-    A.dither(ctx, W, H, { amp: 12, grain: 2.4, seed: 234 });
-  });
+  }
 
-  // —— Polarlicht ——
+  // Weiche Vorhänge: überlappende, sich verjüngende Bänder. Helligkeit unten, Ränder auf null.
+  function veil(target, spec, rnd) {
+    function ribbon(width, alpha, core) {
+      const t = 0.04 + rnd() * 0.92;
+      const edge = Math.sin(t * Math.PI);
+      const x = spec.x + (t - 0.5) * spec.spread;
+      const h = spec.h * (0.42 + 0.58 * edge) * (0.84 + rnd() * 0.22);
+      const yb = spec.base + (rnd() - 0.5) * 40 - (1 - edge) * 28;
+      const yt = yb - h;
+      const phase = spec.phase + (t - 0.5) * 1.6;
+      const sway = (78 + 120 * edge) * (spec.sway || 1);
+      const pick = rnd();
+      let col;
+      if (edge < 0.32) col = pick < 0.55 ? '#6a4cc4' : '#9078d8';
+      else if (core > 0.75) col = pick < 0.34 ? '#e4fff6' : pick < 0.7 ? '#7eecc4' : '#62d0c4';
+      else if (pick < 0.3) col = '#7056c8';
+      else if (pick < 0.62) col = '#3fbfae';
+      else col = '#8adcb0';
+      const a = alpha * (spec.gain || 1) * (0.18 + 0.82 * edge);
+      const g = target.createLinearGradient(0, yt, 0, yb);
+      g.addColorStop(0, A.rgba(col, 0));
+      g.addColorStop(0.2, A.rgba(col, a * 0.06));
+      g.addColorStop(0.45, A.rgba(col, a * 0.26));
+      g.addColorStop(0.64, A.rgba(col, a * 0.5));
+      g.addColorStop(0.8, A.rgba(col, a));
+      g.addColorStop(0.93, A.rgba(col, a * 0.28));
+      g.addColorStop(1, A.rgba(col, 0));
+      target.fillStyle = g;
+      target.beginPath();
+      const steps = 16;
+      const xs = new Array(steps + 1);
+      const ys = new Array(steps + 1);
+      const ws = new Array(steps + 1);
+      for (let i = 0; i <= steps; i++) {
+        const u = i / steps;
+        const y = yt + (yb - yt) * u;
+        const fold = Math.sin(u * 1.25 + phase) * sway * (0.2 + 0.8 * u);
+        const fold2 = Math.sin(u * 2.6 + phase * 1.3) * sway * 0.16;
+        const taper = Math.pow(Math.sin(u * Math.PI), 0.72);
+        xs[i] = x + fold + fold2 + spec.lean * (y - yt) * 0.22;
+        ys[i] = y;
+        ws[i] = width * (0.22 + 0.78 * taper);
+      }
+      target.moveTo(xs[0] - ws[0] * 0.5, ys[0]);
+      for (let i = 1; i <= steps; i++) target.lineTo(xs[i] - ws[i] * 0.5, ys[i]);
+      for (let i = steps; i >= 0; i--) target.lineTo(xs[i] + ws[i] * 0.5, ys[i]);
+      target.closePath();
+      target.fill();
+    }
+    let s;
+    for (s = 0; s < 7; s++) ribbon(170 + rnd() * 90, 0.05, 0);
+    for (s = 0; s < 16; s++) ribbon(70 + rnd() * 50, 0.055, 0.25);
+    for (s = 0; s < 18; s++) ribbon(28 + rnd() * 22, 0.06, 0.55);
+    for (s = 0; s < 8; s++) ribbon(12 + rnd() * 10, 0.055, 1);
+  }
+
+  function iceCrack(ctx, x, y, len, seed) {
+    const rnd = A.rng(seed);
+    ctx.save();
+    ctx.strokeStyle = 'rgba(186,214,208,0.11)';
+    ctx.lineWidth = 1.15;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    let px = x, py = y;
+    const parts = 5 + ((rnd() * 4) | 0);
+    for (let i = 0; i < parts; i++) {
+      px += (len / parts) * (0.65 + rnd() * 0.7);
+      py += (rnd() - 0.5) * 16;
+      ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+    ctx.globalAlpha = 0.7;
+    ctx.beginPath();
+    ctx.moveTo(px - len * 0.25, py);
+    ctx.lineTo(px - len * 0.25 + (rnd() - 0.3) * 50, py + (rnd() - 0.5) * 22);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // —— Polarlicht: weiche Vorhänge über einem zugefrorenen See ——
   A.scene('bg-polarlicht', GW, GH, function (ctx, W, H) {
     const n = A.makeNoise(245), r = A.rng(245);
-    const hz = 860;
-    const mx = 1760, my = 250;
-    bands(ctx, W, [[0, '#070a12', 360], [360, '#0c1824', hz], [hz, '#0a141c', H]]);
-    stars(ctx, W, H, r, 520, hz * 0.9);
-    const Lr = A.layer(W, H);
-    // Helle senkrechte Falten. Die Bildmitte bleibt frei.
-    function aurora(cx, spread, h, y0, edge, core) {
-      for (let i = -spread; i <= spread; i += 3) {
-        const x = cx + i;
-        const u = i / spread;
-        const fold = Math.exp(-u * u * 1.15);
-        const wobble = n(x / 160 + y0, 1.7);
-        const gap = n(x / 36 + y0 * 0.01, 4.2);
-        if (gap > 0.62) continue;
-        const hh = h * (0.62 + 0.38 * fold) * (0.82 + 0.18 * wobble);
-        const yy = y0 + wobble * 36;
-        const a = fold * (gap > 0.2 ? 0.55 : 1);
-        Lr.fillStyle = A.rgba(edge, 0.5 * a);
-        Lr.fillRect(x, yy, 4, hh);
-        const hot = Math.exp(-Math.pow(u * 2.1, 2));
-        if (hot > 0.28) {
-          Lr.fillStyle = A.rgba(core, (0.35 + 0.6 * hot) * a);
-          Lr.fillRect(x, yy, 4, hh);
-        }
-      }
-    }
-    aurora(200, 340, 780, 30, '#6d4ad8', '#9dffe4');
-    aurora(500, 200, 600, 90, '#4a3cb8', '#e4fff6');
-    aurora(2160, 280, 840, 20, '#5a42c8', '#b6ffe8');
-    aurora(2400, 180, 540, 80, '#3e3498', '#f2fffb');
-    Lr.save();
-    Lr.globalCompositeOperation = 'destination-in';
-    const fade = Lr.createLinearGradient(0, 0, 0, hz);
-    fade.addColorStop(0, 'rgba(0,0,0,0)');
-    fade.addColorStop(0.04, 'rgba(0,0,0,.45)');
-    fade.addColorStop(0.12, 'rgba(0,0,0,1)');
-    fade.addColorStop(0.4, 'rgba(0,0,0,1)');
-    fade.addColorStop(0.62, 'rgba(0,0,0,.4)');
-    fade.addColorStop(0.78, 'rgba(0,0,0,0)');
-    fade.addColorStop(1, 'rgba(0,0,0,0)');
-    Lr.fillStyle = fade;
-    Lr.fillRect(0, 0, W, hz);
-    Lr.restore();
+    const mx = 1500, my = 214;
+    bands(ctx, W, [
+      [0, '#070910'],
+      [260, '#0c1420'],
+      [620, '#101c2a'],
+      [H, '#12202c', H]
+    ]);
+    const shore = crestFrom(W, [
+      [0, 820], [280, 860], [640, 900], [1000, 930], [1280, 944],
+      [1600, 928], [1960, 890], [2280, 850], [2560, 810]
+    ], n, 3.3);
+    starfield(ctx, W, 900, r, 720, mx, my);
+    const groups = [
+      { x: 520, spread: 720, base: 790, h: 880, phase: 0.5, lean: -0.035, gain: 0.72, sway: 1 },
+      { x: 780, spread: 340, base: 830, h: 600, phase: 1.9, lean: 0.02, gain: 0.58, sway: 0.85 },
+      { x: 1960, spread: 700, base: 770, h: 900, phase: 1.15, lean: 0.04, gain: 0.76, sway: 1.08 },
+      { x: 2260, spread: 300, base: 820, h: 540, phase: 2.7, lean: -0.02, gain: 0.48, sway: 0.8 }
+    ];
+    const skyVeil = A.layer(W, H);
+    for (let i = 0; i < groups.length; i++) veil(skyVeil, groups[i], r);
+    const soft = A.layer(W, H);
+    soft.filter = 'blur(14px)';
+    soft.drawImage(skyVeil.canvas, 0, 0);
     ctx.save();
     ctx.globalCompositeOperation = 'screen';
-    ctx.drawImage(Lr.canvas, 0, 0);
+    ctx.drawImage(soft.canvas, 0, 0);
     ctx.restore();
-    const lake = ctx.createLinearGradient(0, hz, 0, H);
-    lake.addColorStop(0, '#163038');
-    lake.addColorStop(0.35, '#102028');
-    lake.addColorStop(1, '#070c10');
-    ctx.fillStyle = lake;
-    ctx.fillRect(0, hz, W, H - hz);
     ctx.save();
-    ctx.beginPath();
-    ctx.rect(0, hz + 12, W, 460);
+    A.fillRidge(ctx, shore, H, null);
     ctx.clip();
-    ctx.globalAlpha = 0.42;
+    A.vgrad(ctx, 0, 800, W, H - 800, [[0, '#102830'], [0.3, '#0c1c24'], [0.65, '#09141a'], [1, '#070c10']]);
+    ctx.save();
     ctx.globalCompositeOperation = 'screen';
-    ctx.setTransform(1, 0, 0, -0.72, 0, 1480);
-    ctx.drawImage(Lr.canvas, 0, 0);
+    for (let i = 0; i < 46; i++) {
+      const v = i / 46;
+      const srcY = 740 - v * 500;
+      const destY = 900 + v * 440;
+      const ox = Math.sin(v * 7.4 + 0.4) * (5 + v * 26) + Math.sin(v * 19) * 2.5;
+      ctx.globalAlpha = 0.14 * Math.pow(1 - v, 1.05);
+      ctx.drawImage(soft.canvas, 0, srcY, W, 16, ox, destY, W, 20 + v * 14);
+    }
     ctx.restore();
-    ctx.lineCap = 'round';
-    for (let k = 0; k < 18; k++) {
-      const y = hz + 36 + k * 26 + r() * 6;
-      ctx.strokeStyle = 'rgba(170,210,200,' + (0.05 + r() * 0.06) + ')';
-      ctx.lineWidth = 1.4;
-      ctx.beginPath();
-      const x0 = r() * 520;
-      ctx.moveTo(x0, y);
-      ctx.lineTo(x0 + 70 + r() * 160, y + (r() - 0.5) * 3);
-      const x1 = W - 200 - r() * 480;
-      ctx.moveTo(x1, y + 4);
-      ctx.lineTo(x1 + 60 + r() * 140, y + 4);
-      ctx.stroke();
-    }
-    for (let k = 0; k < 16; k++) {
-      const t = k / 16;
-      const y = hz + 10 + t * t * 260;
-      const w = 6 + t * 28;
-      if (k % 3 === 1) continue;
-      ctx.fillStyle = 'rgba(220,255,240,' + (0.28 * (1 - t)) + ')';
-      ctx.fillRect(mx - w / 2 + Math.sin(k) * t * 10, y, w, 2);
-    }
-    const shore = valley(W, hz + 6, 80, 30, 640, n, 3.3);
-    forest(ctx, shore, W, '#071014', r, { min: 40, max: 120, skip: 0.22 });
+    iceCrack(ctx, 180, 1040, 380, 11);
+    iceCrack(ctx, 520, 1180, 320, 19);
+    iceCrack(ctx, 980, 1120, 240, 23);
+    iceCrack(ctx, 1400, 1260, 300, 29);
+    iceCrack(ctx, 1760, 1100, 260, 37);
+    iceCrack(ctx, 2100, 1220, 340, 41);
+    iceCrack(ctx, 680, 1340, 200, 53);
+    ctx.restore();
+    stand(ctx, shore, '#070b10', r, { min: 40, max: 260, quiet: 0.42, skip: 0.32, fade: true, space: 0.86 });
+    ctx.fillStyle = '#06080c';
     ctx.beginPath();
-    ctx.moveTo(0, shore[0] + 28);
-    for (let x = 0; x <= W; x++) ctx.lineTo(x, shore[x]);
-    for (let x = W; x >= 0; x--) ctx.lineTo(x, shore[x] + 28);
-    ctx.closePath();
-    ctx.fillStyle = '#071014';
+    ctx.moveTo(0, H + 4);
+    ctx.lineTo(0, 1260);
+    ctx.quadraticCurveTo(220, 1160, 480, 1320);
+    ctx.quadraticCurveTo(860, 1420, 1280, 1460);
+    ctx.quadraticCurveTo(1760, 1400, 2100, 1280);
+    ctx.quadraticCurveTo(2340, 1180, W, 1230);
+    ctx.lineTo(W, H + 4);
     ctx.fill();
-    pine(ctx, -30, 1320, 820, '#05080c', r, 'rgba(180,255,220,.28)');
-    pine(ctx, 160, 1360, 520, '#05080c', r, null);
-    pine(ctx, 2540, 1300, 860, '#05080c', r, null);
-    pine(ctx, 2320, 1340, 500, '#05080c', r, 'rgba(180,255,220,.2)');
-    A.punkt(ctx, mx, my, 30, '#eafff6', '#b8ffe0', 200);
-    A.vignette(ctx, W, H, '#04060a', 0.42);
-    A.dither(ctx, W, H, { amp: 12, grain: 2.3, seed: 245 });
+    pineTree(ctx, 30, 1580, 740, '#05070a', r, { spread: 0.7 });
+    pineTree(ctx, 230, 1540, 460, '#05070a', r, { spread: 0.64 });
+    pineTree(ctx, 2520, 1600, 780, '#05070a', r, { spread: 0.72 });
+    pineTree(ctx, 2300, 1520, 440, '#05070a', r, { spread: 0.62 });
+    A.radial(ctx, mx, my, 240, 'rgba(184,255,228,0.2)', 'rgba(184,255,228,0)', 'screen', 1.05, 0.72);
+    A.punkt(ctx, mx, my, 28, '#e9fff8', '#b7ffe6', 140);
+    A.vignette(ctx, W, H, '#04060a', 0.4);
+    A.dither(ctx, W, H, { amp: 11, grain: 2.2, seed: 245 });
   });
+
 
   // —— Sternenzelt ——
   A.scene('bg-sternenzelt', GW, GH, function (ctx, W, H) {
