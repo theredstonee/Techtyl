@@ -47,9 +47,21 @@ final class ServerTypes
         'neoforge' => ['kind' => 'mod', 'directory' => 'mods', 'loaders' => ['neoforge']],
     ];
 
-    /** Typen, deren Version Techtyl wechseln kann, und solche, bei denen das noch folgt. */
-    public const VERSION_SWITCH = ['paper', 'purpur', 'folia', 'vanilla', 'fabric', 'velocity'];
-    public const VERSION_PLANNED = ['forge', 'neoforge'];
+    /** Typen, deren Version Techtyl wechseln kann. Forge und NeoForge laufen ueber das Installationsskript des Eggs. */
+    public const VERSION_SWITCH = ['paper', 'purpur', 'folia', 'vanilla', 'fabric', 'velocity', 'forge', 'neoforge'];
+    public const VERSION_PLANNED = [];
+
+    /**
+     * Loader, die ein Nutzer als Software waehlen darf. Proxys (Velocity) und andere Spiele gehoeren nicht dazu.
+     * Stehen mehrere erlaubte Eggs eines Typs zur Wahl, gilt das mit der kleinsten ID (SoftwarePolicy).
+     */
+    public const SOFTWARE = ['paper', 'purpur', 'folia', 'vanilla', 'fabric', 'forge', 'neoforge'];
+
+    /** Diese Loader lesen plugins/. Ein Wechsel zwischen ihnen laesst den Ordner liegen. */
+    public const PLUGIN_LOADERS = ['paper', 'purpur', 'folia'];
+
+    /** Diese Loader lesen mods/. Ein Wechsel der Familie legt mods/ beiseite, loescht ihn nicht. */
+    public const MOD_LOADERS = ['fabric', 'forge', 'neoforge'];
 
     /**
      * Werkzeug => Typen, fuer die es gilt. Ein weiteres Werkzeug (z. B. fuer eine neue Seite)

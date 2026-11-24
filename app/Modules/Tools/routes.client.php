@@ -12,6 +12,7 @@ use Pterodactyl\BlueprintFramework\Extensions\{identifier}\Modules\Tools\Http\Co
 use Pterodactyl\BlueprintFramework\Extensions\{identifier}\Modules\Tools\Http\WorldsController;
 use Pterodactyl\BlueprintFramework\Extensions\{identifier}\Modules\Tools\Http\PlayersController;
 use Pterodactyl\BlueprintFramework\Extensions\{identifier}\Modules\Tools\Http\VersionController;
+use Pterodactyl\BlueprintFramework\Extensions\{identifier}\Modules\Tools\Http\SoftwareController;
 use Pterodactyl\BlueprintFramework\Extensions\{identifier}\Modules\Tools\Http\PropertiesController;
 
 /*
@@ -55,6 +56,16 @@ Route::prefix('/servers/{server}')
             Route::get('/builds', [VersionController::class, 'builds'])->middleware('throttle:60,1,techtyl-tools-read');
             Route::post('/preview', [VersionController::class, 'preview'])->middleware('throttle:30,1,techtyl-tools-preview');
             Route::post('/switch', [VersionController::class, 'switch'])->middleware('throttle:6,1,techtyl-tools-switch');
+        });
+
+        // Software (loader) switch. Same server-type gate as the version list.
+        // Paths sit beside /versions, not under it: GET /software, GET /software/versions, POST /software/preview, POST /software/switch.
+        // Reading needs startup.read. Switching re-checks startup.update, settings.reinstall and the image right.
+        Route::middleware(ToolAvailable::class . ':versions')->group(function () {
+            Route::get('/software', [SoftwareController::class, 'show']);
+            Route::get('/software/versions', [SoftwareController::class, 'versions'])->middleware('throttle:60,1,techtyl-tools-software-read');
+            Route::post('/software/preview', [SoftwareController::class, 'preview'])->middleware('throttle:30,1,techtyl-tools-software-preview');
+            Route::post('/software/switch', [SoftwareController::class, 'switch'])->middleware('throttle:6,1,techtyl-tools-software-switch');
         });
 
         // server.properties

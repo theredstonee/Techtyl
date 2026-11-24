@@ -66,6 +66,61 @@
 
     <div class="box">
       <div class="box-header with-border">
+        <h3 class="box-title">{{ $tt('admin_switch_title') }}</h3>
+      </div>
+      <form method="POST" action="{{ $root }}">
+        {{ csrf_field() }}
+        <input type="hidden" name="action" value="tools.switch">
+        <div class="box-body">
+          <p class="text-muted">{{ $tt('admin_switch_help') }}</p>
+          <div class="form-group">
+            <label for="techtyl-tools-switch">{{ $tt('admin_switch_label') }}</label>
+            <select class="form-control" id="techtyl-tools-switch" name="switch_enabled">
+              <option value="0" @if (empty($toolsSwitchEnabled)) selected @endif>{{ $tt('admin_switch_off') }}</option>
+              <option value="1" @if (!empty($toolsSwitchEnabled)) selected @endif>{{ $tt('admin_switch_on') }}</option>
+            </select>
+          </div>
+          <p class="text-muted">{{ $tt('admin_switch_eggs') }}</p>
+          <p class="text-muted">{{ $tt('admin_switch_eggs_help') }}</p>
+          @if (empty($toolsSwitchChoices))
+            <p class="text-muted">{{ $tt('admin_switch_none') }}</p>
+          @endif
+        </div>
+        @if (!empty($toolsSwitchChoices))
+          <div class="box-body table-responsive no-padding">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>{{ $tt('admin_switch_col_allow') }}</th>
+                  <th>{{ $tt('admin_col_egg') }}</th>
+                  <th>{{ $tt('admin_col_nest') }}</th>
+                  <th>{{ $tt('admin_col_type') }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                @foreach ($toolsSwitchChoices as $choice)
+                  <tr>
+                    <td>
+                      <label class="sr-only" for="techtyl-tools-switch-egg-{{ $choice['id'] }}">{{ $choice['name'] }}</label>
+                      <input type="checkbox" id="techtyl-tools-switch-egg-{{ $choice['id'] }}" name="switch_eggs[]" value="{{ $choice['id'] }}" @if (in_array($choice['id'], $toolsSwitchEggs ?? [], false)) checked @endif>
+                    </td>
+                    <td>{{ $choice['name'] }}</td>
+                    <td>{{ $choice['nest'] }}</td>
+                    <td>{{ $choice['label'] }}</td>
+                  </tr>
+                @endforeach
+              </tbody>
+            </table>
+          </div>
+        @endif
+        <div class="box-footer">
+          <button type="submit" class="btn btn-primary pull-right">{{ $tt('admin_switch_save') }}</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="box">
+      <div class="box-header with-border">
         <h3 class="box-title">{{ $tt('admin_share_title') }}</h3>
       </div>
       <form method="POST" action="{{ $root }}">
@@ -114,6 +169,8 @@
           <li>{{ $tt('admin_service_mojang') }}</li>
           <li>{{ $tt('admin_service_mojang_accounts') }}</li>
           <li>{{ $tt('admin_service_fabric') }}</li>
+          <li>{{ $tt('admin_service_forge') }}</li>
+          <li>{{ $tt('admin_service_neoforge') }}</li>
           <li>{{ $tt('admin_service_mclo') }}</li>
         </ul>
         <p class="text-muted small">{{ $tt('admin_services_privacy') }}</p>

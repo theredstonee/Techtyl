@@ -38,6 +38,7 @@ final class Tasks
     public const HANDLERS = [
         'content.install' => ContentInstaller::class,
         'version.switch' => VersionSwitcher::class,
+        'software.switch' => SoftwareSwitcher::class,
     ];
 
     private const MAX_ACTIVE_PER_SERVER = 25;
@@ -267,7 +268,7 @@ final class Tasks
     {
         try {
             DB::table(self::TABLE)->whereNotIn('status', self::ACTIVE)->where('finished_at', '<', now()->subDays(30))
-                ->whereNot(fn ($query) => $query->where('kind', 'version.switch')->where('status', self::DONE))
+                ->whereNot(fn ($query) => $query->whereIn('kind', ['version.switch', 'software.switch'])->where('status', self::DONE))
                 ->delete();
         } catch (\Throwable $e) {
             // Aufraeumen darf nie stoeren.

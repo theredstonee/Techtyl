@@ -15,20 +15,30 @@ import {
 } from '../../tools/api';
 import { Translate, tt, useToolsT } from '../../tools/text';
 import { Bar, Button, cx, Dialog, Empty, formatBytes, formatDate, Icon, Notice, SkeletonRows, Spinner, Toasts, ToolsGate, useServer, useTasks, useToasts } from '../../tools/ui';
+import Software from '../../tools/Software';
 
 const SOURCES = ['techtyl', 'files', 'variable', 'jar'];
 const STEPS = ['backup', 'download', 'verify', 'stop', 'swap', 'configure'];
+const REINSTALL_STEPS = ['backup', 'stop', 'configure', 'install'];
+const SOFTWARE_TYPES = ['paper', 'purpur', 'folia', 'vanilla', 'fabric', 'forge', 'neoforge'];
 
 const describe = (label: string, ver: string, build: string | null, buildLabel: string, hasBuilds: boolean): string =>
     `${label} ${ver}${hasBuilds && build ? ` · ${buildLabel} ${build}` : ''}`;
 
-const buildWord = (data: VersionList, t: Translate): string => t(data.type === 'fabric' ? 'col_loader' : 'col_build');
+const buildWord = (data: VersionList, t: Translate): string => {
+    if (data.type === 'fabric') return t('col_loader');
+    if (data.type === 'forge') return t('col_forge');
+    if (data.type === 'neoforge') return t('col_neoforge');
+
+    return t('col_build');
+};
 
 /* ------------------------------------------------------------------ Laufender Wechsel */
 
 const Running = ({ task }: { task: ToolsTask }) => {
     const t = useToolsT();
-    const steps = STEPS.filter((step) => step !== 'backup' || task.subject.backup);
+    const reinstall = task.subject.mode === 'reinstall';
+    const steps = (reinstall ? REINSTALL_STEPS : STEPS).filter((step) => step !== 'backup' || task.subject.backup);
     const index = steps.indexOf(task.step);
     const title = t('switch_title', { label: task.title });
 
@@ -47,7 +57,7 @@ const Running = ({ task }: { task: ToolsTask }) => {
                 ))}
             </ol>
             <p className={'techtyl-tools-muted'} style={{ marginTop: 10 }}>
-                {t('run_hint')}
+                {t(reinstall ? 'run_hint_install' : 'run_hint')}
             </p>
         </div>
     );
@@ -158,9 +168,13 @@ const PreviewDialog = ({ server, data, ver, build, onClose, onStarted, onError }
 
                     <dl className={'techtyl-tools-facts'}>
                         <dt>{t('fact_server')}</dt>
-                        <dd>{t(preview.server_state === 'offline' ? 'fact_server_off' : 'fact_server_on')}</dd>
+                        <dd>
+                            {preview.reinstall
+                                ? t(preview.server_state === 'offline' ? 'fact_server_install_off' : 'fact_server_install')
+                                : t(preview.server_state === 'offline' ? 'fact_server_off' : 'fact_server_on')}
+                        </dd>
                         <dt>{t('fact_file')}</dt>
-                        <dd>{t('fact_file_text', { jar: preview.jar, backup: preview.jar_backup })}</dd>
+                        <dd>{preview.reinstall ? t('fact_reinstall') : t('fact_file_text', { jar: preview.jar, backup: preview.jar_backup })}</dd>
                         {preview.download_size && (
                             <>
                                 <dt>{t('fact_download')}</dt>
@@ -240,11 +254,21 @@ const VersionsPage = ({ meta, server }: { meta: ToolsMeta; server: string }) => 
     const [build, setBuild] = useState<string | null>(null);
     const [open, setOpen] = useState(false);
     const [finished, setFinished] = useState<ToolsTask | null>(null);
+    const [softwareNote, setSoftwareNote] = useState<ToolsTask | null>(null);
     const [starting, setStarting] = useState(false);
     const allowed = !!meta.permissions.version;
+    const showSoftware = SOFTWARE_TYPES.indexOf(meta.type) !== -1;
 
     const onFinished = useCallback(
         (task: ToolsTask) => {
+            if (task.kind === 'software.switch') {
+                setSoftwareNote(task);
+                setAttempt((value) => value + 1);
+                if (task.status === 'done') push('ok', tt('software_done'));
+                else push('danger', task.error || tt('switch_failed'));
+
+                return;
+            }
             if (task.kind !== 'version.switch') return;
             if (task.status === 'done') {
                 push('ok', tt('switch_done', { label: task.title }));
@@ -328,25 +352,52 @@ const VersionsPage = ({ meta, server }: { meta: ToolsMeta; server: string }) => 
         setStarting(false);
     };
 
+    const software = showSoftware ? (
+        <Software
+            server={server}
+            meta={meta}
+            tasks={tasks}
+            note={softwareNote}
+            onClearNote={() => setSoftwareNote(null)}
+            onTrack={(task) => {
+                setSoftwareNote(null);
+                setFinished(null);
+                tasks.track(task);
+            }}
+        />
+    ) : null;
+
     if (!allowed) {
         return (
-            <Empty icon={'info'} title={t('version_right_title')}>
-                {t('version_right_text')}
-            </Empty>
+            <>
+                {software}
+                <Empty icon={'info'} title={t('version_right_title')}>
+                    {t('version_right_text')}
+                </Empty>
+                <Toasts toasts={toasts} dismiss={dismiss} />
+            </>
         );
     }
     if (error) {
         return (
-            <Empty icon={'warn'} title={t('versions_failed')} action={<Button onClick={() => setAttempt(attempt + 1)}>{t('retry')}</Button>}>
-                {error}
-            </Empty>
+            <>
+                {software}
+                <Empty icon={'warn'} title={t('versions_failed')} action={<Button onClick={() => setAttempt(attempt + 1)}>{t('retry')}</Button>}>
+                    {error}
+                </Empty>
+                <Toasts toasts={toasts} dismiss={dismiss} />
+            </>
         );
     }
     if (!data) {
         return (
-            <div className={'techtyl-tools-panel'}>
-                <SkeletonRows rows={5} />
-            </div>
+            <>
+                {software}
+                <div className={'techtyl-tools-panel'}>
+                    <SkeletonRows rows={5} />
+                </div>
+                <Toasts toasts={toasts} dismiss={dismiss} />
+            </>
         );
     }
 
@@ -357,6 +408,7 @@ const VersionsPage = ({ meta, server }: { meta: ToolsMeta; server: string }) => 
 
     return (
         <>
+            {software}
             <div className={'techtyl-tools-panel'}>
                 <div className={'techtyl-tools-current'}>
                     <div>
@@ -404,11 +456,13 @@ const VersionsPage = ({ meta, server }: { meta: ToolsMeta; server: string }) => 
                         </>
                     }
                 >
-                    {t('done_backup', { file: finished.result.jar_backup })}
+                    {finished.result.mode === 'reinstall' ? t('done_reinstall') : t('done_backup', { file: String(finished.result.jar_backup || '') })}
                     {finished.result.image_changed ? ` ${t('done_image')}` : ''}
                     {finished.result.started ? ` ${t('done_started')}` : ''}
                 </Notice>
             )}
+
+            {tasks.active.some((task) => task.kind === 'software.switch') && !running && <Notice tone={'info'}>{t('switch_other_running')}</Notice>}
 
             {data.planned ? (
                 <Notice tone={'info'} title={t('planned_title', { type: data.type_label })}>
@@ -495,7 +549,7 @@ const VersionsPage = ({ meta, server }: { meta: ToolsMeta; server: string }) => 
                                     : t('picked', { label: describe(data.type_label, picked, build, buildLabel, data.has_builds) })
                                 : t('pick_hint')}
                         </span>
-                        <Button look={'primary'} disabled={!picked || !build || isCurrent} onClick={() => setOpen(true)}>
+                        <Button look={'primary'} disabled={!picked || !build || isCurrent || tasks.active.some((task) => task.kind === 'software.switch')} onClick={() => setOpen(true)}>
                             {t('next')} <Icon id={'arrow'} />
                         </Button>
                     </div>

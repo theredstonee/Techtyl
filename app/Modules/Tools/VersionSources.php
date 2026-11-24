@@ -2,6 +2,7 @@
 
 namespace Pterodactyl\BlueprintFramework\Extensions\{identifier}\Modules\Tools;
 
+use Illuminate\Support\Facades\Log;
 use Pterodactyl\BlueprintFramework\Extensions\{identifier}\I18n;
 
 /**
@@ -10,6 +11,8 @@ use Pterodactyl\BlueprintFramework\Extensions\{identifier}\I18n;
  *   purpur                  -> api.purpurmc.org v2
  *   vanilla                 -> Mojang piston-meta
  *   fabric                  -> meta.fabricmc.net (Build = Loader-Version)
+ *   forge                   -> promotions_slim.json plus maven-metadata.xml
+ *   neoforge                -> maven.neoforged.net metadata (not the legacy forge artifact)
  *
  * Kennungen aus Nutzereingaben gelten erst, wenn sie in der vom Dienst gelieferten Liste stehen.
  * Das Versionsschema ist bewusst nicht auf "1.x" festgelegt (es gibt 26.x und Vorabversionen).
@@ -73,6 +76,14 @@ final class VersionSources
             }
 
             return $list;
+        }
+
+        if ($type === 'forge') {
+            return self::forgeIndex()['games'];
+        }
+
+        if ($type === 'neoforge') {
+            return self::neoIndex()['games'];
         }
 
         if ($type === 'fabric') {
@@ -145,6 +156,14 @@ final class VersionSources
             $entry = self::vanillaManifest()[$version];
 
             return [['id' => 'release', 'label' => I18n::t('tools.build_official'), 'channel' => 'stable', 'time' => $entry['time'], 'size' => null]];
+        }
+
+        if ($type === 'forge') {
+            return self::forgeIndex()['builds'][$version] ?? [];
+        }
+
+        if ($type === 'neoforge') {
+            return self::neoIndex()['builds'][$version] ?? [];
         }
 
         // Fabric: der "Build" ist die Loader-Version.
@@ -229,6 +248,39 @@ final class VersionSources
             ];
         }
 
+        if ($type === 'forge') {
+            $info = self::forgeIndex()['by_full'][$build] ?? null;
+            if (!is_array($info) || ($info['mc'] ?? '') !== $version) {
+                throw ToolsException::notFound('build_unknown');
+            }
+
+            return [
+                'version' => $version,
+                'build' => $build,
+                'java' => self::javaFor($version),
+                'files' => [],
+                'extra' => [
+                    'forge_version' => $build,
+                    'build_type' => !empty($info['recommended']) ? 'recommended' : 'latest',
+                ],
+            ];
+        }
+
+        if ($type === 'neoforge') {
+            $info = self::neoIndex()['by_full'][$build] ?? null;
+            if (!is_array($info) || ($info['mc'] ?? '') !== $version) {
+                throw ToolsException::notFound('build_unknown');
+            }
+
+            return [
+                'version' => $version,
+                'build' => $build,
+                'java' => self::javaFor($version),
+                'files' => [],
+                'extra' => ['neoforge_version' => $build],
+            ];
+        }
+
         if ($type === 'vanilla') {
             $server = self::vanillaServer($version);
 
@@ -303,6 +355,17 @@ final class VersionSources
         } catch (\Throwable $e) {
             return null;
         }
+    }
+
+    /**
+     * Minecraft game id for a NeoForge loader id such as 21.1.172, or null when it does not match.
+     * NeoForge 1.20.1 lives on the legacy net.neoforged:forge line and is not listed here.
+     */
+    public static function neoforgeGame(string $id): ?string
+    {
+        $split = self::splitNeo($id);
+
+        return $split['mc'] ?? null;
     }
 
     /** Benoetigte Java-Hauptversion, wenn der Dienst keine nennt. */
@@ -424,6 +487,249 @@ final class VersionSources
             'sha1' => $server['sha1'],
             'java' => $java >= 8 && $java <= 99 ? $java : self::javaFor($version),
         ];
+    }
+
+    /**
+     * Forge index for this request. Promotions add the recommended flag. If that file fails,
+     * the maven list is still used and nothing is marked recommended.
+     *
+     * @return array{games: array<int, array{id: string, stable: bool, group: string}>, builds: array<string, array<int, array{id: string, label: string, channel: string, time: null, size: null}>>, by_full: array<string, array{mc: string, recommended: bool}>}
+     */
+    private static function forgeIndex(): array
+    {
+        $promos = [];
+        try {
+            $data = ExternalHttp::get('forge_files', '/net/minecraftforge/forge/promotions_slim.json', [], self::LIST_TTL);
+            $raw = is_array($data['promos'] ?? null) ? $data['promos'] : [];
+            $count = 0;
+            foreach ($raw as $key => $value) {
+                if ($count >= 2000) {
+                    break;
+                }
+                $count++;
+                if (!is_string($key) || !is_string($value)) {
+                    continue;
+                }
+                if (!preg_match('/^(\d+\.\d+(?:\.\d+)?)-(latest|recommended)$/', $key, $match)) {
+                    continue;
+                }
+                $full = self::forgeFull($match[1], trim($value));
+                if ($full === null) {
+                    continue;
+                }
+                $promos[$full] = $match[2];
+            }
+        } catch (\Throwable $e) {
+            Log::warning('techtyl tools: forge promotions unavailable', ['error' => substr($e->getMessage(), 0, 200)]);
+        }
+
+        $grouped = [];
+        foreach (self::mavenVersions('forge_maven', '/net/minecraftforge/forge/maven-metadata.xml') as $full) {
+            $split = self::splitForge($full);
+            if ($split === null) {
+                continue;
+            }
+            $grouped[$split['mc']][$full] = ($promos[$full] ?? '') === 'recommended';
+        }
+
+        $games = [];
+        $builds = [];
+        $byFull = [];
+        foreach ($grouped as $mc => $rows) {
+            if (!self::validId($mc)) {
+                continue;
+            }
+            $games[] = ['id' => $mc, 'stable' => self::looksStable($mc), 'group' => self::group($mc)];
+            $list = [];
+            foreach ($rows as $full => $recommended) {
+                $split = self::splitForge($full);
+                if ($split === null) {
+                    continue;
+                }
+                $byFull[$full] = ['mc' => $mc, 'recommended' => $recommended];
+                $list[] = [
+                    'id' => $full,
+                    'label' => I18n::t($recommended ? 'tools.forge_recommended' : 'tools.forge_build', ['id' => $split['build']]),
+                    'channel' => 'stable',
+                    'time' => null,
+                    'size' => null,
+                    'sort' => $split['build'],
+                    'recommended' => $recommended,
+                ];
+            }
+            usort($list, fn ($a, $b) => version_compare($b['sort'], $a['sort']));
+            $recommended = null;
+            $rest = [];
+            foreach ($list as $row) {
+                unset($row['sort']);
+                if ($row['recommended']) {
+                    $recommended = $row;
+                    unset($recommended['recommended']);
+                } else {
+                    unset($row['recommended']);
+                    $rest[] = $row;
+                }
+            }
+            $rest = array_slice($rest, 0, self::MAX_BUILDS);
+            $builds[$mc] = $recommended !== null ? array_merge([$recommended], $rest) : $rest;
+        }
+        usort($games, fn ($a, $b) => version_compare($b['id'], $a['id']));
+
+        return ['games' => $games, 'builds' => $builds, 'by_full' => $byFull];
+    }
+
+    /**
+     * NeoForge loader ids mapped onto Minecraft. A suffix such as -beta is unstable.
+     * The legacy 1.20.1 line is a different maven artifact and is intentionally absent.
+     *
+     * @return array{games: array<int, array{id: string, stable: bool, group: string}>, builds: array<string, array<int, array{id: string, label: string, channel: string, time: null, size: null}>>, by_full: array<string, array{mc: string}>}
+     */
+    private static function neoIndex(): array
+    {
+        $grouped = [];
+        $stableGame = [];
+        foreach (self::mavenVersions('neoforge', '/releases/net/neoforged/neoforge/maven-metadata.xml') as $id) {
+            $split = self::splitNeo($id);
+            if ($split === null) {
+                continue;
+            }
+            $grouped[$split['mc']][] = ['id' => $id, 'unstable' => $split['unstable']];
+            if (!$split['unstable']) {
+                $stableGame[$split['mc']] = true;
+            }
+        }
+
+        $games = [];
+        $builds = [];
+        $byFull = [];
+        foreach ($grouped as $mc => $rows) {
+            $games[] = ['id' => $mc, 'stable' => isset($stableGame[$mc]), 'group' => self::group($mc)];
+            usort($rows, fn ($a, $b) => version_compare($b['id'], $a['id']));
+            $list = [];
+            foreach (array_slice($rows, 0, self::MAX_BUILDS) as $row) {
+                $byFull[$row['id']] = ['mc' => $mc];
+                $list[] = [
+                    'id' => $row['id'],
+                    'label' => $row['unstable'] ? I18n::t('tools.neoforge_beta', ['id' => $row['id']]) : $row['id'],
+                    'channel' => $row['unstable'] ? 'beta' : 'stable',
+                    'time' => null,
+                    'size' => null,
+                ];
+            }
+            $builds[$mc] = $list;
+        }
+        usort($games, fn ($a, $b) => version_compare($b['id'], $a['id']));
+
+        return ['games' => $games, 'builds' => $builds, 'by_full' => $byFull];
+    }
+
+    /** @return array<int, string> */
+    private static function mavenVersions(string $service, string $path): array
+    {
+        $xml = ExternalHttp::text($service, $path, [], self::LIST_TTL);
+        if ($xml === '' || stripos($xml, '<!DOCTYPE') !== false || stripos($xml, '<!ENTITY') !== false) {
+            throw ToolsException::upstream(ExternalHttp::label($service));
+        }
+
+        $versions = self::mavenRead($xml);
+        if ($versions === [] && str_contains($xml, 'xmlns=')) {
+            $stripped = preg_replace('/\sxmlns="[^"]*"/', '', $xml, 1);
+            if (is_string($stripped)) {
+                $versions = self::mavenRead($stripped);
+            }
+        }
+        if ($versions === []) {
+            Log::warning('techtyl tools: maven metadata has no versions', ['service' => $service]);
+            throw ToolsException::upstream(ExternalHttp::label($service));
+        }
+
+        return $versions;
+    }
+
+    /** @return array<int, string> */
+    private static function mavenRead(string $xml): array
+    {
+        $previous = libxml_use_internal_errors(true);
+        try {
+            $doc = simplexml_load_string($xml, 'SimpleXMLElement', LIBXML_NONET);
+        } catch (\Throwable $e) {
+            libxml_clear_errors();
+            libxml_use_internal_errors($previous);
+            Log::warning('techtyl tools: maven metadata unreadable', ['error' => substr($e->getMessage(), 0, 200)]);
+
+            return [];
+        }
+        libxml_clear_errors();
+        libxml_use_internal_errors($previous);
+        if ($doc === false) {
+            return [];
+        }
+
+        $versions = [];
+        $nodes = $doc->versioning->versions->version ?? [];
+        foreach ($nodes as $node) {
+            $id = trim((string) $node);
+            if ($id !== '' && self::validId($id)) {
+                $versions[] = $id;
+            }
+            if (count($versions) >= 8000) {
+                break;
+            }
+        }
+
+        return $versions;
+    }
+
+    /** @return array{mc: string, build: string}|null */
+    private static function splitForge(string $full): ?array
+    {
+        if (!self::validId($full)) {
+            return null;
+        }
+        if (!preg_match('/^(\d+\.\d+(?:\.\d+)?)-(\d+(?:\.\d+){1,3})(?:-(\d+\.\d+(?:\.\d+)?))?$/', $full, $match)) {
+            return null;
+        }
+        if (($match[3] ?? '') !== '' && $match[3] !== $match[1]) {
+            return null;
+        }
+
+        return ['mc' => $match[1], 'build' => $match[2]];
+    }
+
+    private static function forgeFull(string $mc, string $value): ?string
+    {
+        if ($value === '' || strlen($value) > 60) {
+            return null;
+        }
+        $full = str_starts_with($value, $mc . '-') ? $value : $mc . '-' . $value;
+        $split = self::splitForge($full);
+        if ($split === null || $split['mc'] !== $mc) {
+            return null;
+        }
+
+        return $full;
+    }
+
+    /** @return array{mc: string, unstable: bool}|null */
+    private static function splitNeo(string $id): ?array
+    {
+        if (!self::validId($id)) {
+            return null;
+        }
+        if (!preg_match('/^(\d{2})\.(\d{1,3})\.(\d{1,5})(-[a-z0-9.]{1,16})?$/', $id, $match)) {
+            return null;
+        }
+        $major = (int) $match[1];
+        $minor = (int) $match[2];
+        if ($major < 20 || $major > 80) {
+            return null;
+        }
+        $mc = $minor === 0 ? '1.' . $major : '1.' . $major . '.' . $minor;
+        if (!self::validId($mc)) {
+            return null;
+        }
+
+        return ['mc' => $mc, 'unstable' => ($match[4] ?? '') !== ''];
     }
 
     private static function looksStable(string $id): bool

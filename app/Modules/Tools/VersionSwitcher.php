@@ -10,7 +10,9 @@ use Illuminate\Support\Facades\Log;
 use Pterodactyl\Facades\Activity;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Validator;
+use Pterodactyl\Exceptions\DisplayException;
 use Pterodactyl\Services\Backups\InitiateBackupService;
+use Pterodactyl\Services\Servers\ReinstallServerService;
 use Pterodactyl\BlueprintFramework\Extensions\{identifier}\I18n;
 
 /**
@@ -32,6 +34,7 @@ final class VersionSwitcher
         'stop' => 'step_stop',
         'swap' => 'step_swap',
         'configure' => 'step_configure',
+        'install' => 'step_reinstall',
     ];
 
     private const NEW_SUFFIX = '.techtyl-new';
@@ -46,6 +49,9 @@ final class VersionSwitcher
         'vanilla' => ['VANILLA_VERSION' => 'version'],
         'velocity' => ['VELOCITY_VERSION' => 'version', 'BUILD_NUMBER' => 'build'],
         'fabric' => ['MC_VERSION' => 'version', 'LOADER_VERSION' => 'build', 'FABRIC_VERSION' => 'installer'],
+        // Forge and NeoForge do not download a jar here. The egg install script does, after these variables are set.
+        'forge' => ['MC_VERSION' => 'version', 'FORGE_VERSION' => 'forge_version', 'BUILD_TYPE' => 'build_type'],
+        'neoforge' => ['NEOFORGE_VERSION' => 'neoforge_version'],
     ];
 
     /**
@@ -57,6 +63,13 @@ final class VersionSwitcher
         $type = ServerTypes::forServer($server)['type'];
         if (!VersionSources::supports($type)) {
             throw ToolsException::conflict('no_switch');
+        }
+        $reinstall = in_array($type, ['forge', 'neoforge'], true);
+        if ($reinstall) {
+            $blocked = self::installBlock($server);
+            if ($blocked !== null) {
+                throw ToolsException::conflict($blocked);
+            }
         }
         if (!VersionSources::validId($version) || !VersionSources::validId($build)) {
             throw ToolsException::invalid('ids_invalid');
@@ -128,6 +141,22 @@ final class VersionSwitcher
         if ($state !== 'offline' && !$user->can('control.stop', $server)) {
             $warnings[] = ['level' => 'danger', 'text' => I18n::t('tools.warn_cant_stop')];
         }
+        if ($reinstall) {
+            $warnings[] = ['level' => 'warning', 'text' => I18n::t('tools.warn_installer')];
+            $byKey = [];
+            foreach ($variables as $item) {
+                $byKey[$item['key']] = $item;
+            }
+            foreach (array_keys(self::VARIABLES[$type] ?? []) as $key) {
+                $item = $byKey[$key] ?? null;
+                if ($item === null) {
+                    throw ToolsException::conflict('software_var_missing', ['key' => $key]);
+                }
+                if (!$item['set']) {
+                    throw ToolsException::conflict(($item['code'] ?? '') === 'locked' ? 'software_var_locked' : 'software_var_rules', ['key' => $key]);
+                }
+            }
+        }
 
         $size = 0;
         foreach ($files as $file) {
@@ -147,6 +176,7 @@ final class VersionSwitcher
             'server_state' => $state,
             'can_stop' => $state === 'offline' || $user->can('control.stop', $server),
             'can_start' => $user->can('control.start', $server),
+            'reinstall' => $reinstall,
             'backup' => $backup,
             'warnings' => $warnings,
             // Nur intern (queue), geht nie an den Browser:
@@ -159,6 +189,9 @@ final class VersionSwitcher
     {
         if (Tasks::hasActive($server, 'version.switch')) {
             throw ToolsException::conflict('switch_running');
+        }
+        if (Tasks::hasActive($server, 'software.switch')) {
+            throw ToolsException::conflict('software_busy');
         }
         $plan = self::plan($server, $user, $version, $build);
         if ($plan['direction'] === 'same') {
@@ -188,11 +221,22 @@ final class VersionSwitcher
             'variables' => array_values(array_filter($internal['variables'], fn ($item) => $item['set'])),
             'options' => ['backup' => $backup, 'start' => $start],
             'user_id' => $user->id,
+            'reinstall' => !empty($plan['reinstall']),
             'state' => [],
-            'public' => ['type' => $plan['type'], 'from' => $plan['from'], 'to' => $plan['to'], 'backup' => $backup, 'start' => $start],
+            'public' => [
+                'type' => $plan['type'],
+                'from' => $plan['from'],
+                'to' => $plan['to'],
+                'backup' => $backup,
+                'start' => $start,
+                'mode' => !empty($plan['reinstall']) ? 'reinstall' : 'files',
+            ],
         ];
 
         return Tasks::create($server, $user, 'version.switch', $label, $payload, function (Collection $active) {
+            if ($active->contains('kind', 'software.switch')) {
+                throw ToolsException::conflict('software_busy');
+            }
             if ($active->contains('kind', 'version.switch')) {
                 throw ToolsException::conflict('switch_running');
             }
@@ -201,6 +245,11 @@ final class VersionSwitcher
 
     public static function advance(TaskContext $task): void
     {
+        if (!empty($task->payload['reinstall'])) {
+            self::advanceReinstall($task);
+
+            return;
+        }
         $payload = &$task->payload;
         $state = &$payload['state'];
         $wings = $task->wings();
@@ -402,6 +451,11 @@ final class VersionSwitcher
      */
     public static function abort(TaskContext $task): void
     {
+        if (!empty($task->payload['reinstall'])) {
+            self::abortReinstall($task);
+
+            return;
+        }
         if ($task->server === null) {
             return;
         }
@@ -547,7 +601,7 @@ final class VersionSwitcher
         ];
     }
 
-    /** @return array<int, array{key: string, label: string, from: ?string, to: string, set: bool, reason: ?string}> */
+    /** @return array<int, array{key: string, label: string, from: ?string, to: string, set: bool, code: ?string, reason: ?string}> */
     private static function variablePlan(Server $server, string $type, string $version, string $build, array $extra): array
     {
         $values = ['version' => $version, 'build' => $build] + $extra;
@@ -560,11 +614,14 @@ final class VersionSwitcher
             }
             $set = true;
             $reason = null;
+            $code = null;
             if (!$variable->user_editable) {
                 $set = false;
+                $code = 'locked';
                 $reason = I18n::t('tools.var_locked');
             } elseif (Validator::make(['value' => $to], ['value' => $variable->rules])->fails()) {
                 $set = false;
+                $code = 'rules';
                 $reason = I18n::t('tools.var_rules');
             }
             $plan[] = [
@@ -573,6 +630,7 @@ final class VersionSwitcher
                 'from' => is_string($variable->server_value) ? $variable->server_value : null,
                 'to' => $to,
                 'set' => $set,
+                'code' => $code,
                 'reason' => $reason,
             ];
         }
@@ -589,6 +647,274 @@ final class VersionSwitcher
         }
 
         return $jar === 'minecraft-server.jar' ? 'vanilla-server.jar' : 'minecraft-server.jar';
+    }
+
+    /** Reasons that make a Forge or NeoForge reinstall unsafe before anything is touched. */
+    private static function installBlock(Server $server): ?string
+    {
+        if ($server->status === Server::STATUS_SUSPENDED) {
+            return 'server_suspended';
+        }
+        if ($server->status === Server::STATUS_INSTALLING) {
+            return 'server_installing';
+        }
+        if ($server->status === Server::STATUS_RESTORING_BACKUP) {
+            return 'server_restore';
+        }
+        if ($server->transfer !== null) {
+            return 'server_transfer';
+        }
+        try {
+            if ($server->node !== null && $server->node->isUnderMaintenance()) {
+                return 'server_maintenance';
+            }
+        } catch (\Throwable $e) {
+            return 'software_node';
+        }
+        if (!$server->canBeReinstalled()) {
+            return $server->skip_scripts ? 'server_no_script' : 'server_no_reinstall';
+        }
+
+        return null;
+    }
+
+    /**
+     * Same-egg Forge or NeoForge install. Backup, then stop, then set the egg variables and
+     * run the panel reinstall. No jar is renamed. If the installer never starts, the variables
+     * are put back so a later attempt is not refused as "already this version".
+     */
+    private static function advanceReinstall(TaskContext $task): void
+    {
+        $payload = &$task->payload;
+        $state = &$payload['state'];
+        $wings = $task->wings();
+        $server = $task->server;
+
+        switch ($task->step) {
+            case '':
+                if (!empty($payload['options']['backup'])) {
+                    try {
+                        $backup = app(InitiateBackupService::class)->handle($server, I18n::t('tools.backup_name', ['version' => $payload['version']]));
+                    } catch (\Throwable $e) {
+                        Log::warning('techtyl tools: backup before reinstall failed', ['server' => $server->uuid, 'error' => substr($e->getMessage(), 0, 300)]);
+                        $task->fail('backup_start_failed');
+
+                        return;
+                    }
+                    $state['backup_uuid'] = $backup->uuid;
+                    $state['backup_started'] = time();
+                    $task->step('backup', 8);
+
+                    return;
+                }
+                $state['was_running'] = $wings->state() !== 'offline';
+                $task->step('stop', 20);
+
+                return;
+
+            case 'backup':
+                $backup = Backup::query()->where('server_id', $server->id)->where('uuid', $state['backup_uuid'] ?? '')->first();
+                if ($backup === null || ($backup->completed_at !== null && !$backup->is_successful)) {
+                    $task->fail('backup_failed');
+
+                    return;
+                }
+                if ($backup->completed_at === null) {
+                    if (time() - (int) ($state['backup_started'] ?? time()) > 1500) {
+                        $task->fail('backup_timeout');
+                    }
+
+                    return;
+                }
+                $state['was_running'] = $wings->state() !== 'offline';
+                $task->step('stop', 20);
+
+                return;
+
+            case 'stop':
+                if ($wings->state() === 'offline') {
+                    $task->step('configure', 55);
+
+                    return;
+                }
+                if (empty($state['stop_sent'])) {
+                    $wings->power('stop');
+                    $state['stop_sent'] = time();
+                } elseif (time() - (int) $state['stop_sent'] > 150) {
+                    self::abortReinstall($task);
+                    $task->fail('stop_failed');
+                } elseif (time() - (int) $state['stop_sent'] > 75 && empty($state['kill_sent'])) {
+                    $wings->power('kill');
+                    $state['kill_sent'] = time();
+                }
+
+                return;
+
+            case 'configure':
+                if (empty($state['settings_changed'])) {
+                    $state['snapshot'] = self::snapshot($server, $payload['variables'] ?? []);
+                    $changed = ['image' => false];
+                    DB::transaction(function () use ($task, &$changed) {
+                        $changed = self::applySettings($task);
+                    });
+                    $state['settings_changed'] = true;
+                    $state['image_changed'] = !empty($changed['image']);
+                }
+                if (empty($state['install_triggered'])) {
+                    try {
+                        app(ReinstallServerService::class)->handle($server->fresh());
+                    } catch (DisplayException $e) {
+                        Log::warning('techtyl tools: reinstall refused', ['server' => $server->uuid, 'error' => substr($e->getMessage(), 0, 300)]);
+                        if (self::restoreSnapshot($task)) {
+                            $state['settings_changed'] = false;
+                            $task->fail('reinstall_failed');
+                        } else {
+                            $task->fail('reinstall_failed_keep');
+                        }
+
+                        return;
+                    }
+                    $state['install_triggered'] = true;
+                    $state['install_started'] = time();
+                }
+                $task->step('install', 75);
+
+                return;
+
+            case 'install':
+                $fresh = $server->fresh();
+                if ($fresh === null) {
+                    $task->fail('task_stuck');
+
+                    return;
+                }
+                $status = $fresh->status;
+                if ($status === null || $status === '') {
+                    $started = false;
+                    if (!empty($payload['options']['start'])) {
+                        try {
+                            $wings->power('start');
+                            $started = true;
+                        } catch (\Throwable $e) {
+                            Log::warning('techtyl tools: start after reinstall failed', ['server' => $server->uuid]);
+                        }
+                    }
+                    self::log($task);
+                    $task->done([
+                        'type' => $payload['type'],
+                        'version' => $payload['version'],
+                        'build' => $payload['build'],
+                        'from' => $payload['from'],
+                        'jar' => $payload['jar'],
+                        'jar_size' => 0,
+                        'jar_backup' => null,
+                        'mode' => 'reinstall',
+                        'image_changed' => !empty($state['image_changed']),
+                        'variables_set' => array_column($payload['variables'] ?? [], 'key'),
+                        'started' => $started,
+                        'was_running' => !empty($state['was_running']),
+                    ]);
+
+                    return;
+                }
+                if ($status === Server::STATUS_INSTALL_FAILED || $status === Server::STATUS_REINSTALL_FAILED) {
+                    $task->fail('reinstall_status_failed');
+
+                    return;
+                }
+                $elapsed = time() - (int) ($state['install_started'] ?? time());
+                if ($elapsed > 1500) {
+                    $task->fail('reinstall_timeout');
+
+                    return;
+                }
+                $task->step('install', min(92, 75 + (int) floor($elapsed / 90)));
+
+                return;
+        }
+
+        $task->fail('task_state');
+    }
+
+    /** Put the previous variable values back. Used only when the installer never started. */
+    private static function restoreSnapshot(TaskContext $task): bool
+    {
+        $snapshot = $task->payload['state']['snapshot'] ?? null;
+        $server = $task->server;
+        if (!is_array($snapshot) || $server === null) {
+            return false;
+        }
+        try {
+            DB::transaction(function () use ($server, $snapshot) {
+                foreach ($snapshot['variables'] ?? [] as $item) {
+                    if (!is_array($item) || !is_string($item['key'] ?? null)) {
+                        continue;
+                    }
+                    $variable = $server->variables->firstWhere('env_variable', $item['key']);
+                    if ($variable === null || !$variable->user_editable) {
+                        continue;
+                    }
+                    DB::table('server_variables')->updateOrInsert(
+                        ['server_id' => $server->id, 'variable_id' => $variable->id],
+                        ['variable_value' => (string) ($item['from'] ?? ''), 'updated_at' => now()]
+                    );
+                }
+                $image = $snapshot['image'] ?? null;
+                if (is_string($image) && $image !== '' && $image !== $server->image) {
+                    $images = array_values(is_array($server->egg->docker_images) ? $server->egg->docker_images : []);
+                    if (in_array($image, $images, true)) {
+                        $server->forceFill(['image' => $image])->saveOrFail();
+                    }
+                }
+            });
+        } catch (\Throwable $e) {
+            Log::warning('techtyl tools: could not restore startup settings', ['server' => $server->uuid, 'error' => substr($e->getMessage(), 0, 300)]);
+
+            return false;
+        }
+
+        return true;
+    }
+
+    /** @param array<int, array<string, mixed>> $variables */
+    private static function snapshot(Server $server, array $variables): array
+    {
+        $rows = [];
+        foreach ($variables as $item) {
+            if (!is_string($item['key'] ?? null)) {
+                continue;
+            }
+            $variable = $server->variables->firstWhere('env_variable', $item['key']);
+            $rows[] = [
+                'key' => $item['key'],
+                'from' => $variable !== null && is_string($variable->server_value) ? $variable->server_value : '',
+            ];
+        }
+
+        return ['image' => (string) $server->image, 'variables' => $rows];
+    }
+
+    private static function abortReinstall(TaskContext $task): void
+    {
+        if ($task->server === null) {
+            return;
+        }
+        $state = $task->payload['state'] ?? [];
+        if (!empty($state['settings_changed']) && empty($state['install_triggered'])) {
+            if (self::restoreSnapshot($task)) {
+                $task->payload['state']['settings_changed'] = false;
+            }
+        }
+        if (empty($state['moved']) && empty($task->payload['state']['settings_changed']) && empty($state['install_triggered'])
+            && !empty($state['stop_sent']) && !empty($state['was_running'])) {
+            try {
+                if ($task->wings()->state() === 'offline') {
+                    $task->wings()->power('start');
+                }
+            } catch (\Throwable $e) {
+                Log::warning('techtyl tools: restart after reinstall abort failed', ['server' => $task->server->uuid]);
+            }
+        }
     }
 
     private static function log(TaskContext $task): void

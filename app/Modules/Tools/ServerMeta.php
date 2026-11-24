@@ -28,6 +28,7 @@ final class ServerMeta
         'stop' => 'control.stop',
         'restart' => 'control.restart',
         'version' => 'startup.update',
+        'startup_read' => 'startup.read',
         'image' => 'startup.docker-image',
         'backup' => 'backup.create',
         'reinstall' => 'settings.reinstall',
@@ -151,7 +152,8 @@ final class ServerMeta
             $result = ['version' => null, 'build' => null, 'source' => null, 'loader_version' => null];
 
             // 1. Eigener Wechsel.
-            $last = DB::table(Tasks::TABLE)->where('server_id', $server->id)->where('kind', 'version.switch')
+            $last = DB::table(Tasks::TABLE)->where('server_id', $server->id)
+                ->whereIn('kind', ['version.switch', 'software.switch'])
                 ->where('status', Tasks::DONE)->orderByDesc('id')->value('result');
             $last = is_string($last) ? json_decode($last, true) : null;
             if (is_array($last) && $jar !== null && ($last['type'] ?? null) === $type && (int) ($last['jar_size'] ?? -1) === $jar['size']
@@ -211,6 +213,32 @@ final class ServerMeta
             if ($type === 'fabric') {
                 $loader = self::variable($server, 'LOADER_VERSION');
                 $result['loader_version'] = $loader !== null && VersionSources::validId($loader) && preg_match('/^\d/', $loader) ? $loader : null;
+            }
+            if ($type === 'forge') {
+                $forge = self::variable($server, 'FORGE_VERSION');
+                if ($forge !== null && VersionSources::validId($forge)) {
+                    $result['build'] = $forge;
+                }
+            }
+            if ($type === 'neoforge') {
+                $neo = self::variable($server, 'NEOFORGE_VERSION');
+                if ($neo !== null && VersionSources::validId($neo)) {
+                    $result['build'] = $neo;
+                    if ($result['version'] === null) {
+                        $game = VersionSources::neoforgeGame($neo);
+                        if ($game !== null) {
+                            $result['version'] = $game;
+                            $result['source'] = 'variable';
+                        }
+                    }
+                }
+                if ($result['version'] === null) {
+                    $alt = self::variable($server, 'MINECRAFT_VERSION');
+                    if ($alt !== null && VersionSources::validId($alt) && preg_match('/^\d/', $alt)) {
+                        $result['version'] = $alt;
+                        $result['source'] = 'variable';
+                    }
+                }
             }
 
             // 5. Abgleich der Jar-Groesse mit dem Dienst (liefert bei Paper auch den Build).

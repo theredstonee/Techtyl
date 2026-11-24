@@ -44,6 +44,9 @@ class Admin
             'toolsEggs' => $eggs,
             'toolsTypes' => ServerTypes::labels(),
             'toolsShareLogs' => ToolsSettings::shareLogs(),
+            'toolsSwitchEnabled' => SoftwarePolicy::enabled(),
+            'toolsSwitchEggs' => SoftwarePolicy::allowedIds(),
+            'toolsSwitchChoices' => SoftwarePolicy::choices(),
             'toolsQueueSync' => config('queue.default') === 'sync',
             'toolsStats' => $ready ? [
                 'installed' => DB::table(Content::TABLE)->count(),
@@ -57,6 +60,9 @@ class Admin
     {
         if ($action === 'settings') {
             return self::saveSettings($request);
+        }
+        if ($action === 'switch') {
+            return self::saveSwitch($request);
         }
         if ($action !== 'egg-types') {
             abort(404);
@@ -102,5 +108,26 @@ class Admin
         ToolsSettings::save(['share_logs' => $input['share_logs']]);
 
         return I18n::t('tools.admin_share_saved');
+    }
+
+    private static function saveSwitch(Request $request): string
+    {
+        $input = $request->validate([
+            'switch_enabled' => ['required', 'in:0,1'],
+            'switch_eggs' => ['nullable', 'array', 'max:500'],
+            'switch_eggs.*' => ['integer'],
+        ], [
+            'switch_enabled.required' => I18n::t('tools.admin_switch_input'),
+            'switch_enabled.in' => I18n::t('tools.admin_switch_input'),
+            'switch_eggs.array' => I18n::t('tools.admin_switch_input'),
+            'switch_eggs.max' => I18n::t('tools.admin_switch_input'),
+            'switch_eggs.*.integer' => I18n::t('tools.admin_switch_input'),
+        ]);
+        SoftwarePolicy::save([
+            'enabled' => $input['switch_enabled'],
+            'eggs' => $input['switch_eggs'] ?? [],
+        ]);
+
+        return I18n::t('tools.admin_switch_saved');
     }
 }

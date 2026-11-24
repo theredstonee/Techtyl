@@ -282,6 +282,51 @@ export interface VersionPreview {
     can_start: boolean;
     backup: { possible: boolean; reason: string | null; used: number; limit: number };
     warnings: { level: 'info' | 'warning' | 'danger'; text: string }[];
+    reinstall?: boolean;
+}
+
+export interface SoftwareLoader {
+    id: string;
+    label: string;
+    blurb: string;
+    available: boolean;
+    reason: string | null;
+}
+
+export interface SoftwareView {
+    offered: boolean;
+    loader: string | null;
+    loader_label: string | null;
+    enabled: boolean;
+    locked: boolean;
+    locked_reason: string | null;
+    online: boolean | null;
+    can_stop: boolean;
+    can_start: boolean;
+    can_image: boolean;
+    can_backup: boolean;
+    backup: { possible: boolean; reason: string | null; used: number; limit: number };
+    loaders: SoftwareLoader[];
+    switching: boolean;
+}
+
+export interface SoftwarePreview {
+    loader: string;
+    loader_label: string;
+    confirm_word: string;
+    from: { loader: string; loader_label: string; egg: string; nest: string };
+    to: { loader: string; loader_label: string; game: string; build: string; egg: string; nest: string };
+    startup: string;
+    image: { from: string; to: string | null; keep: boolean; java: number };
+    variables: { key: string; label: string; from: string | null; to: string }[];
+    moves: { kind: string; name: string }[];
+    jar: string;
+    online: boolean;
+    can_stop: boolean;
+    can_start: boolean;
+    can_switch: boolean;
+    backup: { possible: boolean; reason: string | null; used: number; limit: number };
+    warnings: { level: 'info' | 'warning' | 'danger'; text: string }[];
 }
 
 export const getVersions = (server: string) => request<VersionList>(server, 'get', '/versions');
@@ -294,6 +339,20 @@ export const previewSwitch = (server: string, ver: string, build: string) =>
 
 export const switchVersion = (server: string, ver: string, build: string, backup: boolean, start: boolean) =>
     request<ToolsTask>(server, 'post', '/versions/switch', { version: ver, build, backup, start });
+
+export const getSoftware = (server: string) => request<SoftwareView>(server, 'get', '/software');
+
+export const getSoftwareVersions = (server: string, loader: string) =>
+    request<{ loader: string; versions: VersionEntry[] }>(server, 'get', '/software/versions', { loader });
+
+export const getSoftwareBuilds = (server: string, loader: string, game: string) =>
+    request<{ loader: string; game: string; builds: BuildEntry[] }>(server, 'get', '/software/versions', { loader, game });
+
+export const previewSoftware = (server: string, loader: string, game: string, build: string) =>
+    request<SoftwarePreview>(server, 'post', '/software/preview', { loader, game, build });
+
+export const switchSoftware = (server: string, loader: string, game: string, build: string, confirm: string, backup: boolean, start: boolean) =>
+    request<ToolsTask>(server, 'post', '/software/switch', { loader, game, build, confirm, backup, start });
 
 /** Server ueber die Panel-API schalten (start, stop, restart). */
 export const sendPower = (server: string, signal: 'start' | 'stop' | 'restart') =>

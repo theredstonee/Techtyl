@@ -35,6 +35,10 @@ final class ExternalHttp
         'mojang' => ['Mojang', 'https://api.minecraftservices.com', 50],
         // Public log paste. The caller masks the text before it is sent.
         'mclo' => ['mclo.gs', 'https://api.mclo.gs', 30],
+        // Forge promotions are JSON. Maven metadata is XML and is read with text(), not get().
+        'forge_files' => ['Forge', 'https://files.minecraftforge.net', 60],
+        'forge_maven' => ['Forge', 'https://maven.minecraftforge.net', 60],
+        'neoforge' => ['NeoForge', 'https://maven.neoforged.net', 60],
     ];
 
     /** Hosts, von denen Dateien geladen werden duerfen (durch Wings per pull oder durch das Panel). */
@@ -44,11 +48,16 @@ final class ExternalHttp
         'api.purpurmc.org',
         'piston-data.mojang.com',
         'meta.fabricmc.net',
+        'files.minecraftforge.net',
+        'maven.minecraftforge.net',
+        'maven.neoforged.net',
     ];
 
     private const CONNECT_TIMEOUT = 5;
     private const TIMEOUT = 12;
+    private const TEXT_TIMEOUT = 20;
     private const MAX_JSON_BYTES = 6 * 1024 * 1024;
+    private const MAX_TEXT_BYTES = 8 * 1024 * 1024;
 
     /**
      * GET auf einen Dienst, Antwort als Array. $path muss mit "/" beginnen und darf nur bereits
@@ -59,6 +68,28 @@ final class ExternalHttp
     public static function get(string $service, string $path, array $query = [], int $ttl = 300): array
     {
         return self::cached($service, 'GET', self::url($service, $path, $query), null, $ttl);
+    }
+
+    /**
+     * GET whose body is text, not JSON. Used for Maven metadata XML. https only, no redirects,
+     * host taken from SERVICES. Empty bodies are not cached.
+     */
+    public static function text(string $service, string $path, array $query = [], int $ttl = 600): string
+    {
+        $url = self::url($service, $path, $query);
+        $key = 'techtyl:tools:http:text:' . sha1('GET ' . $url);
+        if ($ttl > 0) {
+            $hit = Cache::get($key);
+            if (is_string($hit) && $hit !== '') {
+                return $hit;
+            }
+        }
+        $data = self::request($service, 'GET', $url, null, self::MAX_TEXT_BYTES, self::TEXT_TIMEOUT, '*/*');
+        if ($ttl > 0 && $data !== '') {
+            Cache::put($key, $data, $ttl);
+        }
+
+        return $data;
     }
 
     /** POST mit JSON-Koerper (nur lesende Abfragen wie der Update-Abgleich), Antwort als Array. */
@@ -179,6 +210,19 @@ final class ExternalHttp
 
     private static function send(string $service, string $method, string $url, ?array $body): array
     {
+        $raw = self::request($service, $method, $url, $body, self::MAX_JSON_BYTES, self::TIMEOUT, 'application/json');
+        $data = json_decode($raw, true);
+        if (!is_array($data)) {
+            Log::warning('techtyl tools: externe Antwort ist kein JSON', ['service' => $service]);
+            throw ToolsException::upstream(self::label($service));
+        }
+
+        return $data;
+    }
+
+    /** Shared https GET/POST. Never follows a redirect. $accept is application/json or star-slash-star. */
+    private static function request(string $service, string $method, string $url, ?array $body, int $maxBytes, int $timeout, string $accept): string
+    {
         [$label, , $perMinute] = self::SERVICES[$service];
         $blockKey = 'techtyl:tools:pause:' . $service;
         $until = (int) Cache::get($blockKey, 0);
@@ -187,8 +231,13 @@ final class ExternalHttp
         }
         self::throttle($service, $perMinute, $label);
 
+        $options = ['stream' => true, 'timeout' => $timeout, 'headers' => ['Accept' => $accept]];
+        if ($body !== null) {
+            $options['json'] = $body;
+        }
+
         try {
-            $response = self::client()->request($method, $url, $body === null ? ['stream' => true] : ['stream' => true, 'json' => $body]);
+            $response = self::client()->request($method, $url, $options);
         } catch (GuzzleException $e) {
             Log::warning('techtyl tools: externer Aufruf fehlgeschlagen', ['service' => $service, 'error' => $e->getMessage()]);
             throw ToolsException::upstream($label);
@@ -218,13 +267,7 @@ final class ExternalHttp
             throw ToolsException::upstream($label);
         }
 
-        $data = json_decode(self::read($response, self::MAX_JSON_BYTES, $label), true);
-        if (!is_array($data)) {
-            Log::warning('techtyl tools: externe Antwort ist kein JSON', ['service' => $service]);
-            throw ToolsException::upstream($label);
-        }
-
-        return $data;
+        return self::read($response, $maxBytes, $label);
     }
 
     /** Liest hoechstens $max Bytes; groessere Antworten werden verworfen. */
