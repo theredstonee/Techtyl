@@ -12,6 +12,8 @@ import {
     MOTION,
     NAVIGATION,
     SERVER_LAYOUTS,
+    SCENES,
+    SCENE_FOR_VARIANT,
     VARIANTS,
     imageValue,
     loadBootstrap,
@@ -30,7 +32,7 @@ const BASE = '/api/client/extensions/techtyl';
 const GROUPS: Record<Group, DesignKey[]> = {
     appearance: ['variant', 'accent', 'radius', 'motion'],
     layout: ['navigation', 'server_layout', 'banners', 'banner_height'],
-    background: ['dim', 'opacity', 'blur'],
+    background: ['dim', 'opacity', 'blur', 'scene'],
 };
 
 const SWATCHES = ['#f0a33b', '#ef6f5e', '#e86a9a', '#a885f2', '#5aa9f0', '#2ec4b6', '#7cc48a', '#b8d44a', '#e8c35a', '#c8794a', '#9fb2c4', '#e9f0ee'];
@@ -204,6 +206,96 @@ function LayoutArt({ kind }: { kind: string }) {
     );
 }
 
+function SceneArt({ kind, variant, accent }: { kind: string; variant: string; accent: string }) {
+    const palette = PALETTES[variant] || PALETTES.werft;
+    const bg = palette[0];
+    const surface = palette[1];
+    const line = palette[2];
+    const text = palette[3];
+    const drawn = kind === 'auto' ? SCENE_FOR_VARIANT[variant] || 'contours' : kind;
+    const stars: Array<[number, number]> = [
+        [12, 14],
+        [28, 8],
+        [46, 18],
+        [70, 10],
+        [92, 16],
+        [108, 8],
+        [20, 32],
+        [40, 28],
+        [64, 36],
+        [84, 30],
+        [104, 40],
+        [16, 50],
+        [36, 56],
+        [58, 48],
+        [80, 58],
+        [100, 50],
+    ];
+    const trees: Array<[number, number, number]> = [
+        [16, 58, 18],
+        [34, 62, 24],
+        [54, 56, 16],
+        [74, 64, 28],
+        [96, 58, 20],
+        [112, 62, 16],
+    ];
+    return (
+        <span className={'techtyl-designer-scene-art'}>
+            <svg viewBox={'0 0 120 72'} aria-hidden>
+                <rect width={120} height={72} fill={bg} />
+                {drawn === 'contours' &&
+                    [1, 2, 3, 4, 5].map((step) => (
+                        <ellipse key={step} cx={60} cy={78} rx={14 * step} ry={7 * step} fill={'none'} stroke={step % 2 === 0 ? accent : line} strokeWidth={1} />
+                    ))}
+                {drawn === 'aurora' && (
+                    <>
+                        <path d={'M0 22 C24 4 48 34 78 14 C98 2 110 12 120 8 L120 0 L0 0 Z'} fill={accent} opacity={0.45} />
+                        <path d={'M0 40 C30 20 62 50 96 28 C108 20 114 26 120 22 L120 0 L0 0 Z'} fill={text} opacity={0.16} />
+                        <path d={'M0 58 C36 40 70 66 120 46 L120 72 L0 72 Z'} fill={surface} />
+                    </>
+                )}
+                {drawn === 'stars' &&
+                    stars.map((dot, index) => <circle key={index} cx={dot[0]} cy={dot[1]} r={index % 4 === 0 ? 1.3 : 0.7} fill={index % 5 === 0 ? accent : text} />)}
+                {drawn === 'forest' && (
+                    <>
+                        <rect y={58} width={120} height={14} fill={surface} />
+                        {trees.map((tree, index) => {
+                            const x = tree[0];
+                            const y = tree[1];
+                            const height = tree[2];
+                            const half = Math.round(height * 0.42);
+                            return <polygon key={index} points={x - half + ',' + y + ' ' + (x + half) + ',' + y + ' ' + x + ',' + (y - height)} fill={index % 2 === 0 ? surface : line} />;
+                        })}
+                    </>
+                )}
+                {drawn === 'harbor' && (
+                    <>
+                        <rect y={40} width={120} height={32} fill={surface} />
+                        <path d={'M0 46 C24 40 40 50 60 44 C80 38 96 48 120 42'} fill={'none'} stroke={line} strokeWidth={1} />
+                        <path d={'M0 58 C30 52 50 62 80 56 C100 52 110 58 120 54'} fill={'none'} stroke={line} strokeWidth={1} />
+                        <rect x={48} y={28} width={18} height={14} rx={1} fill={surface} stroke={line} strokeWidth={0.6} />
+                        <rect x={51} y={31} width={3} height={2.5} fill={accent} />
+                        <rect x={57} y={31} width={3} height={2.5} fill={accent} opacity={0.65} />
+                        <circle cx={100} cy={16} r={4} fill={text} opacity={0.35} />
+                        <circle cx={22} cy={36} r={1.4} fill={accent} />
+                    </>
+                )}
+                {drawn === 'grid' && (
+                    <>
+                        {[0, 1, 2, 3, 4, 5, 6].map((step) => (
+                            <line key={'v' + step} x1={step * 20} y1={0} x2={step * 20} y2={72} stroke={line} strokeWidth={1} />
+                        ))}
+                        {[0, 1, 2, 3].map((step) => (
+                            <line key={'h' + step} x1={0} y1={step * 24} x2={120} y2={step * 24} stroke={line} strokeWidth={1} />
+                        ))}
+                        <circle cx={60} cy={36} r={2.2} fill={accent} />
+                    </>
+                )}
+            </svg>
+        </span>
+    );
+}
+
 function MotionArt({ level }: { level: string }) {
     return (
         <svg viewBox={'0 0 120 72'} aria-hidden className={'techtyl-designer-sketch techtyl-designer-motion'} data-level={level}>
@@ -349,7 +441,7 @@ export default () => {
     const [confirmReset, setConfirmReset] = useState(false);
     const [notice, setNotice] = useState<{ tone: 'ok' | 'bad'; text: string } | null>(null);
     const fileInput = useRef<HTMLInputElement | null>(null);
-    const savedLook = useRef<{ design: Design; background: string } | null>(null);
+    const savedLook = useRef<{ design: Design; background: string; motifs: Bootstrap['motifs'] } | null>(null);
     const noticeTimer = useRef<number | undefined>(undefined);
 
     const showNotice = useCallback((tone: 'ok' | 'bad', text: string) => {
@@ -362,7 +454,7 @@ export default () => {
         setData(fresh);
         setDraft({ ...fresh.userDesign });
         setBackground(initialBackground(fresh));
-        savedLook.current = { design: fresh.design, background: fresh.background.url };
+        savedLook.current = { design: fresh.design, background: fresh.background.url, motifs: fresh.motifs };
     }, []);
 
     const load = useCallback(() => {
@@ -374,7 +466,7 @@ export default () => {
         load();
         return () => {
             // Leaving without saving: back to the saved look.
-            if (savedLook.current) applyDesign(savedLook.current.design, savedLook.current.background);
+            if (savedLook.current) applyDesign(savedLook.current.design, savedLook.current.background, savedLook.current.motifs);
             window.clearTimeout(noticeTimer.current);
         };
     }, []);
@@ -405,8 +497,8 @@ export default () => {
     }, [data, effective, background]);
 
     useEffect(() => {
-        if (effective) applyDesign(effective, backgroundUrl);
-    }, [effective, backgroundUrl]);
+        if (effective && data) applyDesign(effective, backgroundUrl, data.motifs);
+    }, [effective, backgroundUrl, data]);
 
     const savedBackground = data ? initialBackground(data) : 'default';
     const changes = useMemo(() => {
@@ -495,7 +587,7 @@ export default () => {
                 // Keep unsaved changes of other values, only the image is new.
                 setData(fresh);
                 setBackground('own');
-                savedLook.current = { design: fresh.design, background: fresh.background.url };
+                savedLook.current = { design: fresh.design, background: fresh.background.url, motifs: fresh.motifs };
                 showNotice('ok', t('uploaded'));
             })
             .catch((error) => showNotice('bad', httpErrorToHuman(error)))
@@ -617,6 +709,23 @@ export default () => {
                         </button>
                         <span className={'techtyl-designer-note'}>{t('bg_hint', { size: sizeLabel(data.maxUploadBytes) })}</span>
                     </div>
+                    <h3 className={'techtyl-designer-label'}>{t('scene')}</h3>
+                    <Choices
+                        label={t('scene')}
+                        columns={4}
+                        value={effective.scene || 'auto'}
+                        onPick={(value) => set('scene', value)}
+                        options={[
+                            { value: 'auto', title: t('scene_auto'), desc: t('scene_auto_desc'), art: <SceneArt kind={'auto'} variant={effective.variant} accent={effective.accent} /> },
+                            { value: 'none', title: t('scene_none'), art: <SceneArt kind={'none'} variant={effective.variant} accent={effective.accent} /> },
+                            ...SCENES.map((key) => ({
+                                value: key,
+                                title: t('scene_' + key),
+                                art: <SceneArt kind={key} variant={effective.variant} accent={effective.accent} />,
+                            })),
+                        ]}
+                    />
+                    <p className={'techtyl-designer-note'}>{t('scene_hint')}</p>
                     <Slider label={t('dim')} value={effective.dim} min={0} max={90} unit={'%'} disabled={!backgroundUrl} onChange={(value) => set('dim', value)} />
                     <Slider label={t('opacity')} value={effective.opacity} min={35} max={100} unit={'%'} onChange={(value) => set('opacity', value)} />
                     <Slider label={t('blur')} value={effective.blur} min={0} max={24} unit={'px'} onChange={(value) => set('blur', value)} />

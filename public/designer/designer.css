@@ -1192,7 +1192,8 @@ svg.dz-svg {
   transform: translateY(0) scale(0.985);
 }
 
-.dz-tile[aria-checked='true'] {
+.dz-tile[aria-checked='true'],
+.dz-tile[aria-pressed='true'] {
   border-color: var(--dz-accent);
   background: color-mix(in srgb, var(--dz-accent) 7%, var(--dz-raise));
   box-shadow: inset 0 0 0 1px var(--dz-accent), 0 12px 30px -20px color-mix(in srgb, var(--dz-accent) 70%, transparent);
@@ -1215,6 +1216,29 @@ svg.dz-svg {
   display: block;
   width: 100%;
   height: 100%;
+}
+
+.dz-scene-art {
+  position: absolute;
+  inset: 0;
+}
+
+/* Einmaliges Aufleuchten nur bei Hover oder Fokus, und nur wenn Bewegung erlaubt ist. */
+html:not([data-motion='aus']) .dz-tile:hover .dz-scene-art::after,
+html:not([data-motion='aus']) .dz-tile:focus-visible .dz-scene-art::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 32%, color-mix(in srgb, var(--dz-accent) 50%, transparent) 50%, transparent 68%);
+  transform: translateX(-70%);
+  animation: dz-scene-shimmer 0.8s ease;
+  pointer-events: none;
+}
+
+@keyframes dz-scene-shimmer {
+  to {
+    transform: translateX(70%);
+  }
 }
 
 .dz-tile-art img {
@@ -1274,7 +1298,8 @@ svg.dz-svg {
   stroke-width: 3;
 }
 
-.dz-tile[aria-checked='true'] .dz-tile-check {
+.dz-tile[aria-checked='true'] .dz-tile-check,
+.dz-tile[aria-pressed='true'] .dz-tile-check {
   transform: scale(1) rotate(0);
 }
 
@@ -1478,6 +1503,11 @@ svg.dz-svg {
   fill: none;
   stroke: var(--sk-line);
   stroke-width: 1;
+}
+.dz-sk .s-accent-stroke {
+  fill: none;
+  stroke: var(--dz-accent);
+  stroke-width: 1.25;
 }
 .dz-sk .s-ok {
   fill: #5fd39a;
@@ -2175,6 +2205,11 @@ html[data-motion='aus'] .dz-skeleton > * {
     animation-duration: 1ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 1ms !important;
+  }
+
+  .dz-scene-art::after {
+    content: none !important;
+    animation: none !important;
   }
 }
 

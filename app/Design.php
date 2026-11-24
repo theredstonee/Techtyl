@@ -19,6 +19,20 @@ class Design
     public const MOTION = ['aus', 'dezent', 'voll'];
     public const SERVER_LAYOUT = ['raster', 'liste', 'kompakt'];
 
+    /**
+     * Szenen, die die Zeichen-Engine versteht. Gespeichert wird zusaetzlich "auto" (Standard)
+     * oder "none". "auto" steht nie im data-Attribut; resolveScene() loest es auf.
+     */
+    public const SCENES = ['contours', 'aurora', 'stars', 'forest', 'harbor', 'grid'];
+
+    /** Szene je Variante, wenn "auto" gilt und kein eigenes Bild liegt. */
+    private const VARIANT_SCENES = [
+        'werft' => 'contours',
+        'papier' => 'grid',
+        'hafen' => 'harbor',
+        'kiefer' => 'forest',
+    ];
+
     public const LOGIN_TITLE_MAX = 60;
     public const LOGIN_SUBTITLE_MAX = 160;
 
@@ -35,12 +49,12 @@ class Design
      * Welche Einstellungen ein Nutzer selbst setzen darf, gruppiert nach der Admin-Grenze,
      * die sie freigibt. Die Bildadresse (background) ist nie frei waehlbar: eigene Bilder
      * kommen nur ueber den Upload, mitgelieferte ueber den Motiv-Schluessel (motif).
-     * Die Login-Werte (login_*) setzt nur der Admin.
+     * Die Login-Werte (login_*) setzt nur der Admin. Die Szene (scene) gehoert zur Hintergrund-Grenze.
      */
     public const GROUPS = [
         'appearance' => ['variant', 'accent', 'radius', 'motion'],
         'layout' => ['navigation', 'server_layout', 'banners', 'banner_height'],
-        'background' => ['dim', 'opacity', 'blur', 'motif'],
+        'background' => ['dim', 'opacity', 'blur', 'motif', 'scene'],
     ];
 
     /** @return string[] */
@@ -81,6 +95,7 @@ class Design
             'opacity' => ['integer', 'min:35', 'max:100'],
             'blur' => ['integer', 'min:0', 'max:24'],
             'motif' => ['string', 'max:40', 'regex:/^[a-z0-9][a-z0-9-]{0,39}$/'],
+            'scene' => ['string', 'in:' . implode(',', self::sceneValues())],
         ];
     }
 
@@ -180,6 +195,7 @@ class Design
             'opacity' => 100,
             'blur' => 0,
             'motif' => '',
+            'scene' => 'auto',
             'login_title' => '',
             'login_subtitle' => '',
             'login_image' => '',
@@ -219,6 +235,7 @@ class Design
             'opacity' => $range('opacity', 35, 100),
             'blur' => $range('blur', 0, 24),
             'motif' => ($input['motif'] ?? null) === self::MOTIF_NONE || Motifs::exists($input['motif'] ?? null) ? $input['motif'] : '',
+            'scene' => in_array($input['scene'] ?? null, self::sceneValues(), true) ? $input['scene'] : $d['scene'],
             'login_title' => Clean::line($input['login_title'] ?? '', self::LOGIN_TITLE_MAX),
             'login_subtitle' => Clean::line($input['login_subtitle'] ?? '', self::LOGIN_SUBTITLE_MAX),
             'login_image' => self::backgroundUrl($input['login_image'] ?? ''),
@@ -281,6 +298,11 @@ class Design
     {
         $design = self::sanitize($design);
         $resolved = self::backgroundFor($design);
+        // Mit einer Szene ersetzt die Animation das Standardbild der Variante, statt darueber zu liegen.
+        // Ausdruecklich gewaehlte Bilder bleiben stehen (dann ergibt "auto" ohnehin keine Szene).
+        if (($design["background"] ?? "") === "" && self::resolveScene($design) !== "none") {
+            $resolved = "";
+        }
         $background = $resolved === '' ? 'none' : 'url("' . $resolved . '")';
 
         $vars = [
@@ -310,6 +332,47 @@ class Design
         return ':root{' . $css . '}';
     }
 
+    /** @return string[] auto, none und die sechs Szenen. */
+    public static function sceneValues(): array
+    {
+        return array_merge(['auto', 'none'], self::SCENES);
+    }
+
+    /**
+     * Szene fuer das html-Attribut. "auto" wird hier aufgeloest und nie ausgegeben:
+     * ein eigenes Bild (Upload oder eine Adresse, die kein mitgeliefertes Motiv ist) ergibt
+     * "none", sonst die Szene der Variante. Fehlt der Schluessel, gilt "auto" (sanitize).
+     *
+     * @param array<string, mixed> $design
+     */
+    public static function resolveScene(array $design): string
+    {
+        $design = self::sanitize($design);
+        $scene = $design['scene'];
+        if ($scene !== 'auto') {
+            return $scene;
+        }
+        if (self::customBackground($design)) {
+            return 'none';
+        }
+
+        return self::VARIANT_SCENES[$design['variant']] ?? 'contours';
+    }
+
+    /**
+     * Hat jemand ausdruecklich ein Bild gewaehlt (eigener Upload, Adresse oder ein mitgeliefertes
+     * Motiv)? Dann bleibt dieses Bild stehen und "auto" waehlt keine Szene. Leer ist das Standardbild
+     * der Variante, "none" heisst ohne Bild; beides ist keine ausdrueckliche Bildwahl.
+     *
+     * @param array<string, mixed> $design bereits durch sanitize()
+     */
+    private static function customBackground(array $design): bool
+    {
+        $background = $design["background"] ?? "";
+
+        return is_string($background) && $background !== "" && $background !== self::BACKGROUND_NONE;
+    }
+
     /**
      * Attribute fuer das html-Element, an denen das Stylesheet Variante und Anordnung erkennt.
      *
@@ -325,6 +388,7 @@ class Design
             'data-techtyl-nav' => $design['navigation'],
             'data-techtyl-servers' => $design['server_layout'],
             'data-techtyl-motion' => $design['motion'],
+            'data-techtyl-scene' => self::resolveScene($design),
             'data-techtyl-banners' => $design['banners'] ? 'an' : 'aus',
             'data-techtyl-logintext' => $design['login_title'] !== '' || $design['login_subtitle'] !== '' ? 'an' : 'aus',
             'data-techtyl-loginbild' => $design['login_image'] !== '' ? 'an' : 'aus',

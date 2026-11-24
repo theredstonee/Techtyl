@@ -7,6 +7,7 @@
 @section('head')
     <script src="/extensions/{identifier}/designer/preview-path.js?v={{ $assetVersion }}" data-path="{{ $previewPath }}"></script>
     <script src="/extensions/{identifier}/designer/receiver.js?v={{ $assetVersion }}" defer></script>
+    <script src="/extensions/{identifier}/backdrop.js?v={version}" defer></script>
 @endsection
 
 @if ($guest)

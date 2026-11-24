@@ -549,6 +549,7 @@ html .techtyl-designer-choice[aria-checked='true'] {
 }
 
 .techtyl-designer-choice-art {
+  position: relative;
   display: block;
   aspect-ratio: 5 / 3;
   border-radius: calc(var(--techtyl-radius) * 0.7);
@@ -610,6 +611,34 @@ html .techtyl-designer-choice[aria-checked='true'] .techtyl-designer-choice-chec
   width: 100%;
   height: 100%;
   background: linear-gradient(135deg, var(--techtyl-bg), var(--techtyl-surface-c, var(--techtyl-surface)));
+}
+
+.techtyl-designer-scene-art {
+  position: absolute;
+  inset: 0;
+}
+
+.techtyl-designer-scene-art svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+html:not([data-techtyl-motion='aus']) .techtyl-designer-choice:hover .techtyl-designer-scene-art::after,
+html:not([data-techtyl-motion='aus']) .techtyl-designer-choice:focus-visible .techtyl-designer-scene-art::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 32%, color-mix(in srgb, var(--techtyl-accent) 50%, transparent) 50%, transparent 68%);
+  transform: translateX(-70%);
+  animation: techtyl-scene-shimmer 0.8s ease;
+  pointer-events: none;
+}
+
+@keyframes techtyl-scene-shimmer {
+  to {
+    transform: translateX(70%);
+  }
 }
 
 /* Sketches */
@@ -1190,10 +1219,15 @@ html[data-techtyl-motion='aus'] .techtyl-designer-announce-icon {
   .techtyl-designer-toast,
   .techtyl-designer-savebar,
   .techtyl-designer-choice,
+  .techtyl-designer-scene-art::after,
   .techtyl-designer-motion .m-card,
   .techtyl-designer-motion .m-pulse,
   .techtyl-designer-announce-icon {
     animation: none !important;
     transition: none !important;
+  }
+
+  .techtyl-designer-scene-art::after {
+    content: none !important;
   }
 }

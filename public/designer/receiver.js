@@ -26,6 +26,8 @@
   var NAVIGATION = ['sidebar', 'icons', 'top'];
   var LAYOUTS = ['raster', 'liste', 'kompakt'];
   var MOTION = ['aus', 'dezent', 'voll'];
+  var SCENES = ['contours', 'aurora', 'stars', 'forest', 'harbor', 'grid'];
+  var SCENE_FOR = { werft: 'contours', papier: 'grid', hafen: 'harbor', kiefer: 'forest' };
   var KINDS = ['info', 'neu', 'erfolg', 'warnung', 'wartung'];
   var ICONS = ['megafon', 'info', 'stern', 'rakete', 'werkzeug', 'warnung', 'herz', 'kalender', 'glocke', 'geschenk'];
   var ANNOUNCE_POSITIONS = ['karte', 'leiste', 'schwebend'];
@@ -169,6 +171,34 @@
     setVar('--techtyl-login-title', title === '' ? null : cssString(title));
     setVar('--techtyl-login-subtitle', subtitle === '' ? null : cssString(subtitle));
     root.setAttribute('data-techtyl-logintext', title !== '' || subtitle !== '' ? 'an' : 'aus');
+
+    var scene = resolvedScene(design);
+    if (scene) root.setAttribute('data-techtyl-scene', scene);
+    refreshScene();
+  }
+
+  // auto wird hier aufgeloest. Ausgegeben wird nur none oder eine bekannte Szene.
+  // Ein Bild ausserhalb der mitgelieferten Motive (Upload oder fremde https-Adresse) ergibt none.
+  function resolvedScene(design) {
+    if (!design || typeof design !== 'object' || !('scene' in design)) return null;
+    var chosen = oneOf(design.scene, ['none'].concat(SCENES));
+    if (chosen) return chosen;
+    if (design.scene !== 'auto') return null;
+    var background = imageUrl(design.background);
+    var bundled = background === '' || (typeof background === 'string' && background.indexOf('/extensions/techtyl/defaults/backgrounds/') === 0);
+    if (typeof background === 'string' && background !== '' && !bundled) return 'none';
+    var variant = oneOf(design.variant, VARIANTS);
+    return (variant && SCENE_FOR[variant]) || 'contours';
+  }
+
+  function refreshScene() {
+    var engine = window.TechtylScene;
+    if (!engine || typeof engine.refresh !== 'function') return;
+    try {
+      engine.refresh();
+    } catch (error) {
+      /* die Engine meldet eigene Fehler selbst */
+    }
   }
 
   function cleanAnnouncement(value) {

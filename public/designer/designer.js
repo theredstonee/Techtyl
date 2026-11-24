@@ -266,6 +266,16 @@
   var motifs = Array.isArray(DATA.motifs) ? DATA.motifs : [];
   var saved = pickState(DATA.saved);
   var uploadedUrl = DATA.saved.uploaded || '';
+  var SCENE_FOR = { werft: 'contours', papier: 'grid', hafen: 'harbor', kiefer: 'forest' };
+  var SCENE_KEYS = ['auto', 'none', 'contours', 'aurora', 'stars', 'forest', 'harbor', 'grid'];
+  // Designs ohne Szene gelten als "auto", auch wenn der gespeicherte Stand den Schluessel noch nicht hat.
+  function ensureScene(design) {
+    if (!design || SCENE_KEYS.indexOf(design.scene) === -1) {
+      if (design) design.scene = 'auto';
+    }
+  }
+  ensureScene(defaults && defaults.design);
+  ensureScene(saved.design);
   var state = clone(saved);
   var undoStack = [];
   var redoStack = [];
@@ -379,7 +389,7 @@
       title: T('title_background'),
       icon: 'image',
       lead: T('lead_background'),
-      paths: ['design.background', 'design.dim', 'design.opacity', 'design.blur'],
+      paths: ['design.background', 'design.dim', 'design.opacity', 'design.blur', 'design.scene'],
       render: renderBackground,
     },
     {
@@ -585,11 +595,14 @@
     return h('p', { class: 'dz-hint', text: text });
   }
 
-  // Auswahl-Kacheln als Radiogruppe mit beweglichem Fokus (Pfeiltasten waehlen).
+  // Auswahl-Kacheln. Standard ist eine Radiogruppe. Mit pressed: Umschaltflaechen (aria-pressed),
+  // ebenfalls nur eine gewaehlt, Pfeiltasten wechseln die Auswahl.
   function tiles(config) {
+    var pressed = !!config.pressed;
+    var stateAttr = pressed ? 'aria-pressed' : 'aria-checked';
     var wrap = h('div', {
       class: 'dz-tiles',
-      role: 'radiogroup',
+      role: pressed ? 'group' : 'radiogroup',
       'aria-label': config.label,
       vars: { '--cols': String(config.cols || 2) },
     });
@@ -600,8 +613,9 @@
           type: 'button',
           class: 'dz-tile' + (config.iconOnly ? ' dz-tile-icon' : config.compact ? ' dz-tile-compact' : ''),
           title: config.iconOnly ? option.title : null,
-          role: 'radio',
-          'aria-checked': 'false',
+          role: pressed ? null : 'radio',
+          'aria-checked': pressed ? null : 'false',
+          'aria-pressed': pressed ? 'false' : null,
           disabled: option.disabled || false,
           on: {
             click: function () {
@@ -641,11 +655,11 @@
       config.options.forEach(function (option, index) {
         var on = same(option.value, value) && !found;
         if (on) found = true;
-        buttons[index].setAttribute('aria-checked', on ? 'true' : 'false');
+        buttons[index].setAttribute(stateAttr, on ? 'true' : 'false');
       });
       // Fokus-Reihenfolge: nur die gewaehlte (sonst erste freie) Kachel ist per Tab erreichbar
       var focusIndex = config.options.findIndex(function (option, index) {
-        return buttons[index].getAttribute('aria-checked') === 'true';
+        return buttons[index].getAttribute(stateAttr) === 'true';
       });
       if (focusIndex === -1) {
         focusIndex = config.options.findIndex(function (option) {
@@ -917,6 +931,72 @@
     };
   }
 
+  function sceneShapes(kind) {
+    if (kind === 'contours') {
+      var rings = [];
+      for (var i = 1; i <= 5; i++) {
+        rings.push(['ellipse', { cx: 80, cy: 118, rx: 18 * i, ry: 9 * i, class: i % 2 === 0 ? 's-accent-stroke' : 's-stroke' }]);
+      }
+      return rings;
+    }
+    if (kind === 'aurora') {
+      return [
+        ['path', { d: 'M0 34 C40 8 78 58 118 24 C140 10 150 20 160 16 L160 0 L0 0 Z', class: 's-accent-soft' }],
+        ['path', { d: 'M0 52 C46 28 90 72 160 40 L160 0 L0 0 Z', class: 's-muted' }],
+        ['path', { d: 'M0 74 C50 48 100 86 160 60 L160 100 L0 100 Z', class: 's-surface' }],
+      ];
+    }
+    if (kind === 'stars') {
+      var dots = [[18, 18, 1.1], [36, 12, 0.7], [58, 22, 1.4], [82, 10, 0.8], [108, 20, 1.1], [136, 14, 1.5], [24, 40, 0.7], [48, 36, 1], [74, 44, 0.8], [98, 34, 1.3], [124, 46, 0.8], [148, 32, 0.7], [30, 64, 1.1], [62, 70, 0.8], [90, 60, 1.4], [118, 72, 0.9], [146, 58, 1]];
+      return dots.map(function (dot, index) {
+        return ['circle', { cx: dot[0], cy: dot[1], r: dot[2], class: index % 5 === 0 ? 's-accent' : 's-text' }];
+      });
+    }
+    if (kind === 'forest') {
+      var shapes = [['rect', { x: 0, y: 78, width: 160, height: 22, class: 's-surface' }]];
+      [[22, 80, 22], [46, 86, 30], [72, 76, 20], [98, 88, 34], [126, 78, 24], [148, 84, 18]].forEach(function (tree) {
+        var x = tree[0];
+        var y = tree[1];
+        var height = tree[2];
+        var half = Math.round(height * 0.42);
+        shapes.push(['polygon', { points: x - half + ',' + y + ' ' + (x + half) + ',' + y + ' ' + x + ',' + (y - height), class: 's-surface' }]);
+        shapes.push(['polygon', { points: x - Math.round(half * 0.62) + ',' + (y - Math.round(height * 0.38)) + ' ' + (x + Math.round(half * 0.62)) + ',' + (y - Math.round(height * 0.38)) + ' ' + x + ',' + (y - height - 8), class: 's-accent-soft' }]);
+      });
+      return shapes;
+    }
+    if (kind === 'harbor') {
+      return [
+        ['rect', { x: 0, y: 58, width: 160, height: 42, class: 's-surface' }],
+        ['path', { d: 'M0 66 C30 58 54 74 84 64 C114 54 136 70 160 62', class: 's-stroke' }],
+        ['path', { d: 'M0 82 C40 74 72 88 112 78 C132 74 146 80 160 76', class: 's-stroke' }],
+        ['rect', { x: 64, y: 40, width: 28, height: 20, rx: 1, class: 's-raise' }],
+        ['rect', { x: 68, y: 44, width: 5, height: 4, class: 's-accent' }],
+        ['rect', { x: 76, y: 44, width: 5, height: 4, class: 's-accent-soft' }],
+        ['rect', { x: 84, y: 44, width: 5, height: 4, class: 's-accent' }],
+        ['circle', { cx: 24, cy: 52, r: 1.6, class: 's-accent' }],
+        ['circle', { cx: 128, cy: 22, r: 5, class: 's-muted' }],
+      ];
+    }
+    if (kind === 'grid') {
+      var grid = [];
+      var step;
+      for (step = 0; step <= 160; step += 20) grid.push(['line', { x1: step, y1: 0, x2: step, y2: 100, class: 's-stroke' }]);
+      for (step = 0; step <= 100; step += 20) grid.push(['line', { x1: 0, y1: step, x2: 160, y2: step, class: 's-stroke' }]);
+      grid.push(['circle', { cx: 80, cy: 50, r: 2.6, class: 's-accent' }]);
+      return grid;
+    }
+    return [];
+  }
+
+  function sceneArt(kind) {
+    return function () {
+      var variant = get('design.variant');
+      if (!SCENE_FOR[variant]) variant = 'werft';
+      var drawn = kind === 'auto' ? SCENE_FOR[variant] : kind;
+      return h('span', { class: 'dz-scene-art' }, sketch(variant, sceneShapes(drawn)));
+    };
+  }
+
   /* Background: '' = included image of the active variant, 'none' = no image, otherwise the address. */
   function variantDefaultUrl(variant) {
     var found = motifs.filter(function (motif) {
@@ -930,6 +1010,18 @@
     if (value === 'none') return '';
     if (value === '') return variantDefaultUrl(state.design.variant);
     return value;
+  }
+
+  // Wie Design::resolveScene: auto folgt der Variante, ein Bild ausserhalb der Motive wird none.
+  function previewScene() {
+    var scene = state.design.scene;
+    if (scene === 'none' || SCENE_KEYS.indexOf(scene) > 1) return scene;
+    var background = resolvedBackground();
+    var bundled = background === '' || motifs.some(function (motif) {
+      return motif.url === background;
+    });
+    if (!bundled) return 'none';
+    return SCENE_FOR[state.design.variant] || 'contours';
   }
 
   /* ================= Bereich: Stil ================= */
@@ -1210,12 +1302,31 @@
       return resolvedBackground() === '';
     };
 
+    var sceneGrid = tiles({
+      label: T('group_scene'),
+      cols: 2,
+      pressed: true,
+      options: SCENE_KEYS.map(function (key) {
+        var option = { value: key, title: T('scene_' + key), art: sceneArt(key) };
+        if (key === 'auto' || key === 'none') option.desc = T('scene_' + key + '_desc');
+        return option;
+      }),
+      value: function () {
+        var value = get('design.scene');
+        return SCENE_KEYS.indexOf(value) === -1 ? 'auto' : value;
+      },
+      pick: function (value) {
+        set('design.scene', value);
+      },
+    });
+
     return [
       group(T('group_image'), [
         grid,
         urlField,
         motifs.length ? null : hint(T('motifs_missing')),
       ]),
+      group(T('group_scene'), [sceneGrid, hint(T('scene_hint'))]),
       group(T('group_effect'), [
         slider({
           path: 'design.dim',
@@ -1989,7 +2100,7 @@
       {
         type: 'techtyl-designer',
         v: 1,
-        design: Object.assign({}, state.design, { background: resolvedBackground() }),
+        design: Object.assign({}, state.design, { background: resolvedBackground(), scene: previewScene() }),
         announcement: state.announcement,
         links: state.links,
       },

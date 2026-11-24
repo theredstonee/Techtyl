@@ -1,4 +1,4 @@
-import { Design, Motif, imageValue, MOTION, NAVIGATION, SERVER_LAYOUTS, VARIANTS } from './bootstrap';
+import { Design, Motif, SCENES, SCENE_FOR_VARIANT, imageValue, MOTION, NAVIGATION, SERVER_LAYOUTS, VARIANTS } from './bootstrap';
 
 // Applies design values directly to <html> (CSS variables and data attributes), the same way the
 // wrapper and the admin designer preview do. Every value is checked before it is used.
@@ -31,7 +31,28 @@ export const resolveBackground = (background: string, variant: string, motifs: M
     return imageValue(background) || '';
 };
 
-export const applyDesign = (design: Design, backgroundUrl: string): void => {
+/**
+ * Scene written onto <html>. "auto" becomes the variant's scene, or "none" when the shown
+ * image is not one of the included motifs (own upload or an external address).
+ */
+export const resolveScene = (scene: unknown, variant: string, backgroundUrl: string, motifs: Motif[]): string => {
+    if (scene === 'none') return 'none';
+    if (typeof scene === 'string' && (SCENES as readonly string[]).includes(scene)) return scene;
+    if (backgroundUrl !== '' && !motifs.some((motif) => motif.url === backgroundUrl)) return 'none';
+    return SCENE_FOR_VARIANT[variant] || 'contours';
+};
+
+const refreshScene = (): void => {
+    const engine = (window as Window & { TechtylScene?: { refresh?: () => void } }).TechtylScene;
+    if (!engine || typeof engine.refresh !== 'function') return;
+    try {
+        engine.refresh();
+    } catch (error) {
+        // The engine reports its own failures. A throw must not break the design page.
+    }
+};
+
+export const applyDesign = (design: Design, backgroundUrl: string, motifs: Motif[] = []): void => {
     const html = root();
     if (inList(design.variant, VARIANTS)) html.setAttribute('data-techtyl-variant', design.variant);
     if (inList(design.navigation, NAVIGATION)) html.setAttribute('data-techtyl-nav', design.navigation);
@@ -61,4 +82,7 @@ export const applyDesign = (design: Design, backgroundUrl: string): void => {
     if (blur !== null) set('--techtyl-blur', blur + 'px');
     const image = imageValue(backgroundUrl);
     set('--techtyl-background', image ? 'url("' + image + '")' : 'none');
+    const variant = inList(design.variant, VARIANTS) ? design.variant : '';
+    html.setAttribute('data-techtyl-scene', resolveScene(design.scene, variant, image || '', motifs));
+    refreshScene();
 };

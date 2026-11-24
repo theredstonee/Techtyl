@@ -8,6 +8,13 @@ export const VARIANTS = ['werft', 'papier', 'hafen', 'kiefer'] as const;
 export const NAVIGATION = ['sidebar', 'icons', 'top'] as const;
 export const SERVER_LAYOUTS = ['raster', 'liste', 'kompakt'] as const;
 export const MOTION = ['aus', 'dezent', 'voll'] as const;
+export const SCENES = ['contours', 'aurora', 'stars', 'forest', 'harbor', 'grid'] as const;
+export const SCENE_FOR_VARIANT: Record<string, (typeof SCENES)[number]> = {
+    werft: 'contours',
+    papier: 'grid',
+    hafen: 'harbor',
+    kiefer: 'forest',
+};
 export const KINDS = ['info', 'neu', 'erfolg', 'warnung', 'wartung'] as const;
 export const ICONS = ['megafon', 'info', 'stern', 'rakete', 'werkzeug', 'warnung', 'herz', 'kalender', 'glocke', 'geschenk'] as const;
 export const WEBSITE_KINDS = ['support', 'status', 'billing', 'docs', 'website'] as const;
@@ -27,6 +34,7 @@ export interface Design {
     opacity: number;
     blur: number;
     motif: string;
+    scene: string;
     login_title: string;
     login_subtitle: string;
     login_image: string;
@@ -147,12 +155,22 @@ export const imageValue = (url: unknown): string | null => {
     return local || url.indexOf('https://') === 0 ? url : null;
 };
 
+const knownScene = (value: unknown): value is string =>
+    value === 'auto' || value === 'none' || (typeof value === 'string' && (SCENES as readonly string[]).includes(value));
+
+// Full designs always carry a scene. A stored row from before the setting existed behaves as auto.
+const withScene = (design: any): Design => {
+    if (!design || typeof design !== 'object') return design;
+    if (knownScene(design.scene)) return design;
+    return { ...design, scene: 'auto' };
+};
+
 const toBootstrap = (attributes: any): Bootstrap => {
     const limits = attributes.limits || {};
     const position = typeof attributes.banner_position === 'string' && /^\d{1,3}% \d{1,3}%$/.test(attributes.banner_position) ? attributes.banner_position : '50% 30%';
     return {
-        design: attributes.design,
-        adminDesign: attributes.admin_design || attributes.design,
+        design: withScene(attributes.design),
+        adminDesign: withScene(attributes.admin_design || attributes.design),
         userDesign: attributes.user_design || {},
         background: attributes.background || { url: '', custom: false, custom_url: '' },
         permissions: attributes.permissions || { appearance: false, layout: false, background: false, banners: false },
