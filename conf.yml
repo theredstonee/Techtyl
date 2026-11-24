@@ -1,7 +1,7 @@
 info:
   name: 'Techtyl'
   identifier: 'techtyl'
-  description: 'Theme mit Designer, eigenen Hintergruenden und Server-Bannern fuer Pterodactyl.'
+  description: 'Theme and extension with a live designer, animated backgrounds, server banners and built-in tools for Pterodactyl.'
   flags: ''
   version: '1.0.0'
   target: 'beta-2026-08'
